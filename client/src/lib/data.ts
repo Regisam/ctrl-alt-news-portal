@@ -112,6 +112,179 @@ export const popularArticles = [
   },
 ];
 
+// ---- AI_LLM_IMAGE, ROBOTICS_HAND_IMAGE, SCIENCE_DNA_IMAGE, SCIENCE_SPACE_IMAGE, ROBOTICS_FACTORY_IMAGE ----
+export const AI_LLM_IMAGE = "https://private-us-east-1.manuscdn.com/sessionFile/8E4srZkejjokDkWPPgZAIg/sandbox/Yy1kS5C4qb1PBWtHLTLEig-img-1_1771976319000_na1fn_YWktYXJ0aWNsZS1sbG0.jpg?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvOEU0c3Jaa2Vqam9rRGtXUFBnWkFJZy9zYW5kYm94L1l5MWtTNUM0cWIxUEJXdEhMVExFaWctaW1nLTFfMTc3MTk3NjMxOTAwMF9uYTFmbl9ZV2t0WVhKMGFXTnNaUzFzYkcwLmpwZz94LW9zcy1wcm9jZXNzPWltYWdlL3Jlc2l6ZSx3XzE5MjAsaF8xOTIwL2Zvcm1hdCx3ZWJwL3F1YWxpdHkscV84MCIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc5ODc2MTYwMH19fV19&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=k6ytoE7j~a2rHoQzRFB5sgA5-CmJU7Q1qsw~NdKaJcDHAF-stW-o6G~6I9~L-Z4f7K~GRBMbtkfz6Js70N6cpYX7VKf3C86FdFXP4SMpdaiBIbe5IwDhsBhC6SXhOTi5HPgQUh1MmQn1EwIZswucNKVO1w6QMTIC5cjflJNGc43XBLGmR3Jl46~IuOieYt2ai10VbBSnNugBr2wf5PTb0G3t8XWOUqEAfhrKIp-SO8r8461os3FN-QHjr~mRva4y2jlDYHpDwxUQFz8Y5EyvLzUW4Lwak0aOjdUDzpECem4LIJzCw7J0OQ0m0JsrQJc54sful~Mum5wtWiKCNr05-A__";
+export const ROBOTICS_HAND_IMAGE = "https://private-us-east-1.manuscdn.com/sessionFile/8E4srZkejjokDkWPPgZAIg/sandbox/Yy1kS5C4qb1PBWtHLTLEig-img-2_1771976327000_na1fn_YWktYXJ0aWNsZS1yb2JvdC1oYW5k.jpg?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvOEU0c3Jaa2Vqam9rRGtXUFBnWkFJZy9zYW5kYm94L1l5MWtTNUM0cWIxUEJXdEhMVExFaWctaW1nLTJfMTc3MTk3NjMyNzAwMF9uYTFmbl9ZV2t0WVhKMGFXTnNaUzF5YjJKdmRDMW9ZVzVrLmpwZz94LW9zcy1wcm9jZXNzPWltYWdlL3Jlc2l6ZSx3XzE5MjAsaF8xOTIwL2Zvcm1hdCx3ZWJwL3F1YWxpdHkscV84MCIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc5ODc2MTYwMH19fV19&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=lnelgTjQoprU0Rx~Q-1Pi4k~6u8geCqs3sL3OTnOnzhwCsa72JXtPVL7DFASi-ZJaCGdTJmrn1a6C2ixc3HMa7UWERyCY4R3jqVIapv4MI8RueOdOsuxdKHAYNpzR5jw4RPPLjU3MRWBTOYFXa8hTdHhr6ZF5fcLUvwOezBKndtl0cdw89NFb8RHknRPwvLF2FteAG60MnYYmoMXBSZLZ5qIUi36S3ZUaTpydLRyyymKT9hWiu5qBDpu4HVc0RQREQg1c89mGoPA5bcp~PYykB7-NAzBbVhg~Gk2ehnPefUZXydA0O0WW14j2Q6o7fh2GHhxH~mo43nSLSldMJJLXA__";
+export const SCIENCE_DNA_IMAGE = "https://private-us-east-1.manuscdn.com/sessionFile/8E4srZkejjokDkWPPgZAIg/sandbox/Yy1kS5C4qb1PBWtHLTLEig-img-3_1771976323000_na1fn_c2NpZW5jZS1hcnRpY2xlLWRuYQ.jpg?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvOEU0c3Jaa2Vqam9rRGtXUFBnWkFJZy9zYW5kYm94L1l5MWtTNUM0cWIxUEJXdEhMVExFaWctaW1nLTNfMTc3MTk3NjMyMzAwMF9uYTFmbl9jMk5wWlc1alpTMWhjblJwWTJ4bExXUnVZUS5qcGc~eC1vc3MtcHJvY2Vzcz1pbWFnZS9yZXNpemUsd18xOTIwLGhfMTkyMC9mb3JtYXQsd2VicC9xdWFsaXR5LHFfODAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3OTg3NjE2MDB9fX1dfQ__&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=PDmbqvVFVQNm~M~g4a7cBVqO9-4ZnyV66O7035x3BnsC6T0O5ykzTRWYrRt~OYFgQKjJwHdQaCoOWBRl7JFN9fOb18UrANFjBDVu0krJX2Yog4~AzDUdyLOl0X4Ydeqp0PXDGUrusGsUQHM49UiTbc73SvbmGjB3rQT2qkMI8ooybrvcIlfFmeaOsq~9mDfaii596sDPEfQE99JlySSMf~w2SNTE1eTl5DXgJFfGPtUksj38VVkeD5SX8cGS~dr6yxXeaQUdOdggerlQnaeJRQdZXLff8unifFCwlsxogCEHLMlBnk2UL6T0d-Za1TLllGA~0VWTxE8wTypbcs4lFQ__";
+export const SCIENCE_SPACE_IMAGE = "https://private-us-east-1.manuscdn.com/sessionFile/8E4srZkejjokDkWPPgZAIg/sandbox/Yy1kS5C4qb1PBWtHLTLEig-img-4_1771976319000_na1fn_c2NpZW5jZS1hcnRpY2xlLXNwYWNl.jpg?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvOEU0c3Jaa2Vqam9rRGtXUFBnWkFJZy9zYW5kYm94L1l5MWtTNUM0cWIxUEJXdEhMVExFaWctaW1nLTRfMTc3MTk3NjMxOTAwMF9uYTFmbl9jMk5wWlc1alpTMWhjblJwWTJ4bExYTndZV05sLmpwZz94LW9zcy1wcm9jZXNzPWltYWdlL3Jlc2l6ZSx3XzE5MjAsaF8xOTIwL2Zvcm1hdCx3ZWJwL3F1YWxpdHkscV84MCIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc5ODc2MTYwMH19fV19&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=NfAjfJ7mOf4pmo~WTk~i2H~OoF7jdnQzj4mkwxCmpkRjFFfM~GQ~REI04OQka4LkjRvIR7gipwXSwVDhEiKa6NIGCgOQn39iMLGzBh9rPCL6L3ahcdrc9~4yhGR1Oh7Rw2xh~20wMdL4SsVWr39A4s2IGdCAREMubPAiVCRILTrQIjJC68JaKcSb4kiDg3F5HZdjFY2ZgAiYS0UQyPlLM1cQIuw3dC-1soaG2FbRsQ-pi7hhRSkQzk-IGoBKvxMI11uyRtPlIyM2u3mw0iN6lI03ZUwjhMX85yeMLOOQSguPJcjNpOpb7dGXlekMtROYfOVsAJ-7w3h0G98G1cN4lQ__";
+export const ROBOTICS_FACTORY_IMAGE = "https://private-us-east-1.manuscdn.com/sessionFile/8E4srZkejjokDkWPPgZAIg/sandbox/Yy1kS5C4qb1PBWtHLTLEig-img-5_1771976315000_na1fn_cm9ib3RpY3MtYXJ0aWNsZS1mYWN0b3J5.jpg?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvOEU0c3Jaa2Vqam9rRGtXUFBnWkFJZy9zYW5kYm94L1l5MWtTNUM0cWIxUEJXdEhMVExFaWctaW1nLTVfMTc3MTk3NjMxNTAwMF9uYTFmbl9jbTlpYjNScFkzTXRZWEowYVdOc1pTMW1ZV04wYjNKNS5qcGc~eC1vc3MtcHJvY2Vzcz1pbWFnZS9yZXNpemUsd18xOTIwLGhfMTkyMC9mb3JtYXQsd2VicC9xdWFsaXR5LHFfODAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3OTg3NjE2MDB9fX1dfQ__&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=Ad5YIACk8RUqnLkmj4a1B3-v3bhYSKswURDSecIb6QSt2oyORqb~vPG4ZK4M1q3ACdxtTjcwj6nn0NVhlg0bnJVjq4OtzkaDRkyWtTAx~XbfJ2SZqmyP-yZM7dRTEijxOwAbhGLHIxhBgFxOqtwQUag0IiJGzO7wxuulzZF1qRW9usqeHsSxH~wBR-IXrl2pngU3FONeIbapFxnCGIgvSdOymtSDFFdu~V5e1T6g7dB3RD2wlKANVCOWyqd5dVVldjSBnRh7XkgGoep66xi41yf4tM1mFEXlhxOYyJsKq38x8pIvYe792AQ5nsmca3WMijmJDTvkPauvt3jLpkPjJA__";
+
+export interface CategoryArticle {
+  id: number;
+  title: { en: string; pt: string };
+  excerpt: { en: string; pt: string };
+  category: Category;
+  author: string;
+  date: string;
+  readTime: string;
+  views: string;
+  image: string;
+  badge: string;
+}
+
+export const aiArticles: CategoryArticle[] = [
+  {
+    id: 101,
+    title: { en: 'GPT-5 Reasoning Engine Surpasses Human Experts', pt: 'Motor de Raciocínio GPT-5 Supera Especialistas Humanos' },
+    excerpt: { en: 'OpenAI\'s latest model sets new records across all major benchmarks, demonstrating multi-step logical reasoning.', pt: 'O mais recente modelo da OpenAI bate recordes em todos os benchmarks, demonstrando raciocínio lógico de múltiplas etapas.' },
+    category: 'AI',
+    author: 'Alex Chen',
+    date: 'Feb 24, 2026',
+    readTime: '5 min',
+    views: '48.2K',
+    image: AI_LLM_IMAGE,
+    badge: 'BREAKING',
+  },
+  {
+    id: 102,
+    title: { en: 'AI Designs New Antibiotics Resistant to Superbugs', pt: 'IA Projeta Novos Antibióticos Resistentes a Superbactérias' },
+    excerpt: { en: 'A deep learning model has discovered a novel class of antibiotics effective against drug-resistant bacteria.', pt: 'Um modelo de aprendizado profundo descobriu uma nova classe de antibióticos eficaz contra bactérias resistentes.' },
+    category: 'AI',
+    author: 'Dr. Sarah Kim',
+    date: 'Feb 23, 2026',
+    readTime: '6 min',
+    views: '35.7K',
+    image: ROBOTICS_HAND_IMAGE,
+    badge: 'EXCLUSIVE',
+  },
+  {
+    id: 103,
+    title: { en: 'Neural Interface Lets Paralysed Patients Type at 200 WPM', pt: 'Interface Neural Permite que Pacientes Paralisados Digitem a 200 PPM' },
+    excerpt: { en: 'A brain-computer interface breakthrough enables direct neural-to-text communication at unprecedented speeds.', pt: 'Um avanço em interfaces cérebro-computador permite comunicação neural direta em velocidades sem precedentes.' },
+    category: 'AI',
+    author: 'James Wright',
+    date: 'Feb 22, 2026',
+    readTime: '7 min',
+    views: '44.7K',
+    image: AI_IMAGE,
+    badge: 'TRENDING',
+  },
+  {
+    id: 104,
+    title: { en: 'NVIDIA Blackwell Ultra: The GPU That Runs AGI', pt: 'NVIDIA Blackwell Ultra: A GPU Que Executa AGI' },
+    excerpt: { en: 'NVIDIA\'s next-generation GPU architecture promises a 10x performance leap for large language model inference.', pt: 'A arquitetura de GPU de próxima geração da NVIDIA promete um salto de desempenho 10x para inferência de LLMs.' },
+    category: 'AI',
+    author: 'Marcus Lee',
+    date: 'Feb 21, 2026',
+    readTime: '4 min',
+    views: '52.1K',
+    image: CHIP_IMAGE,
+    badge: 'HOT',
+  },
+];
+
+export const scienceArticles: CategoryArticle[] = [
+  {
+    id: 201,
+    title: { en: 'CRISPR 3.0 Edits Genes With Zero Off-Target Errors', pt: 'CRISPR 3.0 Edita Genes Com Zero Erros Fora do Alvo' },
+    excerpt: { en: 'A new generation of CRISPR tools achieves near-perfect precision in gene editing, opening new doors for genetic medicine.', pt: 'Uma nova geração de ferramentas CRISPR alcança precisão quase perfeita na edição genética, abrindo novas portas para a medicina genética.' },
+    category: 'SCIENCE',
+    author: 'Dr. Maria Santos',
+    date: 'Feb 24, 2026',
+    readTime: '8 min',
+    views: '38.9K',
+    image: SCIENCE_DNA_IMAGE,
+    badge: 'BREAKTHROUGH',
+  },
+  {
+    id: 202,
+    title: { en: 'James Webb Captures First Image of an Earth-Like Exoplanet', pt: 'James Webb Captura Primeira Imagem de Exoplaneta Semelhante à Terra' },
+    excerpt: { en: 'The telescope\'s infrared sensors have resolved the surface of a rocky exoplanet in the habitable zone for the first time.', pt: 'Os sensores infravermelhos do telescópio resolveram a superfície de um exoplaneta rochoso na zona habitável pela primeira vez.' },
+    category: 'SCIENCE',
+    author: 'Dr. Elena Vasquez',
+    date: 'Feb 23, 2026',
+    readTime: '6 min',
+    views: '61.3K',
+    image: SCIENCE_SPACE_IMAGE,
+    badge: 'EXCLUSIVE',
+  },
+  {
+    id: 203,
+    title: { en: 'Room-Temperature Superconductor Confirmed by Three Labs', pt: 'Supercondutor à Temperatura Ambiente Confirmado por Três Laboratórios' },
+    excerpt: { en: 'Independent verification of the LK-99 successor material marks a turning point for energy transmission and quantum computing.', pt: 'A verificação independente do material sucessor do LK-99 marca um ponto de virada para a transmissão de energia e computação quântica.' },
+    category: 'SCIENCE',
+    author: 'Prof. Raj Patel',
+    date: 'Feb 22, 2026',
+    readTime: '9 min',
+    views: '29.4K',
+    image: SCIENCE_IMAGE,
+    badge: 'VERIFIED',
+  },
+  {
+    id: 204,
+    title: { en: 'Dark Matter Signal Detected at CERN Collider', pt: 'Sinal de Matéria Escura Detectado no Colisor do CERN' },
+    excerpt: { en: 'Physicists report an anomalous energy signature that may represent the first direct detection of dark matter particles.', pt: 'Físicos relatam uma assinatura de energia anômala que pode representar a primeira detecção direta de partículas de matéria escura.' },
+    category: 'SCIENCE',
+    author: 'Dr. Yuki Tanaka',
+    date: 'Feb 21, 2026',
+    readTime: '7 min',
+    views: '43.8K',
+    image: SCIENCE_IMAGE,
+    badge: 'DEVELOPING',
+  },
+];
+
+export const roboticsArticles: CategoryArticle[] = [
+  {
+    id: 301,
+    title: { en: 'Tesla Optimus Gen 3 Begins Full Factory Deployment', pt: 'Tesla Optimus Gen 3 Inicia Implantação Total em Fábricas' },
+    excerpt: { en: 'Tesla\'s humanoid robot begins autonomous assembly line work at Gigafactory Texas, handling 200+ tasks per shift.', pt: 'O robô humanoide da Tesla inicia trabalho autônomo na linha de montagem da Gigafactory Texas, realizando mais de 200 tarefas por turno.' },
+    category: 'ROBOTICS',
+    author: 'James Wright',
+    date: 'Feb 24, 2026',
+    readTime: '5 min',
+    views: '57.2K',
+    image: ROBOTICS_FACTORY_IMAGE,
+    badge: 'BREAKING',
+  },
+  {
+    id: 302,
+    title: { en: 'Boston Dynamics Atlas 3.0 Learns New Skills in Real Time', pt: 'Boston Dynamics Atlas 3.0 Aprende Novas Habilidades em Tempo Real' },
+    excerpt: { en: 'The latest Atlas combines real-time neural processing with physical agility, enabling autonomous decision-making in unstructured environments.', pt: 'O mais recente Atlas combina processamento neural em tempo real com agilidade física, permitindo tomada de decisão autônoma em ambientes não estruturados.' },
+    category: 'ROBOTICS',
+    author: 'Marcus Lee',
+    date: 'Feb 23, 2026',
+    readTime: '6 min',
+    views: '29.4K',
+    image: ROBOTICS_IMAGE,
+    badge: 'FEATURED',
+  },
+  {
+    id: 303,
+    title: { en: 'Surgical Robots Perform 10,000 Procedures Without Human Assist', pt: 'Robôs Cirúrgicos Realizam 10.000 Procedimentos Sem Assistência Humana' },
+    excerpt: { en: 'AI-guided surgical systems achieve a 99.97% success rate across complex operations, outperforming human surgeons.', pt: 'Sistemas cirúrgicos guiados por IA alcançam taxa de sucesso de 99,97% em operações complexas, superando cirurgiões humanos.' },
+    category: 'ROBOTICS',
+    author: 'Dr. Sarah Kim',
+    date: 'Feb 22, 2026',
+    readTime: '7 min',
+    views: '41.6K',
+    image: ROBOTICS_HAND_IMAGE,
+    badge: 'MILESTONE',
+  },
+  {
+    id: 304,
+    title: { en: 'Micro-Robots Deliver Cancer Drugs Directly to Tumours', pt: 'Micro-Robôs Entregam Medicamentos Contra o Câncer Diretamente nos Tumores' },
+    excerpt: { en: 'Magnetically guided micro-robots navigate the bloodstream to deliver chemotherapy with pinpoint accuracy, reducing side effects by 90%.', pt: 'Micro-robôs guiados magneticamente navegam pela corrente sanguínea para entregar quimioterapia com precisão cirúrgica, reduzindo efeitos colaterais em 90%.' },
+    category: 'ROBOTICS',
+    author: 'Prof. Raj Patel',
+    date: 'Feb 21, 2026',
+    readTime: '8 min',
+    views: '33.1K',
+    image: ROBOTICS_IMAGE,
+    badge: 'INNOVATION',
+  },
+];
+
 export const gadgetProducts = [
   {
     id: 1,
