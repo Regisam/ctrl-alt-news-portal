@@ -1,6 +1,6 @@
 // CTRL + ALT News — Home Page
 // Design: Cyberpunk Brutalism | Dark Mode | Neon Category System
-// Layout: Header → Hero+Sidebar → AdBanner(728x90) → Trending → Gadgets → Footer
+// Layout: Header → AdBanner(728x90) → Hero+Sidebar → AdBanner(728x90) → Trending → Gadgets → Footer
 // Bilingual: EN / PT-BR
 
 import { useState, useEffect } from "react";
@@ -12,6 +12,24 @@ import Sidebar from "@/components/Sidebar";
 import Footer from "@/components/Footer";
 
 type Lang = 'en' | 'pt';
+
+const AdLeaderboard = () => (
+  <div style={{ background: 'rgba(5,5,6,0.95)', borderTop: '1px solid rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '10px 2rem' }}>
+    <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+      <div
+        className="ad-placeholder"
+        style={{
+          height: '64px',
+          borderRadius: '4px',
+          maxWidth: '728px',
+          margin: '0 auto',
+        }}
+      >
+        <span>Google AdSense — Leaderboard 728×90</span>
+      </div>
+    </div>
+  </div>
+);
 
 export default function Home() {
   const [lang, setLang] = useState<Lang>('en');
@@ -25,6 +43,9 @@ export default function Home() {
     <div style={{ minHeight: '100vh', background: '#0A0A0B', color: '#F0F0F5' }}>
       {/* ---- HEADER ---- */}
       <Header lang={lang} onLangChange={setLang} />
+
+      {/* ---- AD BANNER TOP (728x90 Leaderboard) — above Hero ---- */}
+      <AdLeaderboard />
 
       {/* ---- HERO + SIDEBAR ---- */}
       <div
@@ -50,22 +71,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ---- AD BANNER (728x90 Leaderboard) — between Hero and Trending ---- */}
-      <div style={{ background: 'rgba(5,5,6,0.95)', borderTop: '1px solid rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '12px 2rem' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-          <div
-            className="ad-placeholder"
-            style={{
-              height: '64px',
-              borderRadius: '4px',
-              maxWidth: '728px',
-              margin: '0 auto',
-            }}
-          >
-            <span>Google AdSense — Leaderboard 728×90</span>
-          </div>
-        </div>
-      </div>
+      {/* ---- AD BANNER BOTTOM (728x90 Leaderboard) — below Hero, above Trending ---- */}
+      <AdLeaderboard />
 
       {/* ---- TRENDING NEWS ---- */}
       <TrendingSection lang={lang} />
