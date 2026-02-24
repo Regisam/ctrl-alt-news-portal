@@ -3,7 +3,7 @@
 // Layout: Header → AdBanner → Hero+Sidebar → Trending → Gadgets → Footer
 // Bilingual: EN / PT-BR
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import TrendingSection from "@/components/TrendingSection";
@@ -15,6 +15,11 @@ type Lang = 'en' | 'pt';
 
 export default function Home() {
   const [lang, setLang] = useState<Lang>('en');
+
+  // Sync <html lang> with selected language for screen readers and SEO
+  useEffect(() => {
+    document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+  }, [lang]);
 
   return (
     <div style={{ minHeight: '100vh', background: '#0A0A0B', color: '#F0F0F5' }}>
