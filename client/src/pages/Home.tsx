@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import TrendingSection from "@/components/TrendingSection";
 import GadgetsSection from "@/components/GadgetsSection";
+import ArticlesSection from "@/components/ArticlesSection";
 import Sidebar from "@/components/Sidebar";
 import Footer from "@/components/Footer";
 
@@ -76,6 +77,9 @@ export default function Home() {
 
       {/* ---- TRENDING NEWS ---- */}
       <TrendingSection lang={lang} />
+
+      {/* ---- AI / SCIENCE / ROBOTICS ARTICLES ---- */}
+      <ArticlesSection lang={lang} />
 
       {/* ---- GADGETS REVIEWS ---- */}
       <GadgetsSection lang={lang} />
