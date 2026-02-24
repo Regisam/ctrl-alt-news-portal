@@ -1,5 +1,7 @@
 // CTRL + ALT News — Footer Component
 // Design: Dark minimal footer with neon accent links
+// A11y: footer landmark, nav landmarks, button types, focus-visible
+// Tokens: CSS variables for neon colors (no hardcoded oklch in JS)
 
 import { LOGO2_URL } from "@/lib/data";
 import { toast } from "sonner";
@@ -8,10 +10,24 @@ interface FooterProps {
   lang: 'en' | 'pt';
 }
 
+const CATEGORIES = [
+  { label: 'AI',       colorVar: 'var(--color-neon-ai)',       ariaLabel: 'AI news section' },
+  { label: 'SCIENCE',  colorVar: 'var(--color-neon-science)',  ariaLabel: 'Science news section' },
+  { label: 'ROBOTICS', colorVar: 'var(--color-neon-robotics)', ariaLabel: 'Robotics news section' },
+  { label: 'GADGETS',  colorVar: 'var(--color-neon-gadgets)',  ariaLabel: 'Gadgets reviews' },
+] as const;
+
+const SOCIAL_ICONS = [
+  { id: 'X',  ariaLabel: 'Follow on X (Twitter)' },
+  { id: 'YT', ariaLabel: 'Watch on YouTube' },
+  { id: 'IG', ariaLabel: 'Follow on Instagram' },
+  { id: 'TG', ariaLabel: 'Join on Telegram' },
+] as const;
+
 export default function Footer({ lang }: FooterProps) {
   const year = new Date().getFullYear();
 
-  const links = {
+  const t = {
     en: {
       about: "About",
       contact: "Contact",
@@ -22,6 +38,9 @@ export default function Footer({ lang }: FooterProps) {
       tagline: "Your source for the future of technology.",
       copyright: `© ${year} CTRL + ALT News. All rights reserved.`,
       disclaimer: "Affiliate disclosure: Some links may earn us a commission at no extra cost to you.",
+      categories: "Categories",
+      company: "Company",
+      legal: "Legal",
     },
     pt: {
       about: "Sobre",
@@ -33,16 +52,18 @@ export default function Footer({ lang }: FooterProps) {
       tagline: "Sua fonte para o futuro da tecnologia.",
       copyright: `© ${year} CTRL + ALT News. Todos os direitos reservados.`,
       disclaimer: "Divulgação de afiliados: Alguns links podem nos render uma comissão sem custo adicional para você.",
+      categories: "Categorias",
+      company: "Empresa",
+      legal: "Legal",
     }
-  };
-
-  const t = links[lang];
+  }[lang];
 
   return (
     <footer
+      aria-label={lang === 'en' ? "Site footer" : "Rodapé do site"}
       style={{
         background: 'rgba(5,5,6,0.98)',
-        borderTop: '1px solid rgba(255,255,255,0.06)',
+        borderTop: '1px solid var(--color-border-subtle)',
         padding: '48px 0 24px',
       }}
     >
@@ -58,16 +79,21 @@ export default function Footer({ lang }: FooterProps) {
         >
           {/* Brand */}
           <div>
-            <img src={LOGO2_URL} alt="CTRL + ALT News" style={{ height: '28px', marginBottom: '12px' }} />
+            <a href="/" aria-label="CTRL + ALT News — Home" className="focus-neon" style={{ display: 'inline-block' }}>
+              <img src={LOGO2_URL} alt="CTRL + ALT News" style={{ height: '28px', marginBottom: '12px', display: 'block' }} />
+            </a>
             <p style={{ color: 'rgba(240,240,245,0.45)', fontSize: '0.82rem', lineHeight: 1.6, margin: 0 }}>
               {t.tagline}
             </p>
             {/* Social Icons */}
-            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
-              {['X', 'YT', 'IG', 'TG'].map(icon => (
-                <button
-                  key={icon}
+            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }} role="list" aria-label={lang === 'en' ? "Social media links" : "Redes sociais"}>
+              {SOCIAL_ICONS.map(({ id, ariaLabel }) => (
+                  <button
+                  key={id}
+                  type="button"
                   onClick={() => toast.info("Social media coming soon!", { duration: 2000 })}
+                  aria-label={ariaLabel}
+                  className="footer-social-btn focus-neon"
                   style={{
                     width: '32px',
                     height: '32px',
@@ -77,52 +103,42 @@ export default function Footer({ lang }: FooterProps) {
                     color: 'rgba(240,240,245,0.5)',
                     fontSize: '0.65rem',
                     fontWeight: 700,
-                    fontFamily: "'Roboto Mono', monospace",
+                    fontFamily: "var(--font-mono)",
                     cursor: 'pointer',
                     transition: 'all 0.2s',
                   }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = 'oklch(0.78 0.18 195 / 0.4)';
-                    e.currentTarget.style.color = 'oklch(0.78 0.18 195)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-                    e.currentTarget.style.color = 'rgba(240,240,245,0.5)';
-                  }}
                 >
-                  {icon}
+                  {id}
                 </button>
               ))}
             </div>
           </div>
 
           {/* Categories */}
-          <div>
-            <h5
+          <nav aria-label={lang === 'en' ? "News categories" : "Categorias de notícias"}>
+            <h2
               style={{
                 color: 'rgba(240,240,245,0.4)',
                 fontSize: '0.65rem',
                 fontWeight: 700,
                 letterSpacing: '0.15em',
                 textTransform: 'uppercase',
-                fontFamily: "'Roboto Mono', monospace",
+                fontFamily: "var(--font-mono)",
                 marginBottom: '14px',
               }}
             >
-              {lang === 'en' ? 'Categories' : 'Categorias'}
-            </h5>
-            {[
-              { label: 'AI', color: 'oklch(0.78 0.18 195)' },
-              { label: 'SCIENCE', color: 'oklch(0.65 0.28 300)' },
-              { label: 'ROBOTICS', color: 'oklch(0.62 0.26 25)' },
-              { label: 'GADGETS', color: 'oklch(0.72 0.22 55)' },
-            ].map(cat => (
+              {t.categories}
+            </h2>
+            {CATEGORIES.map(cat => (
               <button
                 key={cat.label}
+                type="button"
                 onClick={() => toast.info(`${cat.label} section coming soon!`, { duration: 2000 })}
+                aria-label={cat.ariaLabel}
+                className="footer-cat-btn focus-neon"
                 style={{
                   display: 'block',
-                  color: cat.color,
+                  color: cat.colorVar,
                   fontSize: '0.82rem',
                   fontWeight: 600,
                   letterSpacing: '0.06em',
@@ -130,37 +146,38 @@ export default function Footer({ lang }: FooterProps) {
                   border: 'none',
                   cursor: 'pointer',
                   padding: '4px 0',
-                  fontFamily: "'Space Grotesk', sans-serif",
+                  fontFamily: "var(--font-body)",
                   opacity: 0.8,
                   transition: 'opacity 0.2s',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
-                onMouseLeave={e => (e.currentTarget.style.opacity = '0.8')}
               >
                 {cat.label}
               </button>
             ))}
-          </div>
+          </nav>
 
-          {/* Links */}
-          <div>
-            <h5
+          {/* Company Links */}
+          <nav aria-label={lang === 'en' ? "Company links" : "Links da empresa"}>
+            <h2
               style={{
                 color: 'rgba(240,240,245,0.4)',
                 fontSize: '0.65rem',
                 fontWeight: 700,
                 letterSpacing: '0.15em',
                 textTransform: 'uppercase',
-                fontFamily: "'Roboto Mono', monospace",
+                fontFamily: "var(--font-mono)",
                 marginBottom: '14px',
               }}
             >
-              {lang === 'en' ? 'Company' : 'Empresa'}
-            </h5>
+              {t.company}
+            </h2>
             {[t.about, t.contact, t.advertise, t.sitemap].map(link => (
               <button
                 key={link}
+                type="button"
                 onClick={() => toast.info("Page coming soon!", { duration: 2000 })}
+                aria-label={link}
+                className="footer-link-btn focus-neon"
                 style={{
                   display: 'block',
                   color: 'rgba(240,240,245,0.5)',
@@ -169,36 +186,37 @@ export default function Footer({ lang }: FooterProps) {
                   border: 'none',
                   cursor: 'pointer',
                   padding: '4px 0',
-                  fontFamily: "'Space Grotesk', sans-serif",
+                  fontFamily: "var(--font-body)",
                   transition: 'color 0.2s',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'rgba(240,240,245,0.85)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(240,240,245,0.5)')}
               >
                 {link}
               </button>
             ))}
-          </div>
+          </nav>
 
-          {/* Legal */}
-          <div>
-            <h5
+          {/* Legal Links */}
+          <nav aria-label={lang === 'en' ? "Legal links" : "Links legais"}>
+            <h2
               style={{
                 color: 'rgba(240,240,245,0.4)',
                 fontSize: '0.65rem',
                 fontWeight: 700,
                 letterSpacing: '0.15em',
                 textTransform: 'uppercase',
-                fontFamily: "'Roboto Mono', monospace",
+                fontFamily: "var(--font-mono)",
                 marginBottom: '14px',
               }}
             >
-              {lang === 'en' ? 'Legal' : 'Legal'}
-            </h5>
+              {t.legal}
+            </h2>
             {[t.privacy, t.terms].map(link => (
               <button
                 key={link}
+                type="button"
                 onClick={() => toast.info("Page coming soon!", { duration: 2000 })}
+                aria-label={link}
+                className="footer-link-btn focus-neon"
                 style={{
                   display: 'block',
                   color: 'rgba(240,240,245,0.5)',
@@ -207,20 +225,18 @@ export default function Footer({ lang }: FooterProps) {
                   border: 'none',
                   cursor: 'pointer',
                   padding: '4px 0',
-                  fontFamily: "'Space Grotesk', sans-serif",
+                  fontFamily: "var(--font-body)",
                   transition: 'color 0.2s',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'rgba(240,240,245,0.85)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(240,240,245,0.5)')}
               >
                 {link}
               </button>
             ))}
-          </div>
+          </nav>
         </div>
 
         {/* Divider */}
-        <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', marginBottom: '20px' }} />
+        <div aria-hidden="true" style={{ height: '1px', background: 'rgba(255,255,255,0.05)', marginBottom: '20px' }} />
 
         {/* Bottom Row */}
         <div
@@ -232,7 +248,7 @@ export default function Footer({ lang }: FooterProps) {
             gap: '12px',
           }}
         >
-          <p style={{ color: 'rgba(240,240,245,0.3)', fontSize: '0.75rem', margin: 0, fontFamily: "'Roboto Mono', monospace" }}>
+          <p style={{ color: 'rgba(240,240,245,0.3)', fontSize: '0.75rem', margin: 0, fontFamily: "var(--font-mono)" }}>
             {t.copyright}
           </p>
           <p style={{ color: 'rgba(240,240,245,0.25)', fontSize: '0.7rem', margin: 0, maxWidth: '500px', textAlign: 'right' }}>

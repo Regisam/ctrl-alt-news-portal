@@ -47,6 +47,18 @@
   --color-neon-science: oklch(0.65 0.28 300);   /* Vibrant Purple */
   --color-neon-robotics: oklch(0.62 0.26 25);   /* Electric Red */
   --color-neon-gadgets: oklch(0.72 0.22 55);    /* Bright Orange */
+
+  /* Font Family Tokens */
+  --font-body: 'Space Grotesk', sans-serif;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+
+  /* Surface Tokens */
+  --color-surface-glass: oklch(1 0 0 / 0.04);
+  --color-surface-overlay: oklch(0.09 0.008 264 / 0.97);
+  --color-border-subtle: oklch(1 0 0 / 0.07);
+  --color-text-muted: oklch(0.6 0.01 264);
+  --color-text-dim: oklch(0.55 0.008 264 / 0.75);
 }
 
 /* Dark theme (default) */
@@ -91,9 +103,9 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Space Grotesk', sans-serif;
-    background-color: #0A0A0B;
-    color: #F0F0F5;
+    font-family: var(--font-body);
+    background-color: var(--background);
+    color: var(--foreground);
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -414,4 +426,75 @@
   .fade-in-up-delay-1 { animation-delay: 0.1s; opacity: 0; }
   .fade-in-up-delay-2 { animation-delay: 0.2s; opacity: 0; }
   .fade-in-up-delay-3 { animation-delay: 0.3s; opacity: 0; }
+
+  /* ---- Focus Visible Utilities ---- */
+  .focus-neon:focus-visible {
+    outline: 2px solid var(--color-neon-ai);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px oklch(0.78 0.18 195 / 0.2);
+  }
+  .focus-neon-gadgets:focus-visible {
+    outline: 2px solid var(--color-neon-gadgets);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px oklch(0.72 0.22 55 / 0.2);
+  }
+
+  /* ---- Footer & Sidebar Hover States (replaces onMouseEnter/Leave) ---- */
+  .footer-social-btn:hover {
+    border-color: oklch(0.78 0.18 195 / 0.4) !important;
+    color: var(--color-neon-ai) !important;
+  }
+  .footer-cat-btn:hover {
+    opacity: 1 !important;
+  }
+  .footer-link-btn:hover {
+    color: rgba(240,240,245,0.85) !important;
+  }
+  .sidebar-article-btn:hover {
+    background: rgba(255,255,255,0.03) !important;
+  }
+  .newsletter-subscribe-btn:hover {
+    background: oklch(0.85 0.18 195) !important;
+    box-shadow: 0 0 16px oklch(0.78 0.18 195 / 0.5) !important;
+  }
+  .hero-cta-btn:hover {
+    background: oklch(0.85 0.18 195) !important;
+    box-shadow: 0 0 28px oklch(0.78 0.18 195 / 0.6) !important;
+    transform: translateY(-1px);
+  }
+  .search-toggle-btn:hover {
+    background: rgba(255,255,255,0.1) !important;
+    border-color: rgba(255,255,255,0.2) !important;
+    color: rgba(240,240,245,0.8) !important;
+  }
+
+  /* ---- Trending Card Image Zoom (replaces onMouseEnter/Leave on img) ---- */
+  .trending-card:hover .trending-card-img-wrap img {
+    transform: scale(1.05);
+  }
+
+  /* ---- Prefers Reduced Motion ---- */
+  @media (prefers-reduced-motion: reduce) {
+    .fade-in-up,
+    .fade-in-up-delay-1,
+    .fade-in-up-delay-2,
+    .fade-in-up-delay-3 {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+    .trending-card,
+    .news-card,
+    .gadgets-btn,
+    .amazon-btn {
+      transition: none;
+      animation: none;
+    }
+    .trending-card:hover,
+    .news-card:hover,
+    .gadgets-btn:hover,
+    .amazon-btn:hover {
+      transform: none;
+    }
+  }
 }

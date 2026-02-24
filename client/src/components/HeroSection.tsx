@@ -1,7 +1,7 @@
 // CTRL + ALT News — Hero Section
 // Design: Cinematic full-width hero with gradient overlay
 // Left: Bold headline + excerpt + CTA | Right: Cinematic image
-// Dark text-on-image with gradient-to-dark for legibility
+// A11y: article semantics, aria-label on bg, button type, focus-visible
 
 import { Clock, Eye, ArrowRight } from "lucide-react";
 import { HERO_IMAGE } from "@/lib/data";
@@ -22,6 +22,7 @@ const content = {
     views: "124.5K views",
     cta: "Continue Reading",
     breaking: "BREAKING",
+    bgAlt: "Futuristic quantum computing laboratory with AI neural network visualizations in deep blue and cyan",
   },
   pt: {
     category: "IA × CIÊNCIA",
@@ -33,6 +34,7 @@ const content = {
     views: "124,5K visualizações",
     cta: "Continuar Lendo",
     breaking: "URGENTE",
+    bgAlt: "Laboratório de computação quântica futurista com visualizações de redes neurais de IA em azul e ciano",
   }
 };
 
@@ -41,6 +43,7 @@ export default function HeroSection({ lang }: HeroSectionProps) {
 
   return (
     <section
+      aria-label={lang === 'en' ? "Featured article" : "Artigo em destaque"}
       style={{
         position: 'relative',
         width: '100%',
@@ -51,6 +54,8 @@ export default function HeroSection({ lang }: HeroSectionProps) {
     >
       {/* Background Image */}
       <div
+        role="img"
+        aria-label={t.bgAlt}
         style={{
           position: 'absolute',
           inset: 0,
@@ -63,6 +68,7 @@ export default function HeroSection({ lang }: HeroSectionProps) {
 
       {/* Gradient Overlay */}
       <div
+        aria-hidden="true"
         style={{
           position: 'absolute',
           inset: 0,
@@ -70,6 +76,7 @@ export default function HeroSection({ lang }: HeroSectionProps) {
         }}
       />
       <div
+        aria-hidden="true"
         style={{
           position: 'absolute',
           inset: 0,
@@ -78,7 +85,7 @@ export default function HeroSection({ lang }: HeroSectionProps) {
       />
 
       {/* Content */}
-      <div
+      <article
         style={{
           position: 'relative',
           zIndex: 2,
@@ -89,15 +96,16 @@ export default function HeroSection({ lang }: HeroSectionProps) {
         {/* Breaking + Category Badge */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
           <span
+            aria-label={t.breaking}
             style={{
-              background: 'oklch(0.62 0.26 25)',
+              background: 'var(--color-neon-robotics)',
               color: '#fff',
               fontSize: '0.65rem',
               fontWeight: 800,
               letterSpacing: '0.12em',
               padding: '3px 8px',
               borderRadius: '2px',
-              fontFamily: "'Roboto Mono', monospace",
+              fontFamily: "var(--font-mono)",
               boxShadow: '0 0 10px oklch(0.62 0.26 25 / 0.5)',
             }}
           >
@@ -105,11 +113,11 @@ export default function HeroSection({ lang }: HeroSectionProps) {
           </span>
           <span
             style={{
-              color: 'oklch(0.78 0.18 195)',
+              color: 'var(--color-neon-ai)',
               fontSize: '0.72rem',
               fontWeight: 700,
               letterSpacing: '0.1em',
-              fontFamily: "'Roboto Mono', monospace",
+              fontFamily: "var(--font-mono)",
               textShadow: '0 0 8px oklch(0.78 0.18 195 / 0.5)',
             }}
           >
@@ -121,7 +129,7 @@ export default function HeroSection({ lang }: HeroSectionProps) {
         <h1
           className="fade-in-up"
           style={{
-            fontFamily: "'Space Grotesk', sans-serif",
+            fontFamily: "var(--font-body)",
             fontWeight: 800,
             fontSize: 'clamp(1.8rem, 4vw, 3rem)',
             lineHeight: 1.1,
@@ -163,11 +171,12 @@ export default function HeroSection({ lang }: HeroSectionProps) {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div
+              aria-hidden="true"
               style={{
                 width: '28px',
                 height: '28px',
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, oklch(0.78 0.18 195), oklch(0.65 0.28 300))',
+                background: 'linear-gradient(135deg, var(--color-neon-ai), var(--color-neon-science))',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -183,29 +192,34 @@ export default function HeroSection({ lang }: HeroSectionProps) {
               {t.author}
             </span>
           </div>
-          <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.75rem' }}>·</span>
-          <span style={{ color: 'rgba(240,240,245,0.5)', fontSize: '0.78rem', fontFamily: "'Roboto Mono', monospace" }}>
+          <span aria-hidden="true" style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.75rem' }}>·</span>
+          <time
+            dateTime="2026-02-24"
+            style={{ color: 'rgba(240,240,245,0.5)', fontSize: '0.78rem', fontFamily: "var(--font-mono)" }}
+          >
             {t.date}
-          </span>
+          </time>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'rgba(240,240,245,0.5)' }}>
-            <Clock size={12} />
-            <span style={{ fontSize: '0.78rem', fontFamily: "'Roboto Mono', monospace" }}>{t.readTime}</span>
+            <Clock size={12} aria-hidden="true" />
+            <span style={{ fontSize: '0.78rem', fontFamily: "var(--font-mono)" }}>{t.readTime}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'rgba(240,240,245,0.5)' }}>
-            <Eye size={12} />
-            <span style={{ fontSize: '0.78rem', fontFamily: "'Roboto Mono', monospace" }}>{t.views}</span>
+            <Eye size={12} aria-hidden="true" />
+            <span style={{ fontSize: '0.78rem', fontFamily: "var(--font-mono)" }}>{t.views}</span>
           </div>
         </div>
 
         {/* CTA Button */}
         <button
-          className="fade-in-up fade-in-up-delay-3"
+          type="button"
+          className="fade-in-up fade-in-up-delay-3 focus-neon hero-cta-btn"
           onClick={() => toast.info("Article coming soon!", { duration: 2000 })}
+          aria-label={lang === 'en' ? "Continue reading: The Quantum Revolution" : "Continuar lendo: A Revolução Quântica"}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            background: 'oklch(0.78 0.18 195)',
+            background: 'var(--color-neon-ai)',
             color: '#0A0A0B',
             fontWeight: 700,
             fontSize: '0.82rem',
@@ -217,23 +231,13 @@ export default function HeroSection({ lang }: HeroSectionProps) {
             cursor: 'pointer',
             transition: 'all 0.2s ease',
             boxShadow: '0 0 20px oklch(0.78 0.18 195 / 0.4)',
-            fontFamily: "'Space Grotesk', sans-serif",
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'oklch(0.85 0.18 195)';
-            e.currentTarget.style.boxShadow = '0 0 30px oklch(0.78 0.18 195 / 0.7)';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'oklch(0.78 0.18 195)';
-            e.currentTarget.style.boxShadow = '0 0 20px oklch(0.78 0.18 195 / 0.4)';
-            e.currentTarget.style.transform = 'translateY(0)';
+            fontFamily: "var(--font-body)",
           }}
         >
           {t.cta}
-          <ArrowRight size={14} />
+          <ArrowRight size={14} aria-hidden="true" />
         </button>
-      </div>
+      </article>
     </section>
   );
 }
