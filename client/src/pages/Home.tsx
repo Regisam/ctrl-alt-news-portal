@@ -1,6 +1,6 @@
 // CTRL + ALT News — Home Page
 // Design: Cyberpunk Brutalism | Dark Mode | Neon Category System
-// Layout: Header → AdBanner → Hero+Sidebar → Trending → Gadgets → Footer
+// Layout: Header → Hero+Sidebar → AdBanner(728x90) → Trending → Gadgets → Footer
 // Bilingual: EN / PT-BR
 
 import { useState, useEffect } from "react";
@@ -26,8 +26,32 @@ export default function Home() {
       {/* ---- HEADER ---- */}
       <Header lang={lang} onLangChange={setLang} />
 
-      {/* ---- AD BANNER (728x90 Leaderboard) ---- */}
-      <div style={{ background: 'rgba(5,5,6,0.95)', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '10px 2rem' }}>
+      {/* ---- HERO + SIDEBAR ---- */}
+      <div
+        style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 2rem', display: 'grid', gridTemplateColumns: '1fr 320px', gap: '0', alignItems: 'start' }}
+        className="hero-layout"
+      >
+        {/* Hero */}
+        <div>
+          <HeroSection lang={lang} />
+        </div>
+
+        {/* Sidebar */}
+        <div
+          style={{
+            padding: '24px 0 24px 24px',
+            position: 'sticky',
+            top: '64px',
+            maxHeight: 'calc(100vh - 64px)',
+            overflowY: 'auto',
+          }}
+        >
+          <Sidebar lang={lang} />
+        </div>
+      </div>
+
+      {/* ---- AD BANNER (728x90 Leaderboard) — between Hero and Trending ---- */}
+      <div style={{ background: 'rgba(5,5,6,0.95)', borderTop: '1px solid rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '12px 2rem' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div
             className="ad-placeholder"
@@ -41,27 +65,6 @@ export default function Home() {
             <span>Google AdSense — Leaderboard 728×90</span>
           </div>
         </div>
-      </div>
-
-      {/* ---- HERO + SIDEBAR ---- */}
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 2rem', display: 'grid', gridTemplateColumns: '1fr 320px', gap: '0', alignItems: 'start' }} className="hero-layout">
-          {/* Hero */}
-          <div>
-            <HeroSection lang={lang} />
-          </div>
-
-          {/* Sidebar */}
-          <div
-            style={{
-              padding: '24px 0 24px 24px',
-              position: 'sticky',
-              top: '64px',
-              maxHeight: 'calc(100vh - 64px)',
-              overflowY: 'auto',
-            }}
-          >
-            <Sidebar lang={lang} />
-          </div>
       </div>
 
       {/* ---- TRENDING NEWS ---- */}
