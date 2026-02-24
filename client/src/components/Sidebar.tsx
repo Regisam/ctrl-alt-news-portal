@@ -173,54 +173,6 @@ export default function Sidebar({ lang }: SidebarProps) {
         </ol>
       </section>
 
-      {/* 300x250 Ad Placeholder */}
-      <aside
-        aria-label={lang === 'en' ? "Advertisement" : "Publicidade"}
-        style={{
-          width: '100%',
-          minHeight: '250px',
-          borderRadius: '6px',
-          overflow: 'hidden',
-          position: 'relative',
-        }}
-      >
-        <div
-          className="ad-placeholder"
-          style={{
-            width: '100%',
-            height: '250px',
-            borderRadius: '6px',
-            flexDirection: 'column',
-            gap: '8px',
-          }}
-        >
-          <div
-            aria-hidden="true"
-            style={{
-              width: '40px',
-              height: '2px',
-              background: 'rgba(255,255,255,0.15)',
-              borderRadius: '1px',
-            }}
-          />
-          <span style={{ fontSize: '0.65rem', letterSpacing: '0.15em' }}>
-            {lang === 'en' ? 'SPONSORED CONTENT' : 'CONTEÚDO PATROCINADO'}
-          </span>
-          <span style={{ fontSize: '0.6rem', letterSpacing: '0.08em', opacity: 0.6 }}>
-            Google AdSense 300×250
-          </span>
-          <div
-            aria-hidden="true"
-            style={{
-              width: '40px',
-              height: '2px',
-              background: 'rgba(255,255,255,0.15)',
-              borderRadius: '1px',
-            }}
-          />
-        </div>
-      </aside>
-
       {/* Newsletter CTA */}
       <section
         aria-label={lang === 'en' ? "Newsletter signup" : "Inscrição na newsletter"}

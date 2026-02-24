@@ -110,14 +110,6 @@ export const popularArticles = [
     views: "29.4K",
     image: ROBOTICS_IMAGE,
   },
-  {
-    id: 7,
-    title: { en: "Neural Interface Breakthrough: Typing at 200 WPM With Your Mind", pt: "Avanço em Interface Neural: Digitando a 200 PPM Com Sua Mente" },
-    category: 'AI' as Category,
-    date: "Feb 21, 2026",
-    views: "44.7K",
-    image: AI_IMAGE,
-  },
 ];
 
 export const gadgetProducts = [
