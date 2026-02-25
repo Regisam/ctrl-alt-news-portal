@@ -5,7 +5,7 @@
 
 import { Clock, Eye, ArrowRight } from "lucide-react";
 import { HERO_IMAGE } from "@/lib/data";
-import { toast } from "sonner";
+import { Link } from "wouter";
 
 interface HeroSectionProps {
   lang: 'en' | 'pt';
@@ -210,10 +210,9 @@ export default function HeroSection({ lang }: HeroSectionProps) {
         </div>
 
         {/* CTA Button */}
-        <button
-          type="button"
+        <Link
+          href="/article/101"
           className="fade-in-up fade-in-up-delay-3 focus-neon hero-cta-btn"
-          onClick={() => toast.info("Article coming soon!", { duration: 2000 })}
           aria-label={lang === 'en' ? "Continue reading: The Quantum Revolution" : "Continuar lendo: A Revolução Quântica"}
           style={{
             display: 'inline-flex',
@@ -232,11 +231,12 @@ export default function HeroSection({ lang }: HeroSectionProps) {
             transition: 'all 0.2s ease',
             boxShadow: '0 0 20px oklch(0.78 0.18 195 / 0.4)',
             fontFamily: "var(--font-body)",
+            textDecoration: 'none',
           }}
         >
           {t.cta}
           <ArrowRight size={14} aria-hidden="true" />
-        </button>
+        </Link>
       </article>
     </section>
   );

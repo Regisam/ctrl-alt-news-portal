@@ -5,6 +5,7 @@
 
 import { Clock, Eye, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "wouter";
 import {
   aiArticles,
   scienceArticles,
@@ -41,145 +42,132 @@ function ArticleCard({
   accentColorRgb: string;
   badgeBg: string;
 }) {
-  const handleRead = () => {
-    toast.info(lang === 'en' ? 'Full article coming soon!' : 'Artigo completo em breve!', { duration: 2500 });
-  };
-
   return (
-    <article
-      className="article-cat-card"
-      style={{
-        background: 'rgba(18,18,22,0.85)',
-        border: `1px solid rgba(${accentColorRgb}, 0.18)`,
-        borderRadius: '8px',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        transition: 'border-color 0.25s, box-shadow 0.25s, transform 0.25s',
-        cursor: 'pointer',
-      }}
-      style-data-accent={accentColor}
-      onClick={handleRead}
-      onKeyDown={(e) => e.key === 'Enter' && handleRead()}
-      tabIndex={0}
-      role="button"
-      aria-label={`${lang === 'en' ? 'Read article' : 'Ler artigo'}: ${article.title[lang]}`}
-    >
-      {/* Image */}
-      <div style={{ position: 'relative', overflow: 'hidden', height: '180px' }}>
-        <img
-          src={article.image}
-          alt={article.title[lang]}
-          loading="lazy"
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            transition: 'transform 0.4s ease',
-            display: 'block',
-          }}
-          className="article-cat-img"
-        />
-        {/* Badge */}
-        <span
-          aria-label={`${lang === 'en' ? 'Tag' : 'Etiqueta'}: ${article.badge}`}
-          style={{
-            position: 'absolute',
-            top: '10px',
-            left: '10px',
-            background: badgeBg,
-            color: '#fff',
-            fontSize: '0.6rem',
-            fontWeight: 700,
-            letterSpacing: '0.12em',
-            padding: '3px 8px',
-            borderRadius: '3px',
-            textTransform: 'uppercase',
-          }}
-        >
-          {article.badge}
-        </span>
-      </div>
-
-      {/* Content */}
-      <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <h3
-          style={{
-            fontSize: '0.92rem',
-            fontWeight: 700,
-            color: '#F0F0F5',
-            lineHeight: 1.35,
-            margin: 0,
-            fontFamily: "'Roboto', sans-serif",
-          }}
-        >
-          {article.title[lang]}
-        </h3>
-
-        <p
-          style={{
-            fontSize: '0.78rem',
-            color: 'rgba(240,240,245,0.55)',
-            lineHeight: 1.5,
-            margin: 0,
-            flex: 1,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-        >
-          {article.excerpt[lang]}
-        </p>
-
-        {/* Meta */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.7rem', color: 'rgba(240,240,245,0.4)' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Clock size={11} aria-hidden="true" />
-            {article.readTime}
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Eye size={11} aria-hidden="true" />
-            {article.views}
-          </span>
-          <span style={{ marginLeft: 'auto', fontWeight: 500, color: 'rgba(240,240,245,0.5)' }}>
-            {article.author}
+    <Link href={`/article/${article.id}`} style={{ textDecoration: 'none', display: 'block' }}>
+      <article
+        className="article-cat-card"
+        style={{
+          background: 'rgba(18,18,22,0.85)',
+          border: `1px solid rgba(${accentColorRgb}, 0.18)`,
+          borderRadius: '8px',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'border-color 0.25s, box-shadow 0.25s, transform 0.25s',
+          cursor: 'pointer',
+          height: '100%',
+        }}
+        aria-label={`${lang === 'en' ? 'Read article' : 'Ler artigo'}: ${article.title[lang]}`}
+      >
+        {/* Image */}
+        <div style={{ position: 'relative', overflow: 'hidden', height: '180px' }}>
+          <img
+            src={article.image}
+            alt={article.title[lang]}
+            loading="lazy"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transition: 'transform 0.4s ease',
+              display: 'block',
+            }}
+            className="article-cat-img"
+          />
+          {/* Badge */}
+          <span
+            aria-label={`${lang === 'en' ? 'Tag' : 'Etiqueta'}: ${article.badge}`}
+            style={{
+              position: 'absolute',
+              top: '10px',
+              left: '10px',
+              background: badgeBg,
+              color: '#fff',
+              fontSize: '0.6rem',
+              fontWeight: 700,
+              letterSpacing: '0.12em',
+              padding: '3px 8px',
+              borderRadius: '3px',
+              textTransform: 'uppercase',
+            }}
+          >
+            {article.badge}
           </span>
         </div>
 
-        {/* CTA */}
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); handleRead(); }}
-          aria-label={`${lang === 'en' ? 'Read full article' : 'Ler artigo completo'}: ${article.title[lang]}`}
-          style={{
-            width: '100%',
-            padding: '9px 0',
-            background: 'transparent',
-            border: `1px solid ${accentColor}`,
-            borderRadius: '4px',
-            color: accentColor,
-            fontSize: '0.72rem',
-            fontWeight: 700,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            transition: 'background 0.2s, color 0.2s',
-            fontFamily: "'Roboto', sans-serif",
-          }}
-          className="article-cat-btn"
-          data-accent={accentColor}
-          data-accent-rgb={accentColorRgb}
-        >
-          <ArrowRight size={13} aria-hidden="true" />
-          {lang === 'en' ? 'Read Full Article' : 'Ler Artigo Completo'}
-        </button>
-      </div>
-    </article>
+        {/* Content */}
+        <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <h3
+            style={{
+              fontSize: '0.92rem',
+              fontWeight: 700,
+              color: '#F0F0F5',
+              lineHeight: 1.35,
+              margin: 0,
+              fontFamily: "'Roboto', sans-serif",
+            }}
+          >
+            {article.title[lang]}
+          </h3>
+
+          <p
+            style={{
+              fontSize: '0.78rem',
+              color: 'rgba(240,240,245,0.55)',
+              lineHeight: 1.5,
+              margin: 0,
+              flex: 1,
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+            }}
+          >
+            {article.excerpt[lang]}
+          </p>
+
+          {/* Meta */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.7rem', color: 'rgba(240,240,245,0.4)' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Clock size={11} aria-hidden="true" />
+              {article.readTime}
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Eye size={11} aria-hidden="true" />
+              {article.views}
+            </span>
+            <span style={{ marginLeft: 'auto', fontWeight: 500, color: 'rgba(240,240,245,0.5)' }}>
+              {article.author}
+            </span>
+          </div>
+
+          {/* CTA */}
+          <div
+            aria-hidden="true"
+            style={{
+              width: '100%',
+              padding: '9px 0',
+              background: 'transparent',
+              border: `1px solid ${accentColor}`,
+              borderRadius: '4px',
+              color: accentColor,
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              fontFamily: "'Roboto', sans-serif",
+            }}
+          >
+            <ArrowRight size={13} aria-hidden="true" />
+            {lang === 'en' ? 'Read Full Article' : 'Ler Artigo Completo'}
+          </div>
+        </div>
+      </article>
+    </Link>
   );
 }
 
@@ -357,9 +345,6 @@ export default function ArticlesSection({ lang }: ArticlesSectionProps) {
         }
         .article-cat-card:hover .article-cat-img {
           transform: scale(1.06);
-        }
-        .article-cat-btn:hover {
-          background: var(--btn-accent, rgba(0,212,200,0.12)) !important;
         }
         .view-all-btn:hover {
           opacity: 0.75;
