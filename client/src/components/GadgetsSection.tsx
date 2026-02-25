@@ -22,8 +22,10 @@ const BADGE_CLASS: Record<string, string> = {
 export default function GadgetsSection({ lang }: GadgetsSectionProps) {
   return (
     <section
+      id="section-gadgets"
       aria-label={lang === 'en' ? "Editor's choice gadget reviews" : "Reviews de gadgets — escolha do editor"}
       style={{
+        scrollMarginTop: '80px',
         padding: '48px 0',
         background: 'linear-gradient(180deg, var(--background) 0%, oklch(0.72 0.22 55 / 0.03) 50%, var(--background) 100%)',
         borderTop: '1px solid var(--color-border-subtle)',

@@ -7,7 +7,7 @@
 import { useState } from "react";
 import { Search, Menu, X, Globe } from "lucide-react";
 import { LOGO1_URL, LOGO2_URL } from "@/lib/data";
-import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 interface HeaderProps {
   lang: 'en' | 'pt';
@@ -19,14 +19,36 @@ export default function Header({ lang, onLangChange }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const [, navigate] = useLocation();
+
+  const sectionMap: Record<string, string> = {
+    AI: 'section-ai',
+    SCIENCE: 'section-science',
+    ROBOTICS: 'section-robotics',
+    GADGETS: 'section-gadgets',
+  };
+
   const handleNavClick = (section: string) => {
-    toast.info(`${section} section coming soon!`, { duration: 2000 });
+    const id = sectionMap[section];
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      // Navigate to home first, then scroll after a short delay
+      navigate('/');
+      setTimeout(() => {
+        const target = document.getElementById(id);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 350);
+    }
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      toast.info(`Searching for: "${searchQuery}"`, { duration: 2000 });
+      // Search functionality — wire up to a search page or filter when implemented
+      const q = encodeURIComponent(searchQuery.trim());
+      navigate(`/?q=${q}`);
     }
   };
 
