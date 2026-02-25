@@ -4,7 +4,7 @@
 // Tokens: CSS variables for neon colors (no hardcoded oklch in JS)
 
 import { LOGO2_URL } from "@/lib/data";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 
 interface FooterProps {
   lang: 'en' | 'pt';
@@ -71,6 +71,19 @@ export default function Footer({ lang }: FooterProps) {
       legal: "Legal",
     }
   }[lang];
+
+  const linkStyle: React.CSSProperties = {
+    display: 'block',
+    color: 'rgba(240,240,245,0.5)',
+    fontSize: '0.82rem',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '4px 0',
+    fontFamily: "var(--font-body)",
+    transition: 'color 0.2s',
+    textDecoration: 'none',
+  };
 
   return (
     <footer
@@ -185,28 +198,40 @@ export default function Footer({ lang }: FooterProps) {
             >
               {t.company}
             </h2>
-            {[t.about, t.contact, t.advertise, t.sitemap].map(link => (
-              <button
-                key={link}
-                type="button"
-                onClick={() => { /* Page — wire up route when ready */ }}
-                aria-label={link}
-                className="footer-link-btn focus-neon"
-                style={{
-                  display: 'block',
-                  color: 'rgba(240,240,245,0.5)',
-                  fontSize: '0.82rem',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '4px 0',
-                  fontFamily: "var(--font-body)",
-                  transition: 'color 0.2s',
-                }}
-              >
-                {link}
-              </button>
-            ))}
+            <Link
+              href="/about"
+              aria-label={t.about}
+              className="footer-link-btn focus-neon"
+              style={linkStyle}
+            >
+              {t.about}
+            </Link>
+            <Link
+              href="/contact"
+              aria-label={t.contact}
+              className="footer-link-btn focus-neon"
+              style={linkStyle}
+            >
+              {t.contact}
+            </Link>
+            <button
+              type="button"
+              onClick={() => { /* Advertise — wire up when ready */ }}
+              aria-label={t.advertise}
+              className="footer-link-btn focus-neon"
+              style={linkStyle}
+            >
+              {t.advertise}
+            </button>
+            <button
+              type="button"
+              onClick={() => { /* Sitemap — wire up when ready */ }}
+              aria-label={t.sitemap}
+              className="footer-link-btn focus-neon"
+              style={linkStyle}
+            >
+              {t.sitemap}
+            </button>
           </nav>
 
           {/* Legal Links */}
@@ -224,28 +249,23 @@ export default function Footer({ lang }: FooterProps) {
             >
               {t.legal}
             </h2>
-            {[t.privacy, t.terms].map(link => (
-              <button
-                key={link}
-                type="button"
-                onClick={() => { /* Page — wire up route when ready */ }}
-                aria-label={link}
-                className="footer-link-btn focus-neon"
-                style={{
-                  display: 'block',
-                  color: 'rgba(240,240,245,0.5)',
-                  fontSize: '0.82rem',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '4px 0',
-                  fontFamily: "var(--font-body)",
-                  transition: 'color 0.2s',
-                }}
-              >
-                {link}
-              </button>
-            ))}
+            <Link
+              href="/privacy"
+              aria-label={t.privacy}
+              className="footer-link-btn focus-neon"
+              style={linkStyle}
+            >
+              {t.privacy}
+            </Link>
+            <button
+              type="button"
+              onClick={() => { /* Terms — wire up when ready */ }}
+              aria-label={t.terms}
+              className="footer-link-btn focus-neon"
+              style={linkStyle}
+            >
+              {t.terms}
+            </button>
           </nav>
         </div>
 
