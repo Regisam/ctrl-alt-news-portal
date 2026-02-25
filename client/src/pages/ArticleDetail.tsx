@@ -18,6 +18,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import Header from "@/components/Header";
+import CommentsSection from "@/components/CommentsSection";
 import Footer from "@/components/Footer";
 import { aiArticles, scienceArticles, roboticsArticles, trendingArticles } from "@/lib/data";
 import { articleBodies } from "@/lib/articleContent";
@@ -390,6 +391,15 @@ export default function ArticleDetail() {
             </div>
           </div>
         )}
+
+        {/* Comments section */}
+        <CommentsSection
+          articleId={articleId}
+          lang={lang}
+          catColor={catStyle.color}
+          catBg={catStyle.bg}
+          catBorder={catStyle.border}
+        />
 
         {/* Related articles */}
         {related.length > 0 && (
