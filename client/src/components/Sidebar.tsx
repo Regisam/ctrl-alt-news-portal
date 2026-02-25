@@ -1,13 +1,21 @@
 // CTRL + ALT News — Sidebar Component
-// Design: Popular Tech list with thumbnails + 300x250 Ad placeholder + Newsletter
-// A11y: aside landmark, aria-labels, button types, focus-visible, lazy images
+// Design: Popular Tech list with thumbnails + Newsletter
+// A11y: aside landmark, aria-labels, focus-visible, lazy images
 // Tokens: CSS variables for neon colors (no hardcoded oklch in JS)
 
 import { Eye, ChevronRight } from "lucide-react";
-import { popularArticles } from "@/lib/data";
-import { CATEGORY_CONFIG } from "@/lib/constants";
+import { Link } from "wouter";
 import { toast } from "sonner";
 import { useState } from "react";
+import { popularArticles } from "@/lib/data";
+import { CATEGORY_CONFIG } from "@/lib/constants";
+
+// Map popular article IDs (4,5,6) to full article detail IDs
+const POPULAR_TO_ARTICLE_ID: Record<number, number> = {
+  4: 104, // AI Chip Wars
+  5: 202, // Dark Matter
+  6: 303, // Humanoid Robots
+};
 
 interface SidebarProps {
   lang: 'en' | 'pt';
@@ -64,11 +72,11 @@ export default function Sidebar({ lang }: SidebarProps) {
         <ol aria-label={lang === 'en' ? "Popular articles ranked by views" : "Artigos populares por visualizações"}>
           {popularArticles.map((article, idx) => {
             const cat = CATEGORY_CONFIG[article.category];
+            const articleId = POPULAR_TO_ARTICLE_ID[article.id] ?? article.id;
             return (
               <li key={article.id} style={{ listStyle: 'none' }}>
-                <button
-                  type="button"
-                  onClick={() => toast.info("Article coming soon!", { duration: 2000 })}
+                <Link
+                  href={`/article/${articleId}`}
                   aria-label={`${lang === 'en' ? 'Read' : 'Ler'} #${idx + 1}: ${article.title[lang]} — ${article.views} ${lang === 'en' ? 'views' : 'visualizações'}`}
                   className="sidebar-article-btn focus-neon"
                   style={{
@@ -80,9 +88,8 @@ export default function Sidebar({ lang }: SidebarProps) {
                     transition: 'background 0.2s',
                     alignItems: 'flex-start',
                     width: '100%',
-                    background: 'none',
-                    border: 'none',
-                    textAlign: 'left',
+                    textDecoration: 'none',
+                    color: 'inherit',
                   }}
                 >
                   {/* Rank Number */}
@@ -166,7 +173,7 @@ export default function Sidebar({ lang }: SidebarProps) {
                   </div>
 
                   <ChevronRight size={14} aria-hidden="true" style={{ color: 'rgba(240,240,245,0.2)', flexShrink: 0, marginTop: '2px' }} />
-                </button>
+                </Link>
               </li>
             );
           })}

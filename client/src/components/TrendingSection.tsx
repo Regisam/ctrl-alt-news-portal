@@ -1,16 +1,27 @@
 // CTRL + ALT News — Trending News Section
 // Design: Horizontal row of cyberpunk glowing border cards
-// A11y: article semantics, aria-labels, button types, lazy images, focus-visible
+// A11y: article semantics, aria-labels, lazy images, focus-visible
 // Tokens: CSS variables for neon colors
 
 import { Clock, Eye, TrendingUp } from "lucide-react";
+import { Link } from "wouter";
+import { toast } from "sonner";
 import { trendingArticles } from "@/lib/data";
 import { CATEGORY_CONFIG } from "@/lib/constants";
-import { toast } from "sonner";
 
 interface TrendingSectionProps {
   lang: 'en' | 'pt';
 }
+
+// Map trending article IDs (1-6) to the full article detail IDs
+const TRENDING_TO_ARTICLE_ID: Record<number, number> = {
+  1: 101, // AI Chip Wars
+  2: 201, // CRISPR Gene Editing
+  3: 301, // Tesla Optimus
+  4: 102, // AI Antibiotics
+  5: 202, // James Webb
+  6: 302, // Boston Dynamics
+};
 
 export default function TrendingSection({ lang }: TrendingSectionProps) {
   return (
@@ -33,7 +44,7 @@ export default function TrendingSection({ lang }: TrendingSectionProps) {
           </div>
           <button
             type="button"
-            onClick={() => toast.info("View all coming soon!", { duration: 2000 })}
+            onClick={() => toast.info(lang === 'en' ? "View all coming soon!" : "Ver todos em breve!", { duration: 2000 })}
             aria-label={lang === 'en' ? "View all trending articles" : "Ver todos os artigos em alta"}
             className="focus-neon"
             style={{
@@ -62,6 +73,7 @@ export default function TrendingSection({ lang }: TrendingSectionProps) {
         >
           {trendingArticles.map((article, idx) => {
             const cat = CATEGORY_CONFIG[article.category];
+            const articleId = TRENDING_TO_ARTICLE_ID[article.id] ?? article.id;
             return (
               <article
                 key={article.id}
@@ -73,20 +85,18 @@ export default function TrendingSection({ lang }: TrendingSectionProps) {
                   animationDelay: `${idx * 0.1}s`,
                 }}
               >
-                {/* Clickable area wrapping image + content */}
-                <button
-                  type="button"
-                  onClick={() => toast.info("Article coming soon!", { duration: 2000 })}
+                {/* Link wrapping image + content */}
+                <Link
+                  href={`/article/${articleId}`}
                   aria-label={`${lang === 'en' ? 'Read article' : 'Ler artigo'}: ${article.title[lang]}`}
                   className="focus-neon"
                   style={{
                     display: 'block',
                     width: '100%',
-                    background: 'none',
-                    border: 'none',
                     padding: 0,
                     cursor: 'pointer',
-                    textAlign: 'left',
+                    textDecoration: 'none',
+                    color: 'inherit',
                   }}
                 >
                   {/* Image */}
@@ -180,7 +190,7 @@ export default function TrendingSection({ lang }: TrendingSectionProps) {
                             flexShrink: 0,
                           }}
                         >
-                          {article.author.split(' ').map(n => n[0]).join('')}
+                          {article.author.split(' ').map((n: string) => n[0]).join('')}
                         </div>
                         <span style={{ color: 'rgba(240,240,245,0.6)', fontSize: '0.75rem', fontWeight: 500 }}>
                           {article.author}
@@ -198,7 +208,7 @@ export default function TrendingSection({ lang }: TrendingSectionProps) {
                       </div>
                     </div>
                   </div>
-                </button>
+                </Link>
 
                 {/* Bottom neon accent line */}
                 <div
