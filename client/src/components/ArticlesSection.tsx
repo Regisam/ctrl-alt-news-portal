@@ -27,6 +27,7 @@ interface CategoryGridProps {
   accentColorRgb: string;
   badgeBg: string;
   sectionIcon: string;
+  sectionId?: string;
 }
 
 function ArticleCard({
@@ -171,7 +172,7 @@ function ArticleCard({
   );
 }
 
-function CategoryGrid({ lang, articles, categoryLabel, accentColor, accentColorRgb, badgeBg, sectionIcon }: CategoryGridProps) {
+function CategoryGrid({ lang, articles, categoryLabel, accentColor, accentColorRgb, badgeBg, sectionIcon, sectionId }: CategoryGridProps) {
   const handleViewAll = () => {
     toast.info(
       lang === 'en' ? `All ${categoryLabel} articles coming soon!` : `Todos os artigos de ${categoryLabel} em breve!`,
@@ -181,8 +182,9 @@ function CategoryGrid({ lang, articles, categoryLabel, accentColor, accentColorR
 
   return (
     <section
+      id={sectionId}
       aria-label={`${categoryLabel} ${lang === 'en' ? 'articles' : 'artigos'}`}
-      style={{ marginBottom: '48px' }}
+      style={{ marginBottom: '48px', scrollMarginTop: '80px' }}
     >
       {/* Section Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
@@ -309,6 +311,7 @@ export default function ArticlesSection({ lang }: ArticlesSectionProps) {
         accentColorRgb="0, 212, 200"
         badgeBg="rgba(0,212,200,0.85)"
         sectionIcon="🤖"
+        sectionId="section-ai"
       />
 
       {/* Science Section */}
@@ -320,6 +323,7 @@ export default function ArticlesSection({ lang }: ArticlesSectionProps) {
         accentColorRgb="168, 85, 247"
         badgeBg="rgba(168,85,247,0.85)"
         sectionIcon="🔬"
+        sectionId="section-science"
       />
 
       {/* Robotics Section */}
@@ -331,6 +335,7 @@ export default function ArticlesSection({ lang }: ArticlesSectionProps) {
         accentColorRgb="239, 68, 68"
         badgeBg="rgba(239,68,68,0.85)"
         sectionIcon="⚙️"
+        sectionId="section-robotics"
       />
 
       {/* CSS for hover effects */}

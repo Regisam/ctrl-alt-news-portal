@@ -4,17 +4,17 @@
 // Tokens: CSS variables for neon colors (no hardcoded oklch in JS)
 
 import { LOGO2_URL } from "@/lib/data";
-import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 interface FooterProps {
   lang: 'en' | 'pt';
 }
 
 const CATEGORIES = [
-  { label: 'AI',       colorVar: 'var(--color-neon-ai)',       ariaLabel: 'AI news section' },
-  { label: 'SCIENCE',  colorVar: 'var(--color-neon-science)',  ariaLabel: 'Science news section' },
-  { label: 'ROBOTICS', colorVar: 'var(--color-neon-robotics)', ariaLabel: 'Robotics news section' },
-  { label: 'GADGETS',  colorVar: 'var(--color-neon-gadgets)',  ariaLabel: 'Gadgets reviews' },
+  { label: 'AI',       colorVar: 'var(--color-neon-ai)',       ariaLabel: 'AI news section',       sectionId: 'section-ai' },
+  { label: 'SCIENCE',  colorVar: 'var(--color-neon-science)',  ariaLabel: 'Science news section',  sectionId: 'section-science' },
+  { label: 'ROBOTICS', colorVar: 'var(--color-neon-robotics)', ariaLabel: 'Robotics news section', sectionId: 'section-robotics' },
+  { label: 'GADGETS',  colorVar: 'var(--color-neon-gadgets)',  ariaLabel: 'Gadgets reviews',       sectionId: 'section-gadgets' },
 ] as const;
 
 const SOCIAL_ICONS = [
@@ -26,6 +26,20 @@ const SOCIAL_ICONS = [
 
 export default function Footer({ lang }: FooterProps) {
   const year = new Date().getFullYear();
+  const [, navigate] = useLocation();
+
+  const scrollToSection = (sectionId: string) => {
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      navigate('/');
+      setTimeout(() => {
+        const target = document.getElementById(sectionId);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 350);
+    }
+  };
 
   const t = {
     en: {
@@ -91,7 +105,7 @@ export default function Footer({ lang }: FooterProps) {
                   <button
                   key={id}
                   type="button"
-                  onClick={() => toast.info("Social media coming soon!", { duration: 2000 })}
+                  onClick={() => { /* Social media — wire up URLs when accounts are ready */ }}
                   aria-label={ariaLabel}
                   className="footer-social-btn focus-neon"
                   style={{
@@ -133,7 +147,7 @@ export default function Footer({ lang }: FooterProps) {
               <button
                 key={cat.label}
                 type="button"
-                onClick={() => toast.info(`${cat.label} section coming soon!`, { duration: 2000 })}
+                onClick={() => scrollToSection(cat.sectionId)}
                 aria-label={cat.ariaLabel}
                 className="footer-cat-btn focus-neon"
                 style={{
@@ -175,7 +189,7 @@ export default function Footer({ lang }: FooterProps) {
               <button
                 key={link}
                 type="button"
-                onClick={() => toast.info("Page coming soon!", { duration: 2000 })}
+                onClick={() => { /* Page — wire up route when ready */ }}
                 aria-label={link}
                 className="footer-link-btn focus-neon"
                 style={{
@@ -214,7 +228,7 @@ export default function Footer({ lang }: FooterProps) {
               <button
                 key={link}
                 type="button"
-                onClick={() => toast.info("Page coming soon!", { duration: 2000 })}
+                onClick={() => { /* Page — wire up route when ready */ }}
                 aria-label={link}
                 className="footer-link-btn focus-neon"
                 style={{
