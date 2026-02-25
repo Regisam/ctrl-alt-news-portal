@@ -38,6 +38,12 @@ export const ROBOTICS_IMAGE = "https://private-us-east-1.manuscdn.com/sessionFil
 
 export const CHIP_IMAGE = "https://private-us-east-1.manuscdn.com/sessionFile/8E4srZkejjokDkWPPgZAIg/sandbox/vULyvGhN0DnnOvFBohsJWy-img-4_1771963596000_na1fn_dHJlbmRpbmctYWktY2hpcA.jpg?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvOEU0c3Jaa2Vqam9rRGtXUFBnWkFJZy9zYW5kYm94L3ZVTHl2R2hOMERubk92RkJvaHNKV3ktaW1nLTRfMTc3MTk2MzU5NjAwMF9uYTFmbl9kSEpsYm1ScGJtY3RZV2t0WTJocGNBLmpwZz94LW9zcy1wcm9jZXNzPWltYWdlL3Jlc2l6ZSx3XzE5MjAsaF8xOTIwL2Zvcm1hdCx3ZWJwL3F1YWxpdHkscV84MCIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc5ODc2MTYwMH19fV19&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=YB4snizEf4oEoYObp9Lv3o76sgfjp-0YxhfYJRIYELhzaNkg0vzRPx5Ub23QR5YNiBfe~Kh~volCzQ6bZDQjm17~W1X7YhuyO1JAa0Byy~oCqwcz6ficXq1dJty8x468uUm1mX2dL~3zQG1IoxfGIM~9g8YKVAS7Yp2i3jCW2JmbNOxG8EcBiwXLYXsl4CaVZYpnlwuQTimUmUID42Z2fh6TEBCP0z-bo2nHUtUCnhKul8UUVvgScoAGZQxJqxkb~shxjZyQ43oQ2L69jgvxcDXJy~o6jckPZlVgEae8mQzcecu2HBRtLc7p0Ci-VVD~MpZy~SYqTMYFo7CHT9SWwA__";
 
+export const AI_GPU_BLACKWELL_IMAGE = "https://private-us-east-1.manuscdn.com/sessionFile/8E4srZkejjokDkWPPgZAIg/sandbox/wMjgkpac0rG5te03NcHvJY-img-1_1771978311000_na1fn_YWktYXJ0aWNsZS1ncHUtYmxhY2t3ZWxs.jpg?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvOEU0c3Jaa2Vqam9rRGtXUFBnWkFJZy9zYW5kYm94L3dNamdrcGFjMHJHNXRlMDNOY0h2SlktaW1nLTFfMTc3MTk3ODMxMTAwMF9uYTFmbl9ZV2t0WVhKMGFXTnNaUzFuY0hVdFlteGhZMnQzWld4cy5qcGc~eC1vc3MtcHJvY2Vzcz1pbWFnZS9yZXNpemUsd18xOTIwLGhfMTkyMC9mb3JtYXQsd2VicC9xdWFsaXR5LHFfODAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3OTg3NjE2MDB9fX1dfQ__&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=i0PHIZtKqnB8gAQgqlpmrdB618SG4MnqAG5eqNCTmGQTpKKPOYN9t6FBTTx-t5F3GWLS0CG2wagkv3-86xU4s2AnS8gm5OP0I6qMZhFKqplnuqCftVw3OvjZtOSl8JMYcenTocSXb5q2UVhCv4B68fh-2z-nv5pEuyGmHPbU6qJuYdbiZcAXbh74a7AI7683Gy0KTNgZgXgKAdSXD2~9i43bbnL6s8ErWpMVtyRBRO0Rp873G0ah9peizO-qlOK8ij5K0UI4ujL4f30VxPnCl-GBnR7jQZkfOxR5VLFRJrAgAJzRNXJ5LoyPAP5mNzelKJN02V9RBB3huGZrod9tnQ__";
+
+export const SCIENCE_CERN_IMAGE = "https://private-us-east-1.manuscdn.com/sessionFile/8E4srZkejjokDkWPPgZAIg/sandbox/wMjgkpac0rG5te03NcHvJY-img-2_1771978303000_na1fn_c2NpZW5jZS1hcnRpY2xlLWNlcm4tY29sbGlkZXI.jpg?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvOEU0c3Jaa2Vqam9rRGtXUFBnWkFJZy9zYW5kYm94L3dNamdrcGFjMHJHNXRlMDNOY0h2SlktaW1nLTJfMTc3MTk3ODMwMzAwMF9uYTFmbl9jMk5wWlc1alpTMWhjblJwWTJ4bExXTmxjbTR0WTI5c2JHbGtaWEkuanBnP3gtb3NzLXByb2Nlc3M9aW1hZ2UvcmVzaXplLHdfMTkyMCxoXzE5MjAvZm9ybWF0LHdlYnAvcXVhbGl0eSxxXzgwIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzk4NzYxNjAwfX19XX0_&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=KMC5LmL8j0-VaSn1VAZOp7~FPlNjnv6myOagrUM5Gbc6wgFXP4qzGNecQMYCySJ9ko2T3GO2rQh2MV~ItntWThvgm4IyGfx2EmnU5ZxbHld6aKOdRSIP5ZoFUw-om74fqhfQVQysz~zUZ5kv9GBEukCjqiT5QDXVOuwZMZiVXnM6DKmwCzicE0b3pFL4cZ5aHH7ezzmSafRL1vqMkg9C7NmHNG3SNhiithOfauLbO7vrwAnBxDWkJu7yIUxsCpY7aN0mor5z~ASeGfDiWG~AuG9BkDC6N98qSgq-hmoDmg9ltoecbNtK10z9nwK715g34596AI~P0nTdkMFa-otL0Q__";
+
+export const ROBOTICS_MICROBOTS_IMAGE = "https://private-us-east-1.manuscdn.com/sessionFile/8E4srZkejjokDkWPPgZAIg/sandbox/wMjgkpac0rG5te03NcHvJY-img-3_1771978306000_na1fn_cm9ib3RpY3MtYXJ0aWNsZS1taWNyb2JvdHM.jpg?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvOEU0c3Jaa2Vqam9rRGtXUFBnWkFJZy9zYW5kYm94L3dNamdrcGFjMHJHNXRlMDNOY0h2SlktaW1nLTNfMTc3MTk3ODMwNjAwMF9uYTFmbl9jbTlpYjNScFkzTXRZWEowYVdOc1pTMXRhV055YjJKdmRITS5qcGc~eC1vc3MtcHJvY2Vzcz1pbWFnZS9yZXNpemUsd18xOTIwLGhfMTkyMC9mb3JtYXQsd2VicC9xdWFsaXR5LHFfODAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3OTg3NjE2MDB9fX1dfQ__&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=gZphvhXFP6DvzJYb3LI2rETsFlGdKjSzKFsjc-exW9ob0pkExB51ZcrYgViaNI0junmhAoKABqN4FMiWwYwKPwF1q5Tx809F29grqTkVBDaSno-tGHxP9lUpJ85MeUr8bE1a4it9drNtAww6nj9SeWugdc9rGjhve-plhLr8vkw8GEVC3qfVAr6iDK72F2Mo3W~pkHzgBc2rwX-1FIHuboWtBMt8X1sbkztBXewP8ktO6VCklQakOzRYCOr9LGMplLKMXDcSoPQSpZLveOMSjRoaFdhGP5S-yiy2NU4aYIf34stL~OBn5LOAYLRbiHLZCN-2tdIYnowQB64eZ5H0jw__";
+
 export const LOGO1_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663215628989/PEwZctpmmIIArYwD.png";
 export const LOGO2_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663215628989/SBpTvnoKHaINngeZ.png";
 
@@ -178,7 +184,7 @@ export const aiArticles: CategoryArticle[] = [
     date: 'Feb 21, 2026',
     readTime: '4 min',
     views: '52.1K',
-    image: CHIP_IMAGE,
+    image: AI_GPU_BLACKWELL_IMAGE,
     badge: 'HOT',
   },
 ];
@@ -229,7 +235,7 @@ export const scienceArticles: CategoryArticle[] = [
     date: 'Feb 21, 2026',
     readTime: '7 min',
     views: '43.8K',
-    image: SCIENCE_IMAGE,
+    image: SCIENCE_CERN_IMAGE,
     badge: 'DEVELOPING',
   },
 ];
@@ -280,7 +286,7 @@ export const roboticsArticles: CategoryArticle[] = [
     date: 'Feb 21, 2026',
     readTime: '8 min',
     views: '33.1K',
-    image: ROBOTICS_IMAGE,
+    image: ROBOTICS_MICROBOTS_IMAGE,
     badge: 'INNOVATION',
   },
 ];
