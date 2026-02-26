@@ -26,17 +26,17 @@ const SOCIAL_ICONS = [
 
 export default function Footer({ lang }: FooterProps) {
   const year = new Date().getFullYear();
-   const [location, navigate] = useLocation();
+  const [, navigate] = useLocation();
+
+  const categoryRoutes: Record<string, string> = {
+    'section-ai': '/ai',
+    'section-science': '/science',
+    'section-robotics': '/robotics',
+    'section-gadgets': '/gadgets',
+  };
+
   const scrollToSection = (sectionId: string) => {
-    if (location === '/') {
-      const el = document.getElementById(sectionId);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        return;
-      }
-    }
-    // Navigate to home with hash — Home.tsx will handle the scroll
-    navigate(`/#${sectionId}`);
+    navigate(categoryRoutes[sectionId] ?? '/');
   };
 
   const t = {
