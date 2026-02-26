@@ -107,7 +107,7 @@ export default function Footer({ lang }: FooterProps) {
           {/* Brand */}
           <div>
             <a href="/" aria-label="CTRL + ALT News — Home" className="focus-neon" style={{ display: 'inline-block' }}>
-              <img src={LOGO2_URL} alt="CTRL + ALT News" style={{ height: '28px', marginBottom: '12px', display: 'block' }} />
+              <img src={LOGO2_URL} alt="CTRL + ALT News" style={{ height: '36px', marginBottom: '12px', display: 'block', imageRendering: 'pixelated' }} />
             </a>
             <p style={{ color: 'rgba(240,240,245,0.45)', fontSize: '0.82rem', lineHeight: 1.6, margin: 0 }}>
               {t.tagline}
