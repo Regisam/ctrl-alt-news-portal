@@ -21,25 +21,15 @@ export default function Header({ lang, onLangChange }: HeaderProps) {
 
   const [, navigate] = useLocation();
 
-  const sectionMap: Record<string, string> = {
-    AI: 'section-ai',
-    SCIENCE: 'section-science',
-    ROBOTICS: 'section-robotics',
-    GADGETS: 'section-gadgets',
+  const categoryRoutes: Record<string, string> = {
+    AI: '/ai',
+    SCIENCE: '/science',
+    ROBOTICS: '/robotics',
+    GADGETS: '/gadgets',
   };
 
-  const [location] = useLocation();
   const handleNavClick = (section: string) => {
-    const id = sectionMap[section];
-    if (location === '/') {
-      const el = document.getElementById(id);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        return;
-      }
-    }
-    // Navigate to home with hash — Home.tsx will handle the scroll
-    navigate(`/#${id}`);
+    navigate(categoryRoutes[section]);
   };
 
   const handleSearch = (e: React.FormEvent) => {
