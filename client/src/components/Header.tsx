@@ -83,7 +83,7 @@ export default function Header({ lang, onLangChange }: HeaderProps) {
             <img
               src={LOGO2_URL}
               alt="CTRL + ALT News"
-              style={{ height: '40px', width: 'auto', objectFit: 'contain', imageRendering: 'pixelated' }}
+              style={{ height: '60px', width: '80px', objectFit: 'contain', imageRendering: 'pixelated' }}
             />
           </a>
 
