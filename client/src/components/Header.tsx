@@ -28,19 +28,18 @@ export default function Header({ lang, onLangChange }: HeaderProps) {
     GADGETS: 'section-gadgets',
   };
 
+  const [location] = useLocation();
   const handleNavClick = (section: string) => {
     const id = sectionMap[section];
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-      // Navigate to home first, then scroll after a short delay
-      navigate('/');
-      setTimeout(() => {
-        const target = document.getElementById(id);
-        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 350);
+    if (location === '/') {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
     }
+    // Navigate to home with hash — Home.tsx will handle the scroll
+    navigate(`/#${id}`);
   };
 
   const handleSearch = (e: React.FormEvent) => {

@@ -4,6 +4,7 @@
 // Bilingual: EN / PT-BR
 
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import TrendingSection from "@/components/TrendingSection";
@@ -33,12 +34,29 @@ const AdLeaderboard = () => (
 );
 
 export default function Home() {
-  const [lang, setLang] = useState<Lang>('en');
+   const [lang, setLang] = useState<Lang>('en');
+  const [location] = useLocation();
 
   // Sync <html lang> with selected language for screen readers and SEO
   useEffect(() => {
     document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
   }, [lang]);
+
+  // Handle hash-based scroll when navigating from other pages (e.g. /#section-ai)
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash) return;
+    const id = hash.replace('#', '');
+    const tryScroll = (attempts = 0) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (attempts < 10) {
+        setTimeout(() => tryScroll(attempts + 1), 100);
+      }
+    };
+    tryScroll();
+  }, [location]);
 
   return (
     <div style={{ minHeight: '100vh', background: '#0A0A0B', color: '#F0F0F5' }}>

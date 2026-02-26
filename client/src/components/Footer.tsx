@@ -26,19 +26,17 @@ const SOCIAL_ICONS = [
 
 export default function Footer({ lang }: FooterProps) {
   const year = new Date().getFullYear();
-  const [, navigate] = useLocation();
-
+   const [location, navigate] = useLocation();
   const scrollToSection = (sectionId: string) => {
-    const el = document.getElementById(sectionId);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-      navigate('/');
-      setTimeout(() => {
-        const target = document.getElementById(sectionId);
-        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 350);
+    if (location === '/') {
+      const el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
     }
+    // Navigate to home with hash — Home.tsx will handle the scroll
+    navigate(`/#${sectionId}`);
   };
 
   const t = {
@@ -107,7 +105,7 @@ export default function Footer({ lang }: FooterProps) {
           {/* Brand */}
           <div>
             <a href="/" aria-label="CTRL + ALT News — Home" className="focus-neon" style={{ display: 'inline-block' }}>
-              <img src={LOGO2_URL} alt="CTRL + ALT News" style={{ height: '36px', marginBottom: '12px', display: 'block', imageRendering: 'pixelated' }} />
+              <img src={LOGO2_URL} alt="CTRL + ALT News" style={{ height: '60px', width: '80px', marginBottom: '12px', display: 'block', imageRendering: 'pixelated', objectFit: 'contain' }} />
             </a>
             <p style={{ color: 'rgba(240,240,245,0.45)', fontSize: '0.82rem', lineHeight: 1.6, margin: 0 }}>
               {t.tagline}
