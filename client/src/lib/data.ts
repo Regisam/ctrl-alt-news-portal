@@ -180,6 +180,30 @@ export const aiArticles: CategoryArticle[] = [
     badge: 'TRENDING',
   },
   {
+    id: 105,
+    title: { en: 'The Agentic AI Revolution: Model Context Protocol (MCP) Goes Mainstream', pt: 'A Revolução dos Agentes de IA: O Protocolo de Contexto de Modelo (MCP) se Torna Mainstream' },
+    excerpt: { en: 'February 2026 marks a seismic shift from AI as a passive tool to AI as an autonomous worker, powered by the open-source Model Context Protocol.', pt: 'Fevereiro de 2026 marca uma mudança sísmica da IA como ferramenta passiva para a IA como trabalhador autônomo, impulsionada pelo Protocolo de Contexto de Modelo de código aberto.' },
+    category: 'AI',
+    author: 'Manus AI',
+    date: 'Feb 21, 2026',
+    readTime: '6 min',
+    views: '67.4K',
+    image: AI_IMAGE,
+    badge: 'TRENDING',
+  },
+  {
+    id: 106,
+    title: { en: 'Daily Edition — AI, Science, Robotics & Gadgets Roundup', pt: 'Edição Diária — Resumo de IA, Ciência, Robótica e Gadgets' },
+    excerpt: { en: 'Our 21 February 2026 daily briefing: MCP goes mainstream, the ushikuvirus rewrites evolution, China\'s robots steal the Spring Festival Gala, and Samsung Galaxy S26 confirmed.', pt: 'Nosso briefing diário de 21 de fevereiro de 2026: MCP se torna mainstream, ushikuvirus reescreve a evolução, robôs da China roubam a Gala do Festival da Primavera e Galaxy S26 confirmado.' },
+    category: 'AI',
+    author: 'Manus AI',
+    date: 'Feb 21, 2026',
+    readTime: '12 min',
+    views: '89.2K',
+    image: AI_LLM_IMAGE,
+    badge: 'DAILY EDITION',
+  },
+  {
     id: 104,
     title: { en: 'NVIDIA Blackwell Ultra: The GPU That Runs AGI', pt: 'NVIDIA Blackwell Ultra: A GPU Que Executa AGI' },
     excerpt: { en: 'NVIDIA\'s next-generation GPU architecture promises a 10x performance leap for large language model inference.', pt: 'A arquitetura de GPU de próxima geração da NVIDIA promete um salto de desempenho 10x para inferência de LLMs.' },
@@ -239,11 +263,34 @@ export const scienceArticles: CategoryArticle[] = [
     date: 'Feb 21, 2026',
     readTime: '7 min',
     views: '43.8K',
-    image: SCIENCE_CERN_IMAGE,
+     image: SCIENCE_CERN_IMAGE,
     badge: 'DEVELOPING',
   },
+  {
+    id: 205,
+    title: { en: '"Ushikuvirus" Giant Virus Discovery Could Rewrite the Origin of Complex Life', pt: 'Descoberta de Vírus Gigante "Ushikuvirus" Pode Reescrever a Origem da Vida Complexa' },
+    excerpt: { en: 'Researchers from Tokyo University of Science have identified a new giant virus that provides compelling support for the viral eukaryogenesis theory.', pt: 'Pesquisadores da Universidade de Ciência de Tóquio identificaram um novo vírus gigante que fornece forte suporte para a teoria da eucariogênese viral.' },
+    category: 'SCIENCE',
+    author: 'Manus AI',
+    date: 'Feb 21, 2026',
+    readTime: '7 min',
+    views: '31.5K',
+    image: SCIENCE_DNA_IMAGE,
+    badge: 'BREAKTHROUGH',
+  },
+  {
+    id: 206,
+    title: { en: 'Samsung Galaxy Unpacked 2026: The Galaxy S26 Series Is Set to Launch on 25th February', pt: 'Samsung Galaxy Unpacked 2026: A Série Galaxy S26 Será Lançada em 25 de Fevereiro' },
+    excerpt: { en: 'Samsung confirms Galaxy Unpacked 2026 in San Francisco, unveiling the S26 series with Snapdragon 8 Elite Gen 5 and long-awaited Qi2 wireless charging support.', pt: 'Samsung confirma o Galaxy Unpacked 2026 em São Francisco, revelando a série S26 com Snapdragon 8 Elite Gen 5 e suporte ao carregamento sem fios Qi2.' },
+    category: 'SCIENCE',
+    author: 'Manus AI',
+    date: 'Feb 21, 2026',
+    readTime: '5 min',
+    views: '55.8K',
+    image: SCIENCE_SPACE_IMAGE,
+    badge: 'EXCLUSIVE',
+  },
 ];
-
 export const roboticsArticles: CategoryArticle[] = [
   {
     id: 301,
@@ -293,8 +340,19 @@ export const roboticsArticles: CategoryArticle[] = [
     image: ROBOTICS_MICROBOTS_IMAGE,
     badge: 'INNOVATION',
   },
+  {
+    id: 305,
+    title: { en: "China's Humanoid Robots Steal the Show at Spring Festival Gala", pt: 'Robôs Humanoides da China Roubam a Cena na Gala do Festival da Primavera' },
+    excerpt: { en: 'Unitree G1 and Galbot G1 performed kung fu, gymnastics and choreographed dances at the world\'s most-watched TV programme, signalling China\'s dominance in humanoid robotics.', pt: 'O Unitree G1 e o Galbot G1 executaram kung fu, ginástica e danças coreografadas no programa de TV mais visto do mundo, sinalizando a dominância da China na robótica humanoide.' },
+    category: 'ROBOTICS',
+    author: 'Manus AI',
+    date: 'Feb 21, 2026',
+    readTime: '6 min',
+    views: '74.3K',
+    image: ROBOTICS_FACTORY_IMAGE,
+    badge: 'BREAKING',
+  },
 ];
-
 export const gadgetProducts = [
   {
     id: 1,
