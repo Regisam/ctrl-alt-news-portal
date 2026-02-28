@@ -8,6 +8,7 @@ import { Link } from "wouter";
 import { ArrowLeft, Clock, Eye } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Sidebar from "@/components/Sidebar";
 import {
   aiArticles,
   scienceArticles,
@@ -408,51 +409,77 @@ export default function CategoryPage({ category }: CategoryPageProps) {
         </div>
       </div>
 
-      {/* Articles Grid */}
-      <div className="container" style={{ maxWidth: "1200px", padding: "40px 2rem 60px" }}>
-        <h2
+      {/* Articles + Sidebar */}
+      <div className="container" style={{ maxWidth: "1400px", padding: "40px 2rem 60px" }}>
+        <div
           style={{
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            letterSpacing: "0.15em",
-            fontFamily: "var(--font-mono)",
-            color: cfg.color,
-            textTransform: "uppercase",
-            marginBottom: "24px",
+            display: "grid",
+            gridTemplateColumns: "1fr 300px",
+            gap: "32px",
+            alignItems: "start",
           }}
+          className="category-page-layout"
         >
-          {t.articles}
-        </h2>
+          {/* Left: articles */}
+          <div>
+            <h2
+              style={{
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                letterSpacing: "0.15em",
+                fontFamily: "var(--font-mono)",
+                color: cfg.color,
+                textTransform: "uppercase",
+                marginBottom: "24px",
+              }}
+            >
+              {t.articles}
+            </h2>
 
-        {category === "GADGETS" ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-              gap: "20px",
-            }}
-          >
-            {gadgetProducts.map((p) => (
-              <GadgetCard key={p.id} product={p} lang={lang} accentColor={cfg.color} />
-            ))}
+            {category === "GADGETS" ? (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+                  gap: "20px",
+                }}
+              >
+                {gadgetProducts.map((p) => (
+                  <GadgetCard key={p.id} product={p} lang={lang} accentColor={cfg.color} />
+                ))}
+              </div>
+            ) : articles.length > 0 ? (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                  gap: "20px",
+                }}
+              >
+                {articles.map((article) => (
+                  <ArticleCard key={article.id} article={article} lang={lang} accentColor={cfg.color} />
+                ))}
+              </div>
+            ) : (
+              <p style={{ color: "rgba(240,240,245,0.4)", fontFamily: "var(--font-mono)", fontSize: "0.85rem" }}>
+                {t.noArticles}
+              </p>
+            )}
           </div>
-        ) : articles.length > 0 ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-              gap: "20px",
-            }}
-          >
-            {articles.map((article) => (
-              <ArticleCard key={article.id} article={article} lang={lang} accentColor={cfg.color} />
-            ))}
+
+          {/* Right: sticky sidebar */}
+          <div style={{ position: "sticky", top: "88px" }}>
+            <Sidebar lang={lang} />
           </div>
-        ) : (
-          <p style={{ color: "rgba(240,240,245,0.4)", fontFamily: "var(--font-mono)", fontSize: "0.85rem" }}>
-            {t.noArticles}
-          </p>
-        )}
+        </div>
+
+        <style>{`
+          @media (max-width: 900px) {
+            .category-page-layout {
+              grid-template-columns: 1fr !important;
+            }
+          }
+        `}</style>
       </div>
 
       <Footer lang={lang} />
