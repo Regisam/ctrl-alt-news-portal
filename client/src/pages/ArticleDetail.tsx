@@ -20,6 +20,7 @@ import {
 import Header from "@/components/Header";
 import CommentsSection from "@/components/CommentsSection";
 import Footer from "@/components/Footer";
+import Sidebar from "@/components/Sidebar";
 import { aiArticles, scienceArticles, roboticsArticles, trendingArticles } from "@/lib/data";
 import { articleBodies } from "@/lib/articleContent";
 import type { Article } from "@/lib/data";
@@ -214,8 +215,14 @@ export default function ArticleDetail() {
         </div>
       </div>
 
-      {/* ── Main content ── */}
-      <div className="flex-1 w-full max-w-4xl mx-auto px-4 md:px-6 py-10">
+      {/* ── Main content + Sidebar ── */}
+      <div className="flex-1 w-full" style={{ maxWidth: "1400px", margin: "0 auto", padding: "0 1.5rem" }}>
+        <div
+          className="article-detail-layout"
+          style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "40px", alignItems: "start", paddingTop: "2.5rem", paddingBottom: "3rem" }}
+        >
+        {/* Left: article body */}
+        <div>
         {/* Excerpt */}
         <p
           className="text-lg leading-relaxed mb-8 font-medium"
@@ -454,6 +461,21 @@ export default function ArticleDetail() {
             </div>
           </section>
         )}
+        </div>{/* end article body */}
+
+        {/* Right: sticky sidebar */}
+        <div style={{ position: "sticky", top: "88px" }}>
+          <Sidebar lang={lang} />
+        </div>
+        </div>{/* end grid */}
+
+        <style>{`
+          @media (max-width: 960px) {
+            .article-detail-layout {
+              grid-template-columns: 1fr !important;
+            }
+          }
+        `}</style>
       </div>
 
       <Footer lang={lang} />
