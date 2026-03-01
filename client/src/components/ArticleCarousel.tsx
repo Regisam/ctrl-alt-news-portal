@@ -392,6 +392,32 @@ export default function ArticleCarousel({
         </div>
       </div>
 
+      {/* ── Hover neon styles ── */}
+      <style>{`
+        .carousel-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 0 0 1px rgba(${accentColorRgb}, 0.55),
+                      0 0 18px rgba(${accentColorRgb}, 0.25),
+                      0 12px 36px rgba(0,0,0,0.5) !important;
+          border-color: rgba(${accentColorRgb}, 0.55) !important;
+        }
+        .carousel-card:focus-visible {
+          outline: 2px solid rgba(${accentColorRgb}, 0.7);
+          outline-offset: 2px;
+        }
+        .carousel-card:hover .carousel-card-img {
+          transform: scale(1.06);
+        }
+        .carousel-view-all-btn:hover { opacity: 0.75; }
+        @media (max-width: 1100px) {
+          .carousel-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 600px) {
+          .carousel-grid { grid-template-columns: 1fr !important; }
+          .carousel-card, .carousel-card-img { transition: none !important; }
+        }
+      `}</style>
+
       {/* ── Cards Grid 4×2 ── */}
       <div
         className="carousel-grid"
