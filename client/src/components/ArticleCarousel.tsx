@@ -42,24 +42,45 @@ function CarouselCard({
   const title = lang === 'en' ? article.title.en : article.title.pt;
   const excerpt = lang === 'en' ? article.excerpt.en : article.excerpt.pt;
 
+  const baseStyle: React.CSSProperties = {
+    background: 'rgba(15,15,20,0.95)',
+    border: '1px solid rgba(255,255,255,0.07)',
+    borderRadius: '6px',
+    overflow: 'hidden',
+    cursor: 'pointer',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+    display: 'flex',
+    flexDirection: 'column',
+  };
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
+    const el = e.currentTarget;
+    el.style.transform = 'translateY(-4px)';
+    el.style.borderColor = `rgba(${accentColorRgb}, 0.6)`;
+    el.style.boxShadow = `0 0 0 1px rgba(${accentColorRgb}, 0.45), 0 0 20px rgba(${accentColorRgb}, 0.22), 0 12px 36px rgba(0,0,0,0.5)`;
+    const img = el.querySelector('.carousel-card-img') as HTMLElement | null;
+    if (img) img.style.transform = 'scale(1.06)';
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent<HTMLElement>) => {
+    const el = e.currentTarget;
+    el.style.transform = '';
+    el.style.borderColor = 'rgba(255,255,255,0.07)';
+    el.style.boxShadow = '';
+    const img = el.querySelector('.carousel-card-img') as HTMLElement | null;
+    if (img) img.style.transform = '';
+  };
+
   return (
     <article
-      className="carousel-card"
       onClick={() => navigate(`/article/${article.id}`)}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/article/${article.id}`); }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       aria-label={title}
-      style={{
-        background: 'rgba(15,15,20,0.95)',
-        border: '1px solid rgba(255,255,255,0.07)',
-        borderRadius: '6px',
-        overflow: 'hidden',
-        cursor: 'pointer',
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
+      style={baseStyle}
     >
       {/* Thumbnail */}
       <div style={{ position: 'relative', overflow: 'hidden', aspectRatio: '16/9', flexShrink: 0 }}>
@@ -392,29 +413,14 @@ export default function ArticleCarousel({
         </div>
       </div>
 
-      {/* ── Hover neon styles ── */}
+      {/* ── Responsive grid styles ── */}
       <style>{`
-        .carousel-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 0 0 1px rgba(${accentColorRgb}, 0.55),
-                      0 0 18px rgba(${accentColorRgb}, 0.25),
-                      0 12px 36px rgba(0,0,0,0.5) !important;
-          border-color: rgba(${accentColorRgb}, 0.55) !important;
-        }
-        .carousel-card:focus-visible {
-          outline: 2px solid rgba(${accentColorRgb}, 0.7);
-          outline-offset: 2px;
-        }
-        .carousel-card:hover .carousel-card-img {
-          transform: scale(1.06);
-        }
         .carousel-view-all-btn:hover { opacity: 0.75; }
         @media (max-width: 1100px) {
           .carousel-grid { grid-template-columns: repeat(2, 1fr) !important; }
         }
         @media (max-width: 600px) {
           .carousel-grid { grid-template-columns: 1fr !important; }
-          .carousel-card, .carousel-card-img { transition: none !important; }
         }
       `}</style>
 
