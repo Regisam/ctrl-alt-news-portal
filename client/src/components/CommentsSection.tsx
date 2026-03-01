@@ -34,103 +34,7 @@ interface Comment {
   replyOpen: boolean;
 }
 
-// ─── Seed data ────────────────────────────────────────────────────────────────
-
-const SEED_COMMENTS: Omit<Comment, "upvotedByUser" | "showReplies" | "replyOpen">[] = [
-  {
-    id: 1,
-    author: "Marcus Lee",
-    initials: "ML",
-    avatarColor: "#00D4FF",
-    time: "2h ago",
-    body: {
-      en: "This is genuinely one of the most comprehensive breakdowns I've read on this topic. The part about hybrid quantum-AI systems really opened my eyes — we're closer to a paradigm shift than most people realise.",
-      pt: "Este é genuinamente um dos resumos mais abrangentes que li sobre este tema. A parte sobre sistemas quântico-IA híbridos realmente me abriu os olhos — estamos mais perto de uma mudança de paradigma do que a maioria das pessoas percebe.",
-    },
-    upvotes: 47,
-    replies: [
-      {
-        id: 11,
-        author: "Dr. Sarah Kim",
-        initials: "SK",
-        avatarColor: "#A855F7",
-        time: "1h ago",
-        body: {
-          en: "Totally agree. The drug discovery applications alone could save millions of lives in the next decade. The computational gains are staggering.",
-          pt: "Concordo totalmente. As aplicações para descoberta de medicamentos por si só podem salvar milhões de vidas na próxima década. Os ganhos computacionais são impressionantes.",
-        },
-        upvotes: 23,
-        upvotedByUser: false,
-      },
-      {
-        id: 12,
-        author: "James Wright",
-        initials: "JW",
-        avatarColor: "#F97316",
-        time: "45min ago",
-        body: {
-          en: "The climate modelling use case is what excites me most. Current models take weeks — quantum-AI could bring that down to hours.",
-          pt: "O caso de uso de modelagem climática é o que mais me entusiasma. Os modelos atuais levam semanas — quantum-IA poderia reduzir isso para horas.",
-        },
-        upvotes: 18,
-        upvotedByUser: false,
-      },
-    ],
-  },
-  {
-    id: 2,
-    author: "Prof. Raj Patel",
-    initials: "RP",
-    avatarColor: "#EF4444",
-    time: "3h ago",
-    body: {
-      en: "Important caveat: the error correction problem in quantum computing is still largely unsolved at scale. The optimism here is warranted but we should temper expectations for near-term deployment.",
-      pt: "Ressalva importante: o problema de correção de erros na computação quântica ainda está amplamente não resolvido em escala. O otimismo aqui é justificado, mas devemos moderar as expectativas para implantação de curto prazo.",
-    },
-    upvotes: 31,
-    replies: [
-      {
-        id: 21,
-        author: "Dr. Elena Vasquez",
-        initials: "EV",
-        avatarColor: "#00D4FF",
-        time: "2h ago",
-        body: {
-          en: "Fair point. Google's recent surface code results are promising though — 99.9% fidelity at 49 qubits is a real milestone.",
-          pt: "Ponto justo. Os resultados recentes do código de superfície do Google são promissores — 99,9% de fidelidade em 49 qubits é um marco real.",
-        },
-        upvotes: 14,
-        upvotedByUser: false,
-      },
-    ],
-  },
-  {
-    id: 3,
-    author: "Yuki Tanaka",
-    initials: "YT",
-    avatarColor: "#A855F7",
-    time: "5h ago",
-    body: {
-      en: "The section on neural interface communication was fascinating. Direct neuron-to-text at 200 WPM would be transformative for accessibility — imagine what this means for people with ALS or locked-in syndrome.",
-      pt: "A seção sobre comunicação de interface neural foi fascinante. Neurônio-para-texto direto a 200 PPM seria transformador para acessibilidade — imagine o que isso significa para pessoas com ELA ou síndrome de encarceramento.",
-    },
-    upvotes: 62,
-    replies: [],
-  },
-  {
-    id: 4,
-    author: "Maria Santos",
-    initials: "MS",
-    avatarColor: "#F97316",
-    time: "6h ago",
-    body: {
-      en: "Excellent journalism. Would love to see a follow-up piece specifically on the regulatory landscape — how are governments approaching quantum AI governance?",
-      pt: "Excelente jornalismo. Adoraria ver uma matéria de acompanhamento especificamente sobre o cenário regulatório — como os governos estão abordando a governança da IA quântica?",
-    },
-    upvotes: 28,
-    replies: [],
-  },
-];
+// ─── No seed comments — all articles start with zero comments ─────────────────
 
 // ─── Avatar component ─────────────────────────────────────────────────────────
 
@@ -241,9 +145,7 @@ export default function CommentsSection({ articleId, lang, catColor, catBg, catB
   const formId = useId();
   const liveRef = useRef<HTMLDivElement>(null);
 
-  const [comments, setComments] = useState<Comment[]>(() =>
-    SEED_COMMENTS.map((c) => ({ ...c, upvotedByUser: false, showReplies: true, replyOpen: false }))
-  );
+  const [comments, setComments] = useState<Comment[]>([]);
   const [newName, setNewName] = useState("");
   const [newBody, setNewBody] = useState("");
   const [replyTexts, setReplyTexts] = useState<Record<number, string>>({});
