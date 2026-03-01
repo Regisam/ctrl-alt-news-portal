@@ -221,15 +221,16 @@ export default function Footer({ lang }: FooterProps) {
             >
               {t.advertise}
             </button>
-            <button
-              type="button"
-              onClick={() => { /* Sitemap — wire up when ready */ }}
+            <a
+              href="/sitemap.xml"
+              target="_blank"
+              rel="noopener noreferrer"
               aria-label={t.sitemap}
               className="footer-link-btn focus-neon"
               style={linkStyle}
             >
               {t.sitemap}
-            </button>
+            </a>
           </nav>
 
           {/* Legal Links */}
@@ -255,15 +256,14 @@ export default function Footer({ lang }: FooterProps) {
             >
               {t.privacy}
             </Link>
-            <button
-              type="button"
-              onClick={() => { /* Terms — wire up when ready */ }}
+            <Link
+              href="/terms"
               aria-label={t.terms}
               className="footer-link-btn focus-neon"
               style={linkStyle}
             >
               {t.terms}
-            </button>
+            </Link>
           </nav>
         </div>
 
