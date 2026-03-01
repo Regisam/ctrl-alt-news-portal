@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  CTRL+ALT News — sitemap.xml
+  Domain: https://ctrlaltnews-utfwjdz4.manus.space
+  Generated: 2026-03-01
+  Last updated: 2026-03-01
+
+  MAINTENANCE NOTES:
+  ─────────────────────────────────────────────────────────────────────────────
+  • Static pages (/, /ai, /science, /robotics, /gadgets, /about, /contact,
+    /privacy) are listed once and rarely change — update <lastmod> only when
+    the page content changes significantly.
+
+  • Article URLs follow the pattern /article/{id}.
+    When a new article is added to data.ts, ADD a new <url> block here with:
+      - <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/{id}</loc>
+      - <lastmod>YYYY-MM-DD</lastmod>
+      - <changefreq>monthly</changefreq>
+      - <priority>0.7</priority>
+
+  • Priority guide:
+      1.0  → Homepage
+      0.9  → Category index pages
+      0.8  → About / Contact / Privacy
+      0.7  → Individual articles
+      0.5  → Legal / utility pages
+  ─────────────────────────────────────────────────────────────────────────────
+-->
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml"
+>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       STATIC PAGES
+       ═══════════════════════════════════════════════════════════════════════ -->
+
+  <!-- Homepage -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/</loc>
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Category index pages -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/ai</loc>
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/science</loc>
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/robotics</loc>
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/gadgets</loc>
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Institutional pages -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/about</loc>
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/contact</loc>
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/privacy</loc>
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       TRENDING / FEATURED ARTICLES  (IDs 1–6)
+       ═══════════════════════════════════════════════════════════════════════ -->
+
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/1</loc>
+    <lastmod>2026-02-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/2</loc>
+    <lastmod>2026-02-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/3</loc>
+    <lastmod>2026-02-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/4</loc>
+    <lastmod>2026-02-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/5</loc>
+    <lastmod>2026-02-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/6</loc>
+    <lastmod>2026-02-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       AI ARTICLES  (IDs 101–106)
+       ═══════════════════════════════════════════════════════════════════════ -->
+
+  <!-- 101: GPT-5 Reasoning Engine Surpasses Human Experts -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/101</loc>
+    <lastmod>2026-02-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 102: AI Designs New Antibiotics Resistant to Superbugs -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/102</loc>
+    <lastmod>2026-02-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 103: Neural Interface Lets Paralysed Patients Type at 200 WPM -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/103</loc>
+    <lastmod>2026-02-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 104: NVIDIA Blackwell Ultra: The GPU That Runs AGI -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/104</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 105: The Agentic AI Revolution — MCP Goes Mainstream -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/105</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 106: Daily Edition — AI, Science, Robotics & Gadgets Roundup -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/106</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       SCIENCE ARTICLES  (IDs 201–206)
+       ═══════════════════════════════════════════════════════════════════════ -->
+
+  <!-- 201: CRISPR 3.0 Achieves 99.9% Precision in Human Trials -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/201</loc>
+    <lastmod>2026-02-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 202: James Webb Telescope Finds Potential Biosignatures on K2-18b -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/202</loc>
+    <lastmod>2026-02-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 203: Room-Temperature Superconductor Confirmed by Three Independent Labs -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/203</loc>
+    <lastmod>2026-02-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 204: CERN Detects Possible Dark Matter Signal at LHC -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/204</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 205: "Ushikuvirus" Giant Virus Rewrites the Story of Life -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/205</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 206: Samsung Galaxy S26 Ultra Confirmed — Snapdragon 8 Elite 2 & Qi2 -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/206</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       ROBOTICS ARTICLES  (IDs 301–305)
+       ═══════════════════════════════════════════════════════════════════════ -->
+
+  <!-- 301: Tesla Optimus Gen 3 Begins Full Factory Deployment -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/301</loc>
+    <lastmod>2026-02-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 302: Boston Dynamics Atlas Learns to Repair Itself Using Neural Processing -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/302</loc>
+    <lastmod>2026-02-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 303: AI-Powered Surgical Robots Achieve Zero-Error Rate in Clinical Trials -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/303</loc>
+    <lastmod>2026-02-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 304: Micro-Robots Deliver Cancer Treatment Directly to Tumour Cells -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/304</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 305: China's Humanoid Robots Steal the Spring Festival Gala -->
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/305</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       ADD NEW ARTICLES BELOW THIS LINE
+       Copy the block template and fill in id, lastmod, and title comment.
+
+  <url>
+    <loc>https://ctrlaltnews-utfwjdz4.manus.space/article/{ID}</loc>
+    <lastmod>YYYY-MM-DD</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+       ═══════════════════════════════════════════════════════════════════════ -->
+
+</urlset>
