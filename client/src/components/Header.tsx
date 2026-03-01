@@ -5,9 +5,10 @@
 // A11y: aria-labels, roles, focus-visible, button types, dynamic lang
 
 import { useState } from "react";
-import { Search, Menu, X, Globe } from "lucide-react";
+import { Menu, X, Globe } from "lucide-react";
 import { LOGO1_URL, LOGO2_URL } from "@/lib/data";
 import { useLocation } from "wouter";
+import SearchBar from "@/components/SearchBar";
 
 interface HeaderProps {
   lang: 'en' | 'pt';
@@ -15,10 +16,7 @@ interface HeaderProps {
 }
 
 export default function Header({ lang, onLangChange }: HeaderProps) {
-  const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-
   const [, navigate] = useLocation();
 
   const categoryRoutes: Record<string, string> = {
@@ -30,15 +28,6 @@ export default function Header({ lang, onLangChange }: HeaderProps) {
 
   const handleNavClick = (section: string) => {
     navigate(categoryRoutes[section]);
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      // Search functionality — wire up to a search page or filter when implemented
-      const q = encodeURIComponent(searchQuery.trim());
-      navigate(`/?q=${q}`);
-    }
   };
 
   return (
@@ -140,65 +129,7 @@ export default function Header({ lang, onLangChange }: HeaderProps) {
           {/* ---- RIGHT: Search + Language ---- */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
             {/* Search */}
-            <form
-              onSubmit={handleSearch}
-              role="search"
-              aria-label={lang === 'en' ? "Search tech news" : "Buscar notícias de tecnologia"}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              {searchOpen ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <input
-                    type="search"
-                    placeholder={lang === 'en' ? "Search tech news..." : "Buscar notícias..."}
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className="search-input"
-                    aria-label={lang === 'en' ? "Search tech news" : "Buscar notícias de tecnologia"}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: '4px',
-                      fontSize: '0.85rem',
-                      width: '200px',
-                    }}
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
-                    aria-label={lang === 'en' ? "Close search" : "Fechar busca"}
-                    style={{ color: 'rgba(240,240,245,0.5)', background: 'none', border: 'none', padding: '4px' }}
-                    className="focus-neon"
-                  >
-                    <X size={16} aria-hidden="true" />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setSearchOpen(true)}
-                  aria-label={lang === 'en' ? "Open search" : "Abrir busca"}
-                  aria-expanded={searchOpen}
-                  className="focus-neon search-toggle-btn"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '4px',
-                    padding: '6px 12px',
-                    color: 'rgba(240,240,245,0.5)',
-                    fontSize: '0.8rem',
-                    fontFamily: "var(--font-body)",
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  <Search size={14} aria-hidden="true" />
-                  <span className="hidden lg:inline">{lang === 'en' ? 'Search' : 'Buscar'}</span>
-                </button>
-              )}
-            </form>
+            <SearchBar lang={lang} />
 
             {/* Language Toggle */}
             <div

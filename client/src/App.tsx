@@ -10,6 +10,7 @@ import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
+import SearchPage from "./pages/SearchPage";
 import CategoryPage from "./pages/CategoryPage";
 
 function Router() {
@@ -25,6 +26,7 @@ function Router() {
       <Route path={"/contact"} component={ContactPage} />
       <Route path={"/privacy"} component={PrivacyPage} />
       <Route path={"/terms"} component={TermsPage} />
+      <Route path={"/search"} component={SearchPage} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
