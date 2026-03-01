@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Disallow admin or internal paths (none currently, reserved for future use)
+# Disallow: /admin/
+
+Sitemap: https://ctrlaltnews-utfwjdz4.manus.space/sitemap.xml
