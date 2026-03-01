@@ -21,6 +21,7 @@ import Header from "@/components/Header";
 import CommentsSection from "@/components/CommentsSection";
 import Footer from "@/components/Footer";
 import Sidebar from "@/components/Sidebar";
+import LatestInCategory from "@/components/LatestInCategory";
 import { aiArticles, scienceArticles, roboticsArticles, trendingArticles } from "@/lib/data";
 import { articleBodies } from "@/lib/articleContent";
 import type { Article } from "@/lib/data";
@@ -466,6 +467,11 @@ export default function ArticleDetail() {
         {/* Right: sticky sidebar */}
         <div style={{ position: "sticky", top: "88px" }}>
           <Sidebar lang={lang} />
+          <LatestInCategory
+            category={article.category}
+            currentArticleId={article.id}
+            lang={lang}
+          />
         </div>
         </div>{/* end grid */}
 
