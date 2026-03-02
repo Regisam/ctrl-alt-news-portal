@@ -400,6 +400,38 @@ export default function ArticleDetail() {
           </div>
         )}
 
+        {/* Leaderboard 728×90 – between author bio and comments */}
+        <div
+          className="w-full flex items-center justify-center mb-10"
+          style={{ minHeight: "90px" }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "728px",
+              height: "90px",
+              border: "1px dashed rgba(255,255,255,0.18)",
+              borderRadius: "6px",
+              background: "rgba(255,255,255,0.03)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <span
+              style={{
+                color: "rgba(255,255,255,0.25)",
+                fontSize: "11px",
+                letterSpacing: "0.15em",
+                fontFamily: "monospace",
+                textTransform: "uppercase",
+              }}
+            >
+              GOOGLE ADSENSE — LEADERBOARD 728×90
+            </span>
+          </div>
+        </div>
+
         {/* Comments section */}
         <CommentsSection
           articleId={articleId}
