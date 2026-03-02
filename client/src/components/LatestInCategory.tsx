@@ -151,7 +151,7 @@ export default function LatestInCategory({
                     fontFamily: "var(--font-display)",
                     fontWeight: 900,
                     fontSize: "0.95rem",
-                    color: idx < 3 ? style.color : "rgba(255,255,255,0.2)",
+                    color: style.color,
                     minWidth: "22px",
                     lineHeight: 1,
                     paddingTop: "2px",
