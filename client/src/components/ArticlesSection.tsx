@@ -38,6 +38,28 @@ export default function ArticlesSection({ lang }: ArticlesSectionProps) {
         categoryPath="/ai"
       />
 
+      {/* ── Ad Banner: between AI and Science ── */}
+      <div
+        style={{
+          maxWidth: '728px',
+          margin: '0 auto 48px',
+          height: '90px',
+          border: '1px dashed rgba(255,255,255,0.12)',
+          borderRadius: '4px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(255,255,255,0.02)',
+          color: 'rgba(255,255,255,0.25)',
+          fontSize: '0.7rem',
+          letterSpacing: '0.15em',
+          fontFamily: "'Roboto Mono', monospace",
+        }}
+        aria-label="Advertisement"
+      >
+        GOOGLE ADSENSE — LEADERBOARD 728×90
+      </div>
+
       {/* 🔬 Science Carousel */}
       <ArticleCarousel
         lang={lang}
@@ -50,6 +72,28 @@ export default function ArticlesSection({ lang }: ArticlesSectionProps) {
         sectionId="section-science"
         categoryPath="/science"
       />
+
+      {/* ── Ad Banner: between Science and Robotics ── */}
+      <div
+        style={{
+          maxWidth: '728px',
+          margin: '0 auto 48px',
+          height: '90px',
+          border: '1px dashed rgba(255,255,255,0.12)',
+          borderRadius: '4px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(255,255,255,0.02)',
+          color: 'rgba(255,255,255,0.25)',
+          fontSize: '0.7rem',
+          letterSpacing: '0.15em',
+          fontFamily: "'Roboto Mono', monospace",
+        }}
+        aria-label="Advertisement"
+      >
+        GOOGLE ADSENSE — LEADERBOARD 728×90
+      </div>
 
       {/* ⚙️ Robotics Carousel */}
       <ArticleCarousel
