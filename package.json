@@ -12,7 +12,8 @@
     "lint": "eslint client/src --ext .ts,.tsx",
     "lint:fix": "eslint client/src --ext .ts,.tsx --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prepare": "husky"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
