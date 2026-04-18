@@ -61,7 +61,7 @@ function validateContact(data: ContactRequest): ValidationErrors {
 export function setupContactRoute(router: Router): void {
   router.post(
     '/api/contact',
-    async (req: Request<{}, {}, ContactRequest>, res: Response, next: NextFunction): Promise<void> => {
+    async (req: Request<object, object, ContactRequest>, res: Response, next: NextFunction): Promise<void> => {
       try {
         // Log incoming request
         logger.info('POST /api/contact received', {
