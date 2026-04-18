@@ -4,6 +4,7 @@ import logger from '../logger';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
+import { getGoogleAuthUrl, exchangeCodeForToken } from '../services/google-oauth';
 
 interface RegisterBody {
   email: string;
@@ -438,6 +439,141 @@ export function setupAuthRoute(router: Router): void {
           error: error instanceof Error ? error.message : String(error),
         });
         next(error);
+      }
+    }
+  );
+
+  // GET /api/auth/oauth/google - Initiate Google OAuth flow
+  router.get(
+    '/api/auth/oauth/google',
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const authUrl = await getGoogleAuthUrl();
+        logger.info('Google OAuth flow initiated');
+        res.redirect(authUrl);
+      } catch (error) {
+        logger.error('Error initiating Google OAuth', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        res.status(500).json({
+          success: false,
+          error: 'Failed to initiate Google OAuth',
+        });
+      }
+    }
+  );
+
+  // GET /api/auth/oauth/google/callback - Handle Google OAuth callback
+  router.get(
+    '/api/auth/oauth/google/callback',
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const code = typeof req.query.code === 'string' ? req.query.code : undefined;
+        const error = typeof req.query.error === 'string' ? req.query.error : undefined;
+        const error_description = typeof req.query.error_description === 'string' ? req.query.error_description : undefined;
+
+        if (error) {
+          logger.warn('Google OAuth error', {
+            error,
+            description: error_description,
+          });
+          return res.redirect(`/login?error=${encodeURIComponent(error_description || 'OAuth failed')}`);
+        }
+
+        if (!code || typeof code !== 'string') {
+          logger.warn('No authorization code received');
+          return res.redirect('/login?error=Missing+authorization+code');
+        }
+
+        // Exchange code for token
+        const googlePayload = await exchangeCodeForToken(code);
+
+        interface AuthUser {
+          id: string;
+          email: string;
+          fullName: string | null;
+        }
+
+        // Find or create user
+        let user: AuthUser | null = await prisma.user.findUnique({
+          where: { googleId: googlePayload.sub },
+          select: { id: true, email: true, fullName: true },
+        });
+
+        if (user) {
+          // Existing Google user
+          logger.info('Google OAuth - existing user', { userId: user.id });
+        } else {
+          // Check if email already exists
+          const existingUser = await prisma.user.findUnique({
+            where: { email: googlePayload.email },
+          });
+
+          if (existingUser) {
+            // Link Google ID to existing user
+            user = await prisma.user.update({
+              where: { id: existingUser.id },
+              data: {
+                googleId: googlePayload.sub,
+                oauthProvider: 'google',
+              },
+              select: {
+                id: true,
+                email: true,
+                fullName: true,
+              },
+            });
+            logger.info('Google OAuth - linked to existing user', { userId: user.id });
+          } else {
+            // Create new user
+            user = await prisma.user.create({
+              data: {
+                email: googlePayload.email,
+                googleId: googlePayload.sub,
+                oauthProvider: 'google',
+                fullName: googlePayload.name || '',
+                avatarUrl: googlePayload.picture || undefined,
+                emailVerified: googlePayload.email_verified,
+              },
+              select: {
+                id: true,
+                email: true,
+                fullName: true,
+              },
+            });
+            logger.info('Google OAuth - new user created', { userId: user.id });
+          }
+        }
+
+        if (!user) {
+          throw new Error('Failed to create or find user');
+        }
+
+        // Generate tokens
+        const accessToken = generateAccessToken(user.id, user.email);
+        const { token: refreshToken } = generateRefreshToken(user.id);
+
+        // Update lastLoginAt
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLoginAt: new Date() },
+        });
+
+        // Set refresh token in httpOnly cookie and redirect to home with access token
+        res.cookie('refreshToken', refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
+        // Redirect to home with access token as URL fragment (for SPA)
+        res.redirect(`/?accessToken=${encodeURIComponent(accessToken)}`);
+      } catch (error) {
+        logger.error('Error handling Google OAuth callback', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        res.redirect('/login?error=Authentication+failed');
       }
     }
   );

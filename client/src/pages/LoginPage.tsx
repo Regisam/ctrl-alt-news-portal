@@ -208,6 +208,38 @@ export default function LoginPage() {
             >
               {submitting ? strings.loggingIn : strings.login}
             </button>
+
+            <div style={{ marginTop: "20px" }}>
+              <div style={{ textAlign: "center", marginBottom: "16px", opacity: 0.6, fontSize: "0.85rem" }}>
+                {lang === 'en' ? 'Or login with' : 'Ou entre com'}
+              </div>
+              <a
+                href="/api/auth/oauth/google"
+                style={{
+                  display: "inline-block",
+                  width: "100%",
+                  padding: "10px",
+                  background: "rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  borderRadius: "4px",
+                  color: "#e2e8f0",
+                  textDecoration: "none",
+                  textAlign: "center",
+                  fontWeight: 500,
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  (e.target as HTMLAnchorElement).style.background = "rgba(255,255,255,0.15)";
+                  (e.target as HTMLAnchorElement).style.borderColor = "rgba(255,255,255,0.3)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.target as HTMLAnchorElement).style.background = "rgba(255,255,255,0.1)";
+                  (e.target as HTMLAnchorElement).style.borderColor = "rgba(255,255,255,0.2)";
+                }}
+              >
+                {lang === 'en' ? '🔐 Google' : '🔐 Google'}
+              </a>
+            </div>
           </form>
 
           <p style={{ textAlign: "center", marginTop: "24px", fontSize: "0.9rem" }}>
