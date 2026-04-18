@@ -24,6 +24,7 @@ export default function RegisterPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [lang, setLang] = useState<"en" | "pt">("en");
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleLangChange = (newLang: "en" | "pt") => {
     setLang(newLang);
@@ -42,6 +43,8 @@ export default function RegisterPage() {
       passwordRequirement: "At least 8 characters",
       registering: "Registering...",
       error: "Registration failed. Please try again.",
+      success: "Registration successful! Verify your email to continue.",
+      successDesc: "A verification link has been sent to your email. Click it to activate your account.",
     },
     pt: {
       title: "Criar Conta",
@@ -55,6 +58,8 @@ export default function RegisterPage() {
       passwordRequirement: "Mínimo 8 caracteres",
       registering: "Registrando...",
       error: "Falha no registro. Tente novamente.",
+      success: "Registro bem-sucedido! Verifique seu email para continuar.",
+      successDesc: "Um link de verificação foi enviado para seu email. Clique nele para ativar sua conta.",
     },
   };
 
@@ -116,8 +121,11 @@ export default function RegisterPage() {
         return;
       }
 
-      // Registration successful - redirect to login
-      navigate("/login");
+      // Registration successful - show success message then redirect
+      setShowSuccess(true);
+      setTimeout(() => {
+        navigate("/login");
+      }, 3000);
     } catch (error) {
       setSubmitError(strings.error);
       console.error("Registration error:", error);
@@ -133,6 +141,22 @@ export default function RegisterPage() {
         <div style={{ maxWidth: "400px", width: "100%" }}>
           <h1 style={{ marginBottom: "8px", textAlign: "center" }}>{strings.title}</h1>
           <p style={{ textAlign: "center", opacity: 0.7, marginBottom: "40px" }}>{strings.subtitle}</p>
+
+          {showSuccess && (
+            <div
+              style={{
+                padding: "16px",
+                marginBottom: "20px",
+                backgroundColor: "rgba(34, 197, 94, 0.1)",
+                border: "1px solid #22c55e",
+                borderRadius: "4px",
+                color: "#22c55e",
+              }}
+            >
+              <p style={{ fontWeight: 600, marginBottom: "8px" }}>{strings.success}</p>
+              <p style={{ fontSize: "0.9rem", opacity: 0.9 }}>{strings.successDesc}</p>
+            </div>
+          )}
 
           {submitError && (
             <div
@@ -150,7 +174,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px", opacity: showSuccess ? 0.5 : 1, pointerEvents: showSuccess ? "none" : "auto" }}>
             <div>
               <label style={{ display: "block", marginBottom: "6px", fontSize: "0.9rem" }}>
                 {strings.email}

@@ -21,8 +21,9 @@ interface ValidationErrors {
   [key: string]: string;
 }
 
-// In-memory refresh token store (Phase 2: move to database)
+// In-memory token stores (Phase 2: move to database)
 const refreshTokenStore = new Map<string, { userId: string; expiresAt: number }>();
+const verificationTokenStore = new Map<string, { userId: string; email: string; expiresAt: number }>();
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -100,6 +101,13 @@ function generateRefreshToken(userId: string): { token: string; id: string } {
   return { token, id };
 }
 
+function generateVerificationToken(userId: string, email: string): string {
+  const token = randomBytes(32).toString('hex');
+  const expiresAt = Math.floor(Date.now() / 1000) + 24 * 60 * 60; // 24 hours
+  verificationTokenStore.set(token, { userId, email, expiresAt });
+  return token;
+}
+
 export function setupAuthRoute(router: Router): void {
   // POST /api/auth/register
   router.post(
@@ -152,6 +160,9 @@ export function setupAuthRoute(router: Router): void {
           },
         });
 
+        // Generate verification token
+        const verificationToken = generateVerificationToken(user.id, user.email);
+
         logger.info('User registered successfully', {
           userId: user.id,
           email: user.email,
@@ -159,8 +170,12 @@ export function setupAuthRoute(router: Router): void {
 
         res.status(201).json({
           success: true,
-          data: user,
-          message: 'Registration successful. Please login to continue.',
+          data: {
+            ...user,
+            verificationToken, // For development/testing
+            verificationLink: `${process.env.APP_URL || 'http://localhost:3000'}/api/auth/verify-email/${verificationToken}`,
+          },
+          message: 'Registration successful. Please verify your email to continue.',
         });
       } catch (error) {
         logger.error('Error during registration', {
@@ -574,6 +589,98 @@ export function setupAuthRoute(router: Router): void {
           error: error instanceof Error ? error.message : String(error),
         });
         res.redirect('/login?error=Authentication+failed');
+      }
+    }
+  );
+
+  // GET /api/auth/verify-email/:token - Verify email with token
+  router.get(
+    '/api/auth/verify-email/:token',
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const { token } = req.params;
+
+        const tokenData = verificationTokenStore.get(token);
+        if (!tokenData || tokenData.expiresAt < Math.floor(Date.now() / 1000)) {
+          logger.warn('Invalid or expired verification token', { token });
+          res.redirect('/login?error=Verification+link+expired');
+          return;
+        }
+
+        // Mark user as verified
+        await prisma.user.update({
+          where: { id: tokenData.userId },
+          data: { emailVerified: true },
+        });
+
+        // Remove token from store
+        verificationTokenStore.delete(token);
+
+        logger.info('Email verified successfully', { userId: tokenData.userId });
+        res.redirect('/login?verified=true');
+      } catch (error) {
+        logger.error('Error verifying email', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        res.redirect('/login?error=Verification+failed');
+      }
+    }
+  );
+
+  // POST /api/auth/resend-verification - Resend verification email
+  router.post(
+    '/api/auth/resend-verification',
+    async (req: Request<{ email?: string }>, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const { email } = req.body;
+
+        if (!email) {
+          res.status(400).json({
+            success: false,
+            error: 'Email is required',
+          });
+          return;
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { email },
+          select: { id: true, emailVerified: true },
+        });
+
+        if (!user) {
+          res.status(404).json({
+            success: false,
+            error: 'User not found',
+          });
+          return;
+        }
+
+        if (user.emailVerified) {
+          res.status(400).json({
+            success: false,
+            error: 'Email already verified',
+          });
+          return;
+        }
+
+        // Generate new verification token
+        const verificationToken = generateVerificationToken(user.id, email);
+
+        logger.info('Verification email resent', { userId: user.id, email });
+
+        res.json({
+          success: true,
+          message: 'Verification email sent',
+          verificationLink: `${process.env.APP_URL || 'http://localhost:3000'}/api/auth/verify-email/${verificationToken}`,
+        });
+      } catch (error) {
+        logger.error('Error resending verification email', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        res.status(500).json({
+          success: false,
+          error: 'Failed to resend verification email',
+        });
       }
     }
   );
