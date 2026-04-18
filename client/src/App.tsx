@@ -12,6 +12,8 @@ import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
 import SearchPage from "./pages/SearchPage";
 import CategoryPage from "./pages/CategoryPage";
+import RegisterPage from "./pages/RegisterPage";
+import LoginPage from "./pages/LoginPage";
 
 function Router() {
   return (
@@ -22,6 +24,8 @@ function Router() {
       <Route path={"/science"} component={() => <CategoryPage category="SCIENCE" />} />
       <Route path={"/robotics"} component={() => <CategoryPage category="ROBOTICS" />} />
       <Route path={"/gadgets"} component={() => <CategoryPage category="GADGETS" />} />
+      <Route path={"/register"} component={RegisterPage} />
+      <Route path={"/login"} component={LoginPage} />
       <Route path={"/about"} component={AboutPage} />
       <Route path={"/contact"} component={ContactPage} />
       <Route path={"/privacy"} component={PrivacyPage} />

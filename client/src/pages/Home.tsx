@@ -35,12 +35,24 @@ const AdLeaderboard = () => (
 
 export default function Home() {
    const [lang, setLang] = useState<Lang>('en');
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
 
   // Sync <html lang> with selected language for screen readers and SEO
   useEffect(() => {
     document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
   }, [lang]);
+
+  // Capture accessToken from OAuth callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const accessToken = params.get('accessToken');
+
+    if (accessToken) {
+      localStorage.setItem('accessToken', accessToken);
+      // Clean up URL
+      window.history.replaceState({}, document.title, '/');
+    }
+  }, []);
 
   // Handle hash-based scroll when navigating from other pages (e.g. /#section-ai)
   useEffect(() => {
