@@ -81,6 +81,7 @@ export default function ArticleDetail() {
   }
 
   // Sync language from localStorage (set by Header toggle)
+   
   useEffect(() => {
     const stored = localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null;
     if (stored) setLang(stored);

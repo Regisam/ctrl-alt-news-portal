@@ -1,0 +1,359 @@
+// prisma/schema.prisma
+// Ctrl Alt News Portal — Full PostgreSQL Schema
+// Design by Aria (System Architect)
+// Last updated: 2026-04-18
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUM DEFINITIONS
+// ============================================================================
+
+enum UserRole {
+  USER    // Regular reader
+  AUTHOR  // Can create articles
+  ADMIN   // Full access
+}
+
+enum ArticleStatus {
+  DRAFT     // Not published
+  PUBLISHED // Visible to all
+  ARCHIVED  // Hidden but kept for history
+}
+
+enum CommentStatus {
+  PENDING   // Awaiting moderation
+  APPROVED  // Visible
+  REJECTED  // Spam/inappropriate
+}
+
+enum ReactionType {
+  LIKE  // Simple like
+  CLAP  // Multiple claps (1-50)
+}
+
+// ============================================================================
+// CORE MODELS
+// ============================================================================
+
+/// User account (local email/password or OAuth)
+model User {
+  id                String     @id @default(cuid())
+
+  // Email & Authentication
+  email             String     @unique
+  emailVerified     Boolean    @default(false)
+  passwordHash      String?    // Null if OAuth only
+
+  // OAuth
+  googleId          String?    @unique
+  oauthProvider     String?    // "google", "github", etc.
+
+  // Profile
+  username          String?    @unique
+  fullName          String?
+  bio               String?    @db.Text
+  avatarUrl         String?    @default("https://api.dicebear.com/7.x/avataaars/svg")
+
+  // Roles & Permissions
+  role              UserRole   @default(USER)
+
+  // Timestamps
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  lastLoginAt       DateTime?
+
+  // Relations
+  articles          Article[]
+  comments          Comment[]
+  bookmarks         Bookmark[]
+  reactions         Reaction[]
+  pageViews         PageView[]
+
+  @@index([email])
+  @@index([googleId])
+  @@map("users")
+}
+
+/// Article (blog post)
+model Article {
+  id                String     @id @default(cuid())
+
+  // Content (Bilingual)
+  titleEn           String
+  titlePt           String
+  slug              String     @unique // For SEO: /articles/my-article-slug
+
+  excerptEn         String     @db.Text
+  excerptPt         String     @db.Text
+
+  contentEn         String     @db.Text // Markdown
+  contentPt         String     @db.Text // Markdown
+
+  // Media
+  featuredImageUrl  String?
+
+  // Metadata
+  categoryId        String
+  authorId          String
+  status            ArticleStatus @default(DRAFT)
+  readingTimeMinutes Int?
+  viewCount         Int        @default(0) // Denormalized for performance
+
+  // Publishing
+  publishedAt       DateTime?
+  scheduledAt       DateTime?  // For future publishing
+
+  // Content Management
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  deletedAt         DateTime?  // Soft delete
+
+  // Relations
+  category          Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  author            User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments          Comment[]
+  reactions         Reaction[]
+  bookmarks         Bookmark[]
+  pageViews         PageView[]
+  tags              ArticleTag[]
+  searchIndex       ArticleSearchIndex?
+
+  // Indexes
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([publishedAt])
+  @@index([status])
+  @@index([slug])
+  @@map("articles")
+}
+
+/// Category (AI, Science, Robotics, Gadgets)
+model Category {
+  id                String     @id @default(cuid())
+
+  // Bilingual
+  nameEn            String
+  namePt            String
+
+  slug              String     @unique // For URL: /category/ai
+  descriptionEn     String?    @db.Text
+  descriptionPt     String?    @db.Text
+
+  // Styling
+  colorHex          String     @default("#06B6D4") // Neon color
+  iconUrl           String?
+
+  // Metadata
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  // Relations
+  articles          Article[]
+
+  @@unique([nameEn])
+  @@unique([namePt])
+  @@map("categories")
+}
+
+/// Comment on article (supports threading via parentId)
+model Comment {
+  id                String     @id @default(cuid())
+
+  // Content
+  content           String     @db.Text
+
+  // Threading (replies)
+  parentId          String?    // FK to parent comment for nested replies
+
+  // Moderation
+  status            CommentStatus @default(PENDING)
+
+  // Relations
+  articleId         String
+  authorId          String
+
+  // Timestamps
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  deletedAt         DateTime?  // Soft delete
+
+  // Relations
+  article           Article    @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  author            User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent            Comment?   @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies           Comment[]  @relation("CommentReplies")
+
+  // Indexes
+  @@index([articleId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([status])
+  @@map("comments")
+}
+
+/// User reactions to articles (like, clap)
+model Reaction {
+  id                String     @id @default(cuid())
+
+  // Reaction data
+  reactionType      ReactionType
+  count             Int        @default(1) // For claps (1-50)
+
+  // Relations
+  articleId         String
+  userId            String
+
+  // Timestamp
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  // Relations
+  article           Article    @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Constraint: one reaction per user per article per type
+  @@unique([articleId, userId, reactionType])
+  @@index([articleId])
+  @@index([userId])
+  @@map("reactions")
+}
+
+/// Bookmarks (saved articles for later reading)
+model Bookmark {
+  id                String     @id @default(cuid())
+
+  // Relations
+  userId            String
+  articleId         String
+
+  // Timestamp
+  createdAt         DateTime   @default(now())
+
+  // Relations
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article           Article    @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  // Constraint: one bookmark per user per article
+  @@unique([userId, articleId])
+  @@index([userId])
+  @@index([articleId])
+  @@map("bookmarks")
+}
+
+/// Tags for articles
+model Tag {
+  id                String     @id @default(cuid())
+
+  // Metadata
+  name              String     @unique
+  slug              String     @unique
+
+  // Timestamps
+  createdAt         DateTime   @default(now())
+
+  // Relations
+  articles          ArticleTag[]
+
+  @@map("tags")
+}
+
+/// Join table: Articles ↔ Tags
+model ArticleTag {
+  articleId         String
+  tagId             String
+
+  // Timestamp
+  createdAt         DateTime   @default(now())
+
+  // Relations
+  article           Article    @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag               Tag        @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+  @@index([tagId])
+  @@map("article_tags")
+}
+
+/// Contact form submissions
+model Contact {
+  id                String     @id @default(cuid())
+
+  // Form data
+  name              String
+  email             String
+  subject           String
+  message           String     @db.Text
+
+  // Metadata
+  topic             String?    // e.g., "Editorial", "Press", "Advertising"
+  status            String     @default("new") // "new", "responded"
+  responseNotes     String?    @db.Text
+
+  // Timestamps
+  createdAt         DateTime   @default(now())
+  respondedAt       DateTime?
+
+  @@index([email])
+  @@index([status])
+  @@map("contacts")
+}
+
+/// Page view analytics
+model PageView {
+  id                String     @id @default(cuid())
+
+  // Context
+  pagePath          String     // e.g., "/articles/1", "/category/ai"
+  referrer          String?    // Referring URL
+  userAgent         String?    // Browser info (truncated for privacy)
+
+  // Session
+  sessionId         String?    // For tracking session flow
+
+  // User & Article
+  userId            String?    // Null for anonymous users
+  articleId         String?    // Null for non-article pages
+
+  // IP (hashed for privacy compliance)
+  ipHashCrc32       String?    // CRC32 of hashed IP
+
+  // Timestamp
+  createdAt         DateTime   @default(now())
+
+  // Relations
+  user              User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  article           Article?   @relation(fields: [articleId], references: [id], onDelete: SetNull)
+
+  // Indexes for analytics queries
+  @@index([articleId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([pagePath])
+  @@map("page_views")
+}
+
+// ============================================================================
+// SEARCH INDEX (PostgreSQL FTS)
+// ============================================================================
+
+model ArticleSearchIndex {
+  articleId         String     @id @unique
+
+  // Full-text search vector (tsvector)
+  // Automatically updated via trigger in raw SQL
+  searchVector      Unsupported("tsvector")?
+
+  // Relation
+  article           Article    @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([searchVector], type: Gist)
+  @@map("article_search_index")
+}

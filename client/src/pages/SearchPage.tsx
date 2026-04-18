@@ -72,6 +72,7 @@ export default function SearchPage() {
   const [inputValue, setInputValue] = useState(getQuery);
 
   // Sync query from URL when it changes
+   
   useEffect(() => {
     const q = getQuery();
     setQuery(q);

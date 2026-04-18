@@ -105,6 +105,7 @@ export default function AboutPage() {
     document.documentElement.lang = newLang === "pt" ? "pt-BR" : "en-UK";
   }
 
+   
   useEffect(() => {
     const stored = localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null;
     if (stored) setLang(stored);

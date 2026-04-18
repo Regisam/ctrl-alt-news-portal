@@ -79,7 +79,16 @@ export default function SearchBar({ lang }: SearchBarProps) {
 
   const PREVIEW_LIMIT = 6;
 
+  // ── Close search helper ──────────────────────────────────────────────────────
+  const closeSearch = useCallback(() => {
+    setOpen(false);
+    setQuery("");
+    setResults([]);
+    setHighlighted(-1);
+  }, []);
+
   // ── Filter on query change ──────────────────────────────────────────────────
+   
   useEffect(() => {
     setResults(searchArticles(query, lang));
     setHighlighted(-1);
@@ -119,15 +128,8 @@ export default function SearchBar({ lang }: SearchBarProps) {
         closeSearch();
       }
     },
-    [highlighted, results, query, navigate]
+    [highlighted, results, query, navigate, closeSearch]
   );
-
-  const closeSearch = () => {
-    setOpen(false);
-    setQuery("");
-    setResults([]);
-    setHighlighted(-1);
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,6 +211,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
               placeholder={t.placeholder}
               aria-label={t.placeholder}
               aria-autocomplete="list"
+              role="combobox"
               aria-expanded={showDropdown}
               autoComplete="off"
               style={{
