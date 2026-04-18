@@ -53,6 +53,7 @@ export default function ContactPage() {
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   function handleLangChange(newLang: "en" | "pt") {
     setLang(newLang);
@@ -164,19 +165,52 @@ export default function ContactPage() {
     return valid;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
     setSubmitting(true);
-    // Simulate async submission
-    setTimeout(() => {
+    setSubmitError("");
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name.value.trim(),
+          email: form.email.value.trim(),
+          subject: form.subject.value,
+          message: form.message.value.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (errorData.errors) {
+          const next = { ...form };
+          Object.entries(errorData.errors as Record<string, string>).forEach(([key, value]) => {
+            if (key in next) {
+              next[key as keyof FormState] = { ...next[key as keyof FormState], error: String(value) };
+            }
+          });
+          setForm(next);
+        } else {
+          setSubmitError(lang === "en" ? "Failed to send message. Please try again." : "Falha ao enviar mensagem. Tente novamente.");
+        }
+        return;
+      }
+
       setSubmitting(false);
       setSubmitted(true);
-    }, 1200);
+    } catch (err) {
+      setSubmitting(false);
+      setSubmitError(lang === "en" ? "Failed to send message. Please try again." : "Falha ao enviar mensagem. Tente novamente.");
+      console.error("Contact form error:", err);
+    }
   }
 
   function handleField(field: keyof FormState, value: string) {
     setForm(prev => ({ ...prev, [field]: { value, error: "" } }));
+    if (submitError) setSubmitError("");
   }
 
   const inputStyle: React.CSSProperties = {
@@ -311,6 +345,27 @@ export default function ContactPage() {
           >
             {t.formTitle}
           </h2>
+
+          {submitError && (
+            <div
+              role="alert"
+              aria-live="polite"
+              style={{
+                background: "rgba(239,68,68,0.06)",
+                border: "1px solid rgba(239,68,68,0.3)",
+                borderRadius: "8px",
+                padding: "16px",
+                marginBottom: "20px",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                color: "#EF4444",
+              }}
+            >
+              <AlertCircle size={18} aria-hidden="true" />
+              <span>{submitError}</span>
+            </div>
+          )}
 
           {submitted ? (
             <div

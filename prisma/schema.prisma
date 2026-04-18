@@ -283,27 +283,26 @@ model ArticleTag {
 }
 
 /// Contact form submissions
-model Contact {
+model ContactSubmission {
   id                String     @id @default(cuid())
 
   // Form data
-  name              String
-  email             String
-  subject           String
+  name              String     @db.VarChar(255)
+  email             String     @db.VarChar(255)
+  subject           String     @db.VarChar(500)
   message           String     @db.Text
 
-  // Metadata
-  topic             String?    // e.g., "Editorial", "Press", "Advertising"
-  status            String     @default("new") // "new", "responded"
-  responseNotes     String?    @db.Text
+  // Status
+  status            String     @default("NEW") // NEW, IN_PROGRESS, RESOLVED, SPAM
 
   // Timestamps
   createdAt         DateTime   @default(now())
-  respondedAt       DateTime?
+  updatedAt         DateTime   @updatedAt
+  deletedAt         DateTime?  // Soft delete
 
   @@index([email])
-  @@index([status])
-  @@map("contacts")
+  @@index([createdAt])
+  @@map("contact_submissions")
 }
 
 /// Page view analytics
