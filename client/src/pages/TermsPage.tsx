@@ -88,15 +88,12 @@ const SECTIONS = [
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function TermsPage() {
-  const [lang, setLang] = useState<"en" | "pt">("en");
-  const [activeSection, setActiveSection] = useState("acceptance");
-
-  // Detect language from localStorage (shared with rest of site)
-   
-  useEffect(() => {
+  const [lang, setLang] = useState<"en" | "pt">(() => {
+    if (typeof window === "undefined") return "en";
     const stored = localStorage.getItem("ctrl-alt-lang");
-    if (stored === "pt" || stored === "en") setLang(stored);
-  }, []);
+    return (stored === "pt" || stored === "en") ? stored : "en";
+  });
+  const [activeSection, setActiveSection] = useState("acceptance");
 
   // Scroll spy
   useEffect(() => {

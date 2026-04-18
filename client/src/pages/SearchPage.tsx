@@ -71,14 +71,16 @@ export default function SearchPage() {
   const [activeCategory, setActiveCategory] = useState("ALL");
   const [inputValue, setInputValue] = useState(getQuery);
 
-  // Sync query from URL when it changes
-   
   useEffect(() => {
-    const q = getQuery();
-    setQuery(q);
-    setInputValue(q);
-    setActiveCategory("ALL");
-  }, [typeof window !== "undefined" ? window.location.search : ""]);
+    const handleQueryChange = () => {
+      const q = getQuery();
+      setQuery(q);
+      setInputValue(q);
+      setActiveCategory("ALL");
+    };
+    window.addEventListener("popstate", handleQueryChange);
+    return () => window.removeEventListener("popstate", handleQueryChange);
+  }, []);
 
   const results = useMemo(
     () => filterArticles(ALL_ARTICLES, query, lang, activeCategory),

@@ -97,7 +97,10 @@ const STATS = [
 ];
 
 export default function AboutPage() {
-  const [lang, setLang] = useState<"en" | "pt">("en");
+  const [lang, setLang] = useState<"en" | "pt">(() => {
+    if (typeof window === "undefined") return "en";
+    return (localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null) || "en";
+  });
 
   function handleLangChange(newLang: "en" | "pt") {
     setLang(newLang);
@@ -105,10 +108,7 @@ export default function AboutPage() {
     document.documentElement.lang = newLang === "pt" ? "pt-BR" : "en-UK";
   }
 
-   
   useEffect(() => {
-    const stored = localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null;
-    if (stored) setLang(stored);
     const handler = () => {
       const updated = localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null;
       if (updated) setLang(updated);

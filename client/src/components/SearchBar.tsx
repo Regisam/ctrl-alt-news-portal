@@ -8,7 +8,7 @@
 //   • "View all N results" footer → navigates to /search?q=...
 //   • On form submit → navigates to /search?q=...
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Search, X, ChevronRight } from "lucide-react";
 import {
@@ -70,7 +70,6 @@ interface SearchBarProps {
 export default function SearchBar({ lang }: SearchBarProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<CategoryArticle[]>([]);
   const [highlighted, setHighlighted] = useState(-1);
   const [, navigate] = useLocation();
 
@@ -83,16 +82,10 @@ export default function SearchBar({ lang }: SearchBarProps) {
   const closeSearch = useCallback(() => {
     setOpen(false);
     setQuery("");
-    setResults([]);
     setHighlighted(-1);
   }, []);
 
-  // ── Filter on query change ──────────────────────────────────────────────────
-   
-  useEffect(() => {
-    setResults(searchArticles(query, lang));
-    setHighlighted(-1);
-  }, [query, lang]);
+  const computedResults = useMemo(() => searchArticles(query, lang), [query, lang]);
 
   // ── Click outside to close ──────────────────────────────────────────────────
   useEffect(() => {
@@ -108,7 +101,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
   // ── Keyboard navigation ─────────────────────────────────────────────────────
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      const previewCount = Math.min(results.length, PREVIEW_LIMIT);
+      const previewCount = Math.min(computedResults.length, PREVIEW_LIMIT);
       if (e.key === "ArrowDown") {
         e.preventDefault();
         setHighlighted((h) => Math.min(h + 1, previewCount - 1));
@@ -117,8 +110,8 @@ export default function SearchBar({ lang }: SearchBarProps) {
         setHighlighted((h) => Math.max(h - 1, -1));
       } else if (e.key === "Enter") {
         e.preventDefault();
-        if (highlighted >= 0 && results[highlighted]) {
-          navigate(`/article/${results[highlighted].id}`);
+        if (highlighted >= 0 && computedResults[highlighted]) {
+          navigate(`/article/${computedResults[highlighted].id}`);
           closeSearch();
         } else if (query.trim()) {
           navigate(`/search?q=${encodeURIComponent(query.trim())}`);
@@ -128,7 +121,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
         closeSearch();
       }
     },
-    [highlighted, results, query, navigate, closeSearch]
+    [highlighted, computedResults, query, navigate, closeSearch]
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -144,7 +137,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
     setTimeout(() => inputRef.current?.focus(), 50);
   };
 
-  const preview = results.slice(0, PREVIEW_LIMIT);
+  const preview = computedResults.slice(0, PREVIEW_LIMIT);
   const showDropdown = open && query.trim().length > 0;
 
   const t = {
@@ -213,6 +206,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
               aria-autocomplete="list"
               role="combobox"
               aria-expanded={showDropdown}
+              aria-controls="search-results"
               autoComplete="off"
               style={{
                 paddingLeft: "32px",
@@ -370,7 +364,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
               </ul>
 
               {/* View all footer */}
-              {results.length > 0 && (
+              {computedResults.length > 0 && (
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "10px 14px" }}>
                   <button
                     type="button"
@@ -393,7 +387,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
                       padding: 0,
                     }}
                   >
-                    {t.viewAll(results.length)}
+                    {t.viewAll(computedResults.length)}
                     <ChevronRight size={14} />
                   </button>
                 </div>

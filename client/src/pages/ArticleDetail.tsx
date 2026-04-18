@@ -72,7 +72,10 @@ function getInitials(name: string) {
 export default function ArticleDetail() {
   const params = useParams<{ id: string }>();
   const articleId = parseInt(params.id || "0", 10);
-  const [lang, setLang] = useState<"en" | "pt">("en");
+  const [lang, setLang] = useState<"en" | "pt">(() => {
+    if (typeof window === "undefined") return "en";
+    return (localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null) || "en";
+  });
 
   function handleLangChange(newLang: "en" | "pt") {
     setLang(newLang);
@@ -81,10 +84,7 @@ export default function ArticleDetail() {
   }
 
   // Sync language from localStorage (set by Header toggle)
-   
   useEffect(() => {
-    const stored = localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null;
-    if (stored) setLang(stored);
     const handler = () => {
       const updated = localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null;
       if (updated) setLang(updated);
