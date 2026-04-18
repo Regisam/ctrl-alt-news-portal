@@ -5,7 +5,7 @@ import { createServer } from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import logger from './src/logger';
-import { errorHandler, asyncHandler } from './src/middleware/errorHandler';
+import { errorHandler, notFoundHandler, asyncHandler } from './src/middleware/errorHandler';
 import { requestLogger } from './src/middleware/requestLogger';
 import { setupRoutes } from './src/routes';
 
@@ -46,6 +46,9 @@ async function startServer(): Promise<void> {
     res.sendFile(path.join(staticPath, 'index.html'));
   });
 
+  // 404 handler for non-API routes
+  app.use(notFoundHandler);
+
   // Error handling middleware (must be last)
   app.use(errorHandler);
 
@@ -59,6 +62,24 @@ async function startServer(): Promise<void> {
     logger.error('Failed to start server', { error });
     process.exit(1);
   }
+
+  // Graceful shutdown handling
+  const gracefulShutdown = (signal: string) => {
+    logger.info(`${signal} received, shutting down gracefully`);
+    server.close(() => {
+      logger.info('Server closed');
+      process.exit(0);
+    });
+
+    // Force close after 10 seconds
+    setTimeout(() => {
+      logger.error('Forced shutdown after timeout');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 }
 
 startServer().catch((error) => {
