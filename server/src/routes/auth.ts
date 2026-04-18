@@ -3,6 +3,7 @@ import { prisma } from '../prisma';
 import logger from '../logger';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { randomBytes } from 'crypto';
 
 interface RegisterBody {
   email: string;
@@ -18,6 +19,9 @@ interface LoginBody {
 interface ValidationErrors {
   [key: string]: string;
 }
+
+// In-memory refresh token store (Phase 2: move to database)
+const refreshTokenStore = new Map<string, { userId: string; expiresAt: number }>();
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -62,17 +66,37 @@ function validateLogin(data: LoginBody): ValidationErrors {
   return errors;
 }
 
-function generateJWT(userId: string, email: string): string {
+function generateAccessToken(userId: string, email: string): string {
   const secret = process.env.JWT_SECRET || 'your-secret-key-change-me-in-production';
   return jwt.sign(
     {
       userId,
       email,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 86400, // 24 hours
+      type: 'access',
     },
-    secret
+    secret,
+    { expiresIn: '15m' }
   );
+}
+
+function generateRefreshToken(userId: string): { token: string; id: string } {
+  const id = randomBytes(32).toString('hex');
+  const secret = process.env.JWT_SECRET || 'your-secret-key-change-me-in-production';
+  const token = jwt.sign(
+    {
+      userId,
+      tokenId: id,
+      type: 'refresh',
+    },
+    secret,
+    { expiresIn: '7d' }
+  );
+
+  // Store refresh token
+  const expiresAt = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60; // 7 days
+  refreshTokenStore.set(id, { userId, expiresAt });
+
+  return { token, id };
 }
 
 export function setupAuthRoute(router: Router): void {
@@ -198,8 +222,9 @@ export function setupAuthRoute(router: Router): void {
           return;
         }
 
-        // Generate JWT token
-        const token = generateJWT(user.id, user.email);
+        // Generate tokens
+        const accessToken = generateAccessToken(user.id, user.email);
+        const { token: refreshToken } = generateRefreshToken(user.id);
 
         // Update lastLoginAt
         await prisma.user.update({
@@ -212,10 +237,18 @@ export function setupAuthRoute(router: Router): void {
           email: user.email,
         });
 
+        // Set refresh token in httpOnly cookie
+        res.cookie('refreshToken', refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
         res.status(200).json({
           success: true,
           data: {
-            token,
+            accessToken,
             user: {
               id: user.id,
               email: user.email,
@@ -286,6 +319,122 @@ export function setupAuthRoute(router: Router): void {
         });
       } catch (error) {
         logger.error('Error fetching current user', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        next(error);
+      }
+    }
+  );
+
+  // POST /api/auth/refresh
+  router.post(
+    '/api/auth/refresh',
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
+
+        if (!refreshToken) {
+          logger.warn('Refresh token missing');
+          res.status(401).json({
+            success: false,
+            error: 'Refresh token missing',
+          });
+          return;
+        }
+
+        const secret = process.env.JWT_SECRET || 'your-secret-key-change-me-in-production';
+
+        let decoded: any;
+        try {
+          decoded = jwt.verify(refreshToken, secret);
+        } catch {
+          logger.warn('Invalid refresh token');
+          res.status(401).json({
+            success: false,
+            error: 'Invalid or expired refresh token',
+          });
+          return;
+        }
+
+        // Check if token is in store and not expired
+        const tokenData = refreshTokenStore.get(decoded.tokenId);
+        if (!tokenData || tokenData.expiresAt < Math.floor(Date.now() / 1000)) {
+          logger.warn('Refresh token revoked or expired', { tokenId: decoded.tokenId });
+          res.status(401).json({
+            success: false,
+            error: 'Refresh token revoked or expired',
+          });
+          return;
+        }
+
+        // Get user
+        const user = await prisma.user.findUnique({
+          where: { id: decoded.userId },
+          select: {
+            id: true,
+            email: true,
+            fullName: true,
+          },
+        });
+
+        if (!user) {
+          res.status(404).json({
+            success: false,
+            error: 'User not found',
+          });
+          return;
+        }
+
+        // Generate new access token
+        const newAccessToken = generateAccessToken(user.id, user.email);
+
+        logger.info('Access token refreshed', { userId: user.id });
+
+        res.json({
+          success: true,
+          data: {
+            accessToken: newAccessToken,
+          },
+        });
+      } catch (error) {
+        logger.error('Error refreshing token', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        next(error);
+      }
+    }
+  );
+
+  // POST /api/auth/logout
+  router.post(
+    '/api/auth/logout',
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
+
+        if (refreshToken) {
+          const secret = process.env.JWT_SECRET || 'your-secret-key-change-me-in-production';
+          try {
+            const decoded: any = jwt.verify(refreshToken, secret);
+            // Remove from store (revoke)
+            refreshTokenStore.delete(decoded.tokenId);
+            logger.info('Refresh token revoked', { tokenId: decoded.tokenId });
+          } catch {
+            // Token already invalid, just proceed
+          }
+        }
+
+        // Clear cookie
+        res.clearCookie('refreshToken');
+
+        logger.info('User logged out successfully');
+
+        res.json({
+          success: true,
+          message: 'Logged out successfully',
+        });
+      } catch (error) {
+        logger.error('Error during logout', {
           error: error instanceof Error ? error.message : String(error),
         });
         next(error);

@@ -11,7 +11,7 @@ export async function apiCall(
   url: string,
   options: FetchOptions = {}
 ): Promise<Response> {
-  const token = localStorage.getItem('auth_token');
+  const accessToken = localStorage.getItem('accessToken');
 
   const headers = new Headers(options.headers || {});
 
@@ -21,18 +21,39 @@ export async function apiCall(
   }
 
   // Inject JWT token if available
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
+  if (accessToken) {
+    headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
   const response = await fetch(url, {
     ...options,
     headers,
+    credentials: 'include', // Include cookies (for refresh token)
   });
 
-  // If 401 Unauthorized, token might be expired - clear it
+  // If 401 Unauthorized, token might be expired - try to refresh
   if (response.status === 401) {
-    localStorage.removeItem('auth_token');
+    const refreshResponse = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      credentials: 'include',
+    });
+
+    if (refreshResponse.ok) {
+      const data = await refreshResponse.json();
+      localStorage.setItem('accessToken', data.data.accessToken);
+
+      // Retry original request with new token
+      headers.set('Authorization', `Bearer ${data.data.accessToken}`);
+      return fetch(url, {
+        ...options,
+        headers,
+        credentials: 'include',
+      });
+    } else {
+      // Refresh failed, clear tokens and redirect to login
+      localStorage.removeItem('accessToken');
+      window.location.href = '/login';
+    }
   }
 
   return response;

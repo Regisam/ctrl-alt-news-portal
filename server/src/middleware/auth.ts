@@ -43,11 +43,43 @@ export function verifyJWT(req: AuthRequest, res: Response, next: NextFunction): 
   }
 }
 
+export function requireRole(...roles: string[]) {
+  return (req: AuthRequest, res: Response, next: NextFunction): void => {
+    // First verify JWT
+    verifyJWT(req, res, async () => {
+      try {
+        // Get user with role
+        const { prisma } = await import('../prisma');
+        const user = await prisma.user.findUnique({
+          where: { id: req.userId },
+          select: { role: true },
+        });
+
+        if (!user || !roles.includes(user.role)) {
+          res.status(403).json({
+            success: false,
+            error: 'Forbidden - insufficient permissions',
+          });
+          return;
+        }
+
+        next();
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          error: 'Failed to verify permissions',
+        });
+      }
+    });
+  };
+}
+
 export function isAdmin(req: AuthRequest, res: Response, next: NextFunction): void {
-  // First verify JWT
-  verifyJWT(req, res, () => {
-    // After JWT is verified, check if user is admin
-    // For now, this is a placeholder - will be implemented with database checks in Story 3.5
-    next();
-  });
+  const roleMiddleware = requireRole('ADMIN');
+  roleMiddleware(req, res, next);
+}
+
+export function isAuthor(req: AuthRequest, res: Response, next: NextFunction): void {
+  const roleMiddleware = requireRole('AUTHOR', 'ADMIN');
+  roleMiddleware(req, res, next);
 }

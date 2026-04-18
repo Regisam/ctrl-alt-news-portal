@@ -103,8 +103,8 @@ export default function LoginPage() {
         return;
       }
 
-      // Store token in localStorage
-      localStorage.setItem("auth_token", data.data.token);
+      // Store access token in localStorage
+      localStorage.setItem("accessToken", data.data.accessToken);
 
       // Redirect to profile
       navigate("/profile/me");
