@@ -9,6 +9,7 @@ import { errorHandler, notFoundHandler, asyncHandler } from './src/middleware/er
 import { requestLogger } from './src/middleware/requestLogger';
 import { setupRoutes } from './src/routes';
 import { initializeWebSocket } from './src/websocket';
+import { startNotificationCleanup } from './src/services/notification-cleanup';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -62,6 +63,8 @@ async function startServer(): Promise<void> {
   try {
     server.listen(port, () => {
       logger.info(`Server started successfully`, { port });
+      // Start background cleanup scheduler
+      startNotificationCleanup();
     });
   } catch (error) {
     logger.error('Failed to start server', { error });
