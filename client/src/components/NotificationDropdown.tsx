@@ -43,7 +43,14 @@ export function NotificationDropdown({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end pt-16 px-4 sm:px-6">
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/20" onClick={onClose} />
+      <div
+        className="fixed inset-0 bg-black/20"
+        onClick={onClose}
+        onKeyDown={(e) => e.key === 'Escape' && onClose()}
+        role="button"
+        tabIndex={0}
+        aria-label="Close notifications"
+      />
 
       {/* Dropdown Panel */}
       <div className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 overflow-hidden">

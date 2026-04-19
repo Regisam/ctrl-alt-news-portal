@@ -41,7 +41,7 @@ export function useNotifications({ userId, token, enabled = true }: UseNotificat
     });
 
     socket.on('connect', () => {
-      console.log('Notification socket connected');
+      console.warn('Notification socket connected');
     });
 
     socket.on('notification', (notification: Notification) => {
@@ -52,7 +52,7 @@ export function useNotifications({ userId, token, enabled = true }: UseNotificat
     });
 
     socket.on('disconnect', () => {
-      console.log('Notification socket disconnected');
+      console.warn('Notification socket disconnected');
     });
 
     socketRef.current = socket;
@@ -120,7 +120,11 @@ export function useNotifications({ userId, token, enabled = true }: UseNotificat
     }
 
     setupSocket();
-    fetchNotifications();
+    // Fetch notifications asynchronously to avoid setState in effect
+    const loadNotifications = async () => {
+      await fetchNotifications();
+    };
+    loadNotifications();
 
     return () => {
       if (socketRef.current) {
