@@ -8,6 +8,7 @@ import logger from './src/logger';
 import { errorHandler, notFoundHandler, asyncHandler } from './src/middleware/errorHandler';
 import { requestLogger } from './src/middleware/requestLogger';
 import { setupRoutes } from './src/routes';
+import { initializeWebSocket } from './src/websocket';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,8 +30,12 @@ async function startServer(): Promise<void> {
   app.use(express.urlencoded({ extended: true }));
   app.use(requestLogger);
 
+  // Initialize WebSocket server first
+  const io = initializeWebSocket(server);
+  logger.info('WebSocket server initialized on /socket.io');
+
   // Setup API routes (must be before static files)
-  setupRoutes(apiRouter);
+  setupRoutes(apiRouter, io);
   app.use('/api', apiRouter);
 
   // Serve static files from dist/public in production

@@ -1,7 +1,9 @@
 import type { Router, Request, Response, NextFunction } from 'express';
+import { Server as SocketIOServer } from 'socket.io';
 import { prisma } from '../prisma';
 import logger from '../logger';
 import { validateDepth } from '../utils/validateDepth';
+import { WebSocketHandlers } from '../websocket-handlers';
 
 interface GetCommentsQuery {
   articleId: string;
@@ -89,7 +91,11 @@ async function softDeleteCommentAndChildren(commentId: string): Promise<void> {
   }
 }
 
-export function setupCommentsRoute(router: Router): void {
+export function setupCommentsRoute(router: Router, io?: SocketIOServer): void {
+  let wsHandlers: WebSocketHandlers | undefined;
+  if (io) {
+    wsHandlers = new WebSocketHandlers(io);
+  }
   router.get(
     '/api/comments',
     async (req: Request<object, object, object, GetCommentsQuery>, res: Response, next: NextFunction): Promise<void> => {
@@ -227,6 +233,19 @@ export function setupCommentsRoute(router: Router): void {
           authorId: sanitizedData.authorId,
         });
 
+        // Broadcast new comment via WebSocket
+        if (wsHandlers) {
+          wsHandlers.broadcastNewComment(sanitizedData.articleId, {
+            id: comment.id,
+            content: comment.content,
+            authorId: comment.authorId,
+            authorName: comment.author.fullName || 'Anonymous',
+            createdAt: comment.createdAt,
+            updatedAt: comment.updatedAt,
+            parentId: comment.parentId || undefined,
+          });
+        }
+
         res.status(201).json({
           success: true,
           data: {
@@ -258,7 +277,7 @@ export function setupCommentsRoute(router: Router): void {
 
         const comment = await prisma.comment.findUnique({
           where: { id },
-          select: { id: true, parentId: true },
+          select: { id: true, parentId: true, articleId: true },
         });
 
         if (!comment) {
@@ -273,6 +292,11 @@ export function setupCommentsRoute(router: Router): void {
         await softDeleteCommentAndChildren(id);
 
         logger.info('Comment soft-deleted with children', { commentId: id });
+
+        // Broadcast comment deletion via WebSocket
+        if (wsHandlers) {
+          wsHandlers.broadcastCommentDelete(comment.articleId, id, new Date());
+        }
 
         res.json({
           success: true,
@@ -389,6 +413,19 @@ export function setupCommentsRoute(router: Router): void {
           authorId,
           depth: depthValidation.depth + 1,
         });
+
+        // Broadcast new reply via WebSocket
+        if (wsHandlers) {
+          wsHandlers.broadcastNewComment(articleId, {
+            id: reply.id,
+            content: reply.content,
+            authorId: reply.authorId,
+            authorName: reply.author.fullName || 'Anonymous',
+            createdAt: reply.createdAt,
+            updatedAt: reply.updatedAt,
+            parentId: reply.parentId || undefined,
+          });
+        }
 
         res.status(201).json({
           success: true,
