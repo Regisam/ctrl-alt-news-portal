@@ -183,6 +183,7 @@ model Comment {
 
   // Threading (replies)
   parentId          String?    // FK to parent comment for nested replies
+  replyCount        Int        @default(0)  // Denormalized count for performance
 
   // Moderation
   status            CommentStatus @default(PENDING)

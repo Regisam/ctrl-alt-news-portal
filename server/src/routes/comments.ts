@@ -5,6 +5,7 @@ import logger from '../logger';
 import { validateDepth } from '../utils/validateDepth';
 import { WebSocketHandlers } from '../websocket-handlers';
 import { NotificationService } from '../services/notification-service';
+import { cacheService } from '../services/cache-service';
 
 interface GetCommentsQuery {
   articleId: string;
@@ -77,10 +78,23 @@ function buildCommentTree(comments: any[]): any[] {
 }
 
 async function softDeleteCommentAndChildren(commentId: string): Promise<void> {
+  const comment = await prisma.comment.findUnique({
+    where: { id: commentId },
+    select: { parentId: true },
+  });
+
   await prisma.comment.update({
     where: { id: commentId },
     data: { deletedAt: new Date() },
   });
+
+  // Decrement parent's replyCount if this comment had a parent
+  if (comment && comment.parentId) {
+    await prisma.comment.update({
+      where: { id: comment.parentId },
+      data: { replyCount: { decrement: 1 } },
+    });
+  }
 
   const children = await prisma.comment.findMany({
     where: { parentId: commentId },
@@ -240,7 +254,7 @@ export function setupCommentsRoute(router: Router, io?: SocketIOServer): void {
           authorId: sanitizedData.authorId,
         });
 
-        // Trigger notifications for replies
+        // Trigger notifications for replies and increment parent's replyCount
         if (sanitizedData.parentId) {
           const parentComment = await prisma.comment.findUnique({
             where: { id: sanitizedData.parentId },
@@ -249,6 +263,13 @@ export function setupCommentsRoute(router: Router, io?: SocketIOServer): void {
           if (parentComment && parentComment.authorId !== sanitizedData.authorId) {
             await NotificationService.notifyReply(sanitizedData.parentId, parentComment.authorId, sanitizedData.authorId);
           }
+          // Increment parent's replyCount atomically
+          await prisma.comment.update({
+            where: { id: sanitizedData.parentId },
+            data: { replyCount: { increment: 1 } },
+          });
+          // Invalidate trending cache on new reply
+          cacheService.deleteByPattern('trending_');
         }
 
         // Trigger notifications for mentions
@@ -317,6 +338,9 @@ export function setupCommentsRoute(router: Router, io?: SocketIOServer): void {
 
         logger.info('Comment soft-deleted with children', { commentId: id });
 
+        // Invalidate trending cache on deletion
+        cacheService.deleteByPattern('trending_');
+
         // Broadcast comment deletion via WebSocket
         if (wsHandlers) {
           wsHandlers.broadcastCommentDelete(comment.articleId, id, new Date());
@@ -330,6 +354,105 @@ export function setupCommentsRoute(router: Router, io?: SocketIOServer): void {
         logger.error('Error deleting comment', {
           commentId: req.params.id,
           error: error instanceof Error ? error.message : String(error),
+        });
+        next(error);
+      }
+    }
+  );
+
+  router.get(
+    '/api/comments/trending',
+    async (req: Request<object, object, object, { window?: string; limit?: string; offset?: string; articleId?: string }>, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const { window = '24h', limit = '10', offset = '0', articleId } = req.query;
+        const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10) || 10));
+        const offsetNum = Math.max(0, parseInt(offset, 10) || 0);
+
+        // Generate cache key
+        const cacheKey = `trending_${window}_${limitNum}_${offsetNum}_${articleId || 'all'}`;
+
+        // Check cache first
+        const cachedResult = cacheService.get(cacheKey);
+        if (cachedResult) {
+          logger.info('Trending comments retrieved from cache', { cacheKey });
+          res.status(200).json(cachedResult);
+          return;
+        }
+
+        // Parse time window (default 24h)
+        let hoursBack = 24;
+        if (window.endsWith('h')) {
+          hoursBack = parseInt(window, 10) || 24;
+        } else if (window.endsWith('d')) {
+          hoursBack = parseInt(window, 10) * 24 || 24;
+        }
+
+        const timeWindow = new Date(Date.now() - hoursBack * 60 * 60 * 1000);
+
+        logger.info('GET /api/comments/trending requested', {
+          window,
+          limitNum,
+          offsetNum,
+          articleId,
+          hoursBack,
+        });
+
+        // Build where clause
+        const whereClause: any = {
+          deletedAt: null,
+          status: 'APPROVED',
+          createdAt: { gte: timeWindow },
+        };
+        if (articleId) {
+          whereClause.articleId = articleId;
+        }
+
+        const [comments, total] = await Promise.all([
+          prisma.comment.findMany({
+            where: whereClause,
+            include: {
+              author: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+            orderBy: [
+              { replyCount: 'desc' },
+              { createdAt: 'desc' },
+            ],
+            skip: offsetNum,
+            take: limitNum,
+          }),
+          prisma.comment.count({ where: whereClause }),
+        ]);
+
+        logger.info('Trending comments retrieved', {
+          count: comments.length,
+          total,
+          window,
+        });
+
+        const result = {
+          success: true,
+          data: comments,
+          pagination: {
+            limit: limitNum,
+            offset: offsetNum,
+            total,
+          },
+        };
+
+        // Cache result for 5 minutes (300000 ms)
+        cacheService.set(cacheKey, result, 5 * 60 * 1000);
+
+        res.status(200).json(result);
+      } catch (error) {
+        logger.error('Error fetching trending comments', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
         });
         next(error);
       }
@@ -429,6 +552,15 @@ export function setupCommentsRoute(router: Router, io?: SocketIOServer): void {
             },
           },
         });
+
+        // Increment parent's replyCount atomically
+        await prisma.comment.update({
+          where: { id: parentId },
+          data: { replyCount: { increment: 1 } },
+        });
+
+        // Invalidate trending cache on new reply
+        cacheService.deleteByPattern('trending_');
 
         logger.info('Reply created', {
           replyId: reply.id,
