@@ -3,6 +3,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import { prisma } from '../prisma';
 import logger from '../logger';
 import { WebSocketHandlers } from '../websocket-handlers';
+import { NotificationService } from '../services/notification-service';
 
 interface KarmaVoteBody {
   commentId: string;
@@ -30,10 +31,10 @@ export function setupKarmaRoute(router: Router, io?: SocketIOServer): void {
 
         logger.info('POST /api/comments/:id/upvote', { commentId, userId });
 
-        // Verify comment exists
+        // Verify comment exists and get author
         const comment = await prisma.comment.findUnique({
           where: { id: commentId },
-          select: { id: true, articleId: true },
+          select: { id: true, articleId: true, authorId: true },
         });
 
         if (!comment) {
@@ -79,6 +80,24 @@ export function setupKarmaRoute(router: Router, io?: SocketIOServer): void {
           downvotes: karma.downvotes,
           karmaCount,
         });
+
+        // Update comment author's user karma and check for milestones
+        if (comment.authorId && comment.authorId !== userId) {
+          try {
+            const updatedUser = await prisma.user.update({
+              where: { id: comment.authorId },
+              data: { karma: { increment: 1 } },
+              select: { karma: true },
+            });
+
+            // Check for karma milestone notifications
+            if (updatedUser.karma > 0) {
+              await NotificationService.notifyKarmaMilestone(comment.authorId, updatedUser.karma);
+            }
+          } catch (error) {
+            logger.error('Error updating user karma', { error });
+          }
+        }
 
         // Broadcast karma update via WebSocket
         if (wsHandlers) {
