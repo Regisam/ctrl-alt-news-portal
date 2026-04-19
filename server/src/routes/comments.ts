@@ -4,6 +4,7 @@ import { prisma } from '../prisma';
 import logger from '../logger';
 import { validateDepth } from '../utils/validateDepth';
 import { WebSocketHandlers } from '../websocket-handlers';
+import { NotificationService } from '../services/notification-service';
 
 interface GetCommentsQuery {
   articleId: string;
@@ -89,6 +90,12 @@ async function softDeleteCommentAndChildren(commentId: string): Promise<void> {
   for (const child of children) {
     await softDeleteCommentAndChildren(child.id);
   }
+}
+
+function extractMentions(content: string): string[] {
+  const mentionRegex = /@([a-zA-Z0-9_]{3,20})/g;
+  const matches = content.matchAll(mentionRegex);
+  return Array.from(matches, (m) => m[1]);
 }
 
 export function setupCommentsRoute(router: Router, io?: SocketIOServer): void {
@@ -232,6 +239,23 @@ export function setupCommentsRoute(router: Router, io?: SocketIOServer): void {
           articleId: sanitizedData.articleId,
           authorId: sanitizedData.authorId,
         });
+
+        // Trigger notifications for replies
+        if (sanitizedData.parentId) {
+          const parentComment = await prisma.comment.findUnique({
+            where: { id: sanitizedData.parentId },
+            select: { authorId: true },
+          });
+          if (parentComment && parentComment.authorId !== sanitizedData.authorId) {
+            await NotificationService.notifyReply(sanitizedData.parentId, parentComment.authorId, sanitizedData.authorId);
+          }
+        }
+
+        // Trigger notifications for mentions
+        const mentions = extractMentions(sanitizedData.content);
+        for (const mentionedUsername of mentions) {
+          await NotificationService.notifyMention(mentionedUsername, comment.id, sanitizedData.authorId);
+        }
 
         // Broadcast new comment via WebSocket
         if (wsHandlers) {

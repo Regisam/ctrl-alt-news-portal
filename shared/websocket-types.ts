@@ -61,3 +61,23 @@ export interface ConnectionState {
   connectionError?: string;
   lastHeartbeat?: number;
 }
+
+export type NotificationEventType = 'notification';
+
+export interface NotificationMessage {
+  type: 'notification';
+  data: {
+    id: string;
+    userId: string;
+    type: 'REPLY' | 'MENTION' | 'KARMA_MILESTONE';
+    content: string;
+    read: boolean;
+    createdAt: string;
+    relatedCommentId?: string;
+    triggeredBy?: {
+      id: string;
+      username?: string;
+      avatarUrl?: string;
+    };
+  };
+}

@@ -6,6 +6,7 @@ import {
   CommentUpdatedMessage,
   CommentDeletedMessage,
   KarmaChangedMessage,
+  NotificationMessage,
 } from '@shared/websocket-types';
 
 export class WebSocketHandlers {
@@ -139,6 +140,43 @@ export class WebSocketHandlers {
   ): boolean {
     const hasExistingDownvote = existingVotes.some((vote) => vote.userId === userId && vote.type === 'downvote');
     return !hasExistingDownvote;
+  }
+
+  // Broadcast notification to user
+  broadcastNotification(
+    userId: string,
+    notification: {
+      id: string;
+      type: 'REPLY' | 'MENTION' | 'KARMA_MILESTONE';
+      content: string;
+      read: boolean;
+      createdAt: Date;
+      relatedCommentId?: string;
+      triggeredBy?: { id: string; username?: string; avatarUrl?: string };
+    }
+  ): void {
+    const message: NotificationMessage = {
+      type: 'notification',
+      data: {
+        id: notification.id,
+        userId,
+        type: notification.type,
+        content: notification.content,
+        read: notification.read,
+        createdAt: notification.createdAt.toISOString(),
+        relatedCommentId: notification.relatedCommentId,
+        triggeredBy: notification.triggeredBy,
+      },
+    };
+
+    logger.debug('Broadcasting notification', {
+      userId,
+      notificationId: notification.id,
+      type: notification.type,
+    });
+
+    // Emit to user's personal room (all their connected sockets)
+    this.io.to(`user_${userId}`).emit('notification', message);
   }
 }
 

@@ -7,6 +7,7 @@ import { setupAuthRoute } from './auth';
 import { setupUsersRoute } from './users';
 import { setupModerationRoute } from './moderation';
 import { setupKarmaRoute } from './karma';
+import { setupNotificationsRoute } from './notifications';
 
 export function setupRoutes(router: Router, io?: SocketIOServer): void {
   setupHealthRoute(router);
@@ -16,4 +17,5 @@ export function setupRoutes(router: Router, io?: SocketIOServer): void {
   setupUsersRoute(router);
   setupModerationRoute(router);
   setupKarmaRoute(router, io);
+  setupNotificationsRoute(router);
 }

@@ -53,6 +53,12 @@ export function initializeWebSocket(httpServer: Server): SocketIOServer {
     const userId = socket.userId;
     logger.info('WebSocket client connected', { userId, socketId: socket.id });
 
+    // Auto-join user to personal notification room
+    if (userId) {
+      socket.join(`user_${userId}`);
+      logger.info('Client joined notification room', { userId, socketId: socket.id });
+    }
+
     // Join article room
     socket.on('join_article', (articleId: string) => {
       if (!articleId) {

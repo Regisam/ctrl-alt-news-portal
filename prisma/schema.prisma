@@ -39,6 +39,12 @@ enum ReactionType {
   CLAP  // Multiple claps (1-50)
 }
 
+enum NotificationType {
+  REPLY            // Reply to user's comment
+  MENTION          // User mentioned @username
+  KARMA_MILESTONE  // Karma reached 10, 50, 100
+}
+
 // ============================================================================
 // CORE MODELS
 // ============================================================================
@@ -79,6 +85,8 @@ model User {
   bookmarks         Bookmark[]
   reactions         Reaction[]
   pageViews         PageView[]
+  notifications     Notification[]  // Notifications for this user
+  mentionFrom       Notification[]  @relation("NotificationTriggeredBy")  // Notifications triggered by this user
 
   @@index([email])
   @@index([googleId])
@@ -193,6 +201,7 @@ model Comment {
   author            User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   parent            Comment?   @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
   replies           Comment[]  @relation("CommentReplies")
+  notifications     Notification[]  // Notifications related to this comment
 
   // Indexes
   @@index([articleId])
@@ -249,6 +258,43 @@ model Bookmark {
   @@index([userId])
   @@index([articleId])
   @@map("bookmarks")
+}
+
+/// Notifications (replies, mentions, karma milestones)
+model Notification {
+  id                String     @id @default(cuid())
+
+  // Recipient
+  userId            String
+
+  // Type & Content
+  type              NotificationType
+  content           String     @db.Text  // Notification message (bilingual supported in content)
+
+  // Status
+  read              Boolean    @default(false)
+
+  // Relations (optional)
+  relatedCommentId  String?    // Comment that triggered the notification
+  relatedUserId     String?    // User who triggered the notification (for replies/mentions)
+
+  // Timestamps
+  createdAt         DateTime   @default(now())
+  deletedAt         DateTime?  // Soft delete (for 24h cleanup)
+
+  // Relations
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  relatedComment    Comment?   @relation(fields: [relatedCommentId], references: [id], onDelete: SetNull)
+  triggeredBy       User?      @relation("NotificationTriggeredBy", fields: [relatedUserId], references: [id], onDelete: SetNull)
+
+  // Indexes
+  @@index([userId])
+  @@index([createdAt])
+  @@index([read])
+  @@index([type])
+  @@index([relatedCommentId])
+  @@index([relatedUserId])
+  @@map("notifications")
 }
 
 /// Tags for articles
