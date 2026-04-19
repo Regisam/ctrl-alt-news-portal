@@ -9,6 +9,9 @@ import { Menu, X, Globe } from "lucide-react";
 import { LOGO1_URL, LOGO2_URL } from "@/lib/data";
 import { useLocation } from "wouter";
 import SearchBar from "@/components/SearchBar";
+import { NotificationBell } from "@/components/NotificationBell";
+import { NotificationDropdown } from "@/components/NotificationDropdown";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface HeaderProps {
   lang: 'en' | 'pt';
@@ -17,7 +20,21 @@ interface HeaderProps {
 
 export default function Header({ lang, onLangChange }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
   const [, navigate] = useLocation();
+
+  // Get current user ID from session/localStorage (simplified)
+  const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') || '' : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') || '' : '';
+
+  const {
+    notifications,
+    unreadCount,
+    isLoading,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+  } = useNotifications({ userId, token, enabled: Boolean(userId && token) });
 
   const categoryRoutes: Record<string, string> = {
     AI: '/ai',
@@ -126,10 +143,32 @@ export default function Header({ lang, onLangChange }: HeaderProps) {
           {/* ---- Spacer ---- */}
           <div style={{ flex: 1 }} aria-hidden="true" />
 
-          {/* ---- RIGHT: Search + Language ---- */}
+          {/* ---- RIGHT: Search + Notifications + Language ---- */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
             {/* Search */}
             <SearchBar lang={lang} />
+
+            {/* Notifications Bell */}
+            {userId && token && (
+              <div style={{ position: 'relative' }}>
+                <NotificationBell
+                  unreadCount={unreadCount}
+                  onClick={() => setNotificationDropdownOpen(!notificationDropdownOpen)}
+                  className="focus-neon"
+                />
+                {notificationDropdownOpen && (
+                  <NotificationDropdown
+                    notifications={notifications}
+                    unreadCount={unreadCount}
+                    isLoading={isLoading}
+                    onRead={markAsRead}
+                    onDelete={deleteNotification}
+                    onMarkAllRead={markAllAsRead}
+                    onClose={() => setNotificationDropdownOpen(false)}
+                  />
+                )}
+              </div>
+            )}
 
             {/* Language Toggle */}
             <div
