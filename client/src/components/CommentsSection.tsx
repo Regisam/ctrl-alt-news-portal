@@ -21,6 +21,8 @@ interface ApiComment {
   author: ApiAuthor;
   createdAt: string;
   parentId: string | null;
+  replyCount?: number;
+  parentContext?: { id: string; content: string; author: ApiAuthor };
   replies?: ApiComment[];
 }
 
@@ -43,6 +45,8 @@ interface Comment {
   replies: Reply[];
   showReplies: boolean;
   replyOpen: boolean;
+  replyCount?: number;
+  authorId: string;
 }
 
 // ─── No seed comments — all articles start with zero comments ─────────────────
@@ -155,6 +159,8 @@ function flattenComments(apiComments: ApiComment[]): Comment[] {
     avatarColor: getColorForAuthor(c.author.id),
     time: "",
     content: c.content,
+    authorId: c.author.id,
+    replyCount: c.replyCount,
     replies: (c.replies || []).map((r) => ({
       id: r.id,
       author: r.author.fullName,
@@ -283,6 +289,8 @@ export default function CommentsSection({ articleId, lang, catColor, catBg, catB
           avatarColor: getColorForAuthor(data.data.author.id),
           time: lang === "en" ? "just now" : "agora mesmo",
           content: data.data.content,
+          authorId: data.data.author.id,
+          replyCount: 0,
           replies: [],
           showReplies: true,
           replyOpen: false,
@@ -337,7 +345,13 @@ export default function CommentsSection({ articleId, lang, catColor, catBg, catB
         setComments((prev) =>
           prev.map((c) =>
             c.id === commentId
-              ? { ...c, replies: [...c.replies, newReply], replyOpen: false, showReplies: true }
+              ? {
+                  ...c,
+                  replies: [...c.replies, newReply],
+                  replyOpen: false,
+                  showReplies: true,
+                  replyCount: (c.replyCount ?? 0) + 1
+                }
               : c
           )
         );
