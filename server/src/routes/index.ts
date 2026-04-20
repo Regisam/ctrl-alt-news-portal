@@ -6,6 +6,8 @@ import { setupCommentsRoute } from './comments';
 import { setupAuthRoute } from './auth';
 import { setupAdminAuthRoute } from './admin/auth';
 import { setupAdminUsersRoute } from './admin/users';
+import { setupAdminArticlesRoute } from './admin/articles';
+import { setupAdminAnalyticsRoute } from './admin/analytics';
 import { setupUsersRoute } from './users';
 import { setupModerationRoute } from './moderation';
 import { setupKarmaRoute } from './karma';
@@ -18,6 +20,8 @@ export function setupRoutes(router: Router, io?: SocketIOServer): void {
   setupAuthRoute(router);
   setupAdminAuthRoute(router);
   setupAdminUsersRoute(router);
+  setupAdminArticlesRoute(router);
+  setupAdminAnalyticsRoute(router);
   setupUsersRoute(router);
   setupModerationRoute(router);
   setupKarmaRoute(router, io);
