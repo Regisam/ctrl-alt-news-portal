@@ -18,7 +18,7 @@ datasource db {
 
 enum UserRole {
   USER    // Regular reader
-  AUTHOR  // Can create articles
+  EDITOR  // Can create/edit articles
   ADMIN   // Full access
 }
 

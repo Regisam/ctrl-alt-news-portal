@@ -5,6 +5,7 @@ import logger from '../logger';
 export interface AuthRequest extends Request {
   userId?: string;
   userEmail?: string;
+  userRole?: string;
 }
 
 export function verifyJWT(req: AuthRequest, res: Response, next: NextFunction): void {
@@ -79,7 +80,7 @@ export function isAdmin(req: AuthRequest, res: Response, next: NextFunction): vo
   roleMiddleware(req, res, next);
 }
 
-export function isAuthor(req: AuthRequest, res: Response, next: NextFunction): void {
-  const roleMiddleware = requireRole('AUTHOR', 'ADMIN');
+export function isEditor(req: AuthRequest, res: Response, next: NextFunction): void {
+  const roleMiddleware = requireRole('EDITOR', 'ADMIN');
   roleMiddleware(req, res, next);
 }

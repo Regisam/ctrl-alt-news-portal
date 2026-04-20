@@ -68,12 +68,13 @@ function validateLogin(data: LoginBody): ValidationErrors {
   return errors;
 }
 
-function generateAccessToken(userId: string, email: string): string {
+function generateAccessToken(userId: string, email: string, role: string): string {
   const secret = process.env.JWT_SECRET || 'your-secret-key-change-me-in-production';
   return jwt.sign(
     {
       userId,
       email,
+      role,
       type: 'access',
     },
     secret,
@@ -215,6 +216,7 @@ export function setupAuthRoute(router: Router): void {
             email: true,
             passwordHash: true,
             fullName: true,
+            role: true,
           },
         });
 
@@ -239,7 +241,7 @@ export function setupAuthRoute(router: Router): void {
         }
 
         // Generate tokens
-        const accessToken = generateAccessToken(user.id, user.email);
+        const accessToken = generateAccessToken(user.id, user.email, user.role);
         const { token: refreshToken } = generateRefreshToken(user.id);
 
         // Update lastLoginAt
@@ -248,9 +250,13 @@ export function setupAuthRoute(router: Router): void {
           data: { lastLoginAt: new Date() },
         });
 
+        // Audit logging (especially for admin logins)
         logger.info('User logged in successfully', {
           userId: user.id,
           email: user.email,
+          role: user.role,
+          ip: req.ip,
+          isAdmin: user.role === 'ADMIN',
         });
 
         // Set refresh token in httpOnly cookie
@@ -390,6 +396,7 @@ export function setupAuthRoute(router: Router): void {
             id: true,
             email: true,
             fullName: true,
+            role: true,
           },
         });
 
@@ -402,7 +409,7 @@ export function setupAuthRoute(router: Router): void {
         }
 
         // Generate new access token
-        const newAccessToken = generateAccessToken(user.id, user.email);
+        const newAccessToken = generateAccessToken(user.id, user.email, user.role);
 
         logger.info('Access token refreshed', { userId: user.id });
 
@@ -510,9 +517,9 @@ export function setupAuthRoute(router: Router): void {
         }
 
         // Find or create user
-        let user: AuthUser | null = await prisma.user.findUnique({
+        let user: any = await prisma.user.findUnique({
           where: { googleId: googlePayload.sub },
-          select: { id: true, email: true, fullName: true },
+          select: { id: true, email: true, fullName: true, role: true },
         });
 
         if (user) {
@@ -536,6 +543,7 @@ export function setupAuthRoute(router: Router): void {
                 id: true,
                 email: true,
                 fullName: true,
+                role: true,
               },
             });
             logger.info('Google OAuth - linked to existing user', { userId: user.id });
@@ -554,6 +562,7 @@ export function setupAuthRoute(router: Router): void {
                 id: true,
                 email: true,
                 fullName: true,
+                role: true,
               },
             });
             logger.info('Google OAuth - new user created', { userId: user.id });
@@ -565,7 +574,7 @@ export function setupAuthRoute(router: Router): void {
         }
 
         // Generate tokens
-        const accessToken = generateAccessToken(user.id, user.email);
+        const accessToken = generateAccessToken(user.id, user.email, user.role);
         const { token: refreshToken } = generateRefreshToken(user.id);
 
         // Update lastLoginAt

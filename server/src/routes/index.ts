@@ -4,6 +4,7 @@ import { setupHealthRoute } from './health';
 import { setupContactRoute } from './contact';
 import { setupCommentsRoute } from './comments';
 import { setupAuthRoute } from './auth';
+import { setupAdminAuthRoute } from './admin/auth';
 import { setupUsersRoute } from './users';
 import { setupModerationRoute } from './moderation';
 import { setupKarmaRoute } from './karma';
@@ -14,6 +15,7 @@ export function setupRoutes(router: Router, io?: SocketIOServer): void {
   setupContactRoute(router);
   setupCommentsRoute(router, io);
   setupAuthRoute(router);
+  setupAdminAuthRoute(router);
   setupUsersRoute(router);
   setupModerationRoute(router);
   setupKarmaRoute(router, io);
