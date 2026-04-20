@@ -53,11 +53,11 @@ SPRINT 4 (COMPLETED 2026-04-20)  ███████████████�
 ├── Story 4.5: Trending Comments API ✅
 └── EPIC 6 (cont): Responsive Design
 
-SPRINT 5 (NEXT)  ████████████ 145h EPIC 5: Admin Dashboard
-├── Story 5.1: Admin Authentication
-├── Story 5.2: Articles Dashboard (start)
-├── Story 5.3: Users Dashboard (start)
-├── Story 5.4: Analytics Dashboard (start)
+SPRINT 5 (COMPLETED 2026-04-20)  ████████████ 145h EPIC 5: Admin Dashboard
+├── Story 5.1: Admin Authentication ✅
+├── Story 5.2: Articles Dashboard ✅
+├── Story 5.3: Users Dashboard ✅
+├── Story 5.4: Analytics Dashboard ✅
 └── EPIC 6 (cont): Design Tokens
 
 SPRINT 6 (Jul 6 - Jul 19)  ████████████ 140h EPIC 5 + EPIC 7 (start)
