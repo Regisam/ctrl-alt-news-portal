@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { ChevronUp, ChevronDown, MoreVertical } from 'lucide-react';
 import {
   Table,

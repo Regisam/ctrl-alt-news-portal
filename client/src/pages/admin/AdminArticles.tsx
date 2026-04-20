@@ -136,7 +136,7 @@ export function AdminArticles() {
     }
   };
 
-  const handleSaveArticle = async (updates: any) => {
+  const handleSaveArticle = async (updates: Record<string, unknown>) => {
     if (!selectedArticle) return;
     try {
       const token = localStorage.getItem('accessToken');

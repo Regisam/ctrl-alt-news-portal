@@ -46,20 +46,23 @@ export function ArticleEditModal({
   const [categoryId, setCategoryId] = useState('');
   const [saving, setSaving] = useState(false);
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (article) {
-      // eslint-disable-next-line @babel/object-as-object-prototype
-      setTitleEn(article.titleEn);
-      // eslint-disable-next-line @babel/object-as-object-prototype
-      setTitlePt(article.titlePt);
-      // eslint-disable-next-line @babel/object-as-object-prototype
-      setExcerptEn(article.excerptEn);
-      // eslint-disable-next-line @babel/object-as-object-prototype
-      setExcerptPt(article.excerptPt);
-      // eslint-disable-next-line @babel/object-as-object-prototype
-      setCategoryId(article.categoryId);
+      // Populate form fields when article changes
+      const populate = () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const art = article as any;
+        setTitleEn(art.titleEn);
+        setTitlePt(art.titlePt);
+        setExcerptEn(art.excerptEn);
+        setExcerptPt(art.excerptPt);
+        setCategoryId(art.categoryId);
+      };
+      populate();
     }
   }, [article]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   const handleSave = async () => {
     setSaving(true);

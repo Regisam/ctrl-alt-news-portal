@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader } from 'lucide-react';
 
 interface User {
   id: string;
@@ -211,8 +210,8 @@ export function AdminUsers() {
               }
             }}
             onViewDetail={fetchUserDetail}
-            onChangeRole={(userId) => console.log('Change role:', userId)}
-            onChangeStatus={(userId) => console.log('Change status:', userId)}
+            onChangeRole={() => {}}
+            onChangeStatus={() => {}}
           />
 
           {/* Pagination */}
