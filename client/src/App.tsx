@@ -14,6 +14,9 @@ import SearchPage from "./pages/SearchPage";
 import CategoryPage from "./pages/CategoryPage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
+import { AdminUsers } from "./pages/admin/AdminUsers";
+import { AdminArticles } from "./pages/admin/AdminArticles";
+import { AdminAnalytics } from "./pages/admin/AdminAnalytics";
 
 function Router() {
   return (
@@ -31,6 +34,9 @@ function Router() {
       <Route path={"/privacy"} component={PrivacyPage} />
       <Route path={"/terms"} component={TermsPage} />
       <Route path={"/search"} component={SearchPage} />
+      <Route path={"/admin/users"} component={AdminUsers} />
+      <Route path={"/admin/articles"} component={AdminArticles} />
+      <Route path={"/admin/analytics"} component={AdminAnalytics} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

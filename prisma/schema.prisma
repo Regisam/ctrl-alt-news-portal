@@ -70,6 +70,7 @@ model User {
 
   // Roles & Permissions
   role              UserRole   @default(USER)
+  isActive          Boolean    @default(true) // Soft deactivation for admin
 
   // Reputation
   karma             Int        @default(0) // User reputation score

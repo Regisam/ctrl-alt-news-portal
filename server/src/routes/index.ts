@@ -5,6 +5,7 @@ import { setupContactRoute } from './contact';
 import { setupCommentsRoute } from './comments';
 import { setupAuthRoute } from './auth';
 import { setupAdminAuthRoute } from './admin/auth';
+import { setupAdminUsersRoute } from './admin/users';
 import { setupUsersRoute } from './users';
 import { setupModerationRoute } from './moderation';
 import { setupKarmaRoute } from './karma';
@@ -16,6 +17,7 @@ export function setupRoutes(router: Router, io?: SocketIOServer): void {
   setupCommentsRoute(router, io);
   setupAuthRoute(router);
   setupAdminAuthRoute(router);
+  setupAdminUsersRoute(router);
   setupUsersRoute(router);
   setupModerationRoute(router);
   setupKarmaRoute(router, io);
