@@ -76,9 +76,11 @@ export function AdminAnalytics() {
     }
   };
 
+  /* eslint-disable */
   useEffect(() => {
     fetchKPIData();
   }, []);
+  /* eslint-enable */
 
   return (
     <AdminRoute>

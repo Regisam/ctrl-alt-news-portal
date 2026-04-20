@@ -62,25 +62,25 @@ export function AdminLayout({ children, lang }: AdminLayoutProps) {
         <nav className="flex-1 px-4 py-6 space-y-2">
           {navItems.map((item) => (
             <Link key={item.path} to={item.path}>
-              <a
+              <button
                 onClick={() => setSidebarOpen(false)}
-                className={`block px-4 py-3 rounded transition-colors ${
+                className={`w-full text-left px-4 py-3 rounded transition-colors border-none cursor-pointer ${
                   isActive(item.path)
                     ? 'bg-[#00D4FF]/20 text-[#00D4FF] border-l-2 border-[#00D4FF]'
                     : 'text-gray-300 hover:bg-[#00D4FF]/10'
                 }`}
               >
                 {item.label}
-              </a>
+              </button>
             </Link>
           ))}
         </nav>
 
         <div className="p-4 border-t border-[#00D4FF]/20">
           <Link to="/login">
-            <a className="block px-4 py-2 text-sm text-gray-400 hover:text-[#00D4FF] transition-colors">
+            <button className="w-full text-left px-4 py-2 text-sm text-gray-400 hover:text-[#00D4FF] transition-colors border-none cursor-pointer bg-transparent">
               {t[lang].logout}
-            </a>
+            </button>
           </Link>
         </div>
       </aside>

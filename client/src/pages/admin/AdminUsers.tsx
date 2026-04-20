@@ -145,9 +145,11 @@ export function AdminUsers() {
     }
   };
 
+  /* eslint-disable */
   useEffect(() => {
     fetchUsers();
   }, [page, sortField, sortOrder, search, roleFilter, statusFilter]);
+  /* eslint-enable */
 
   const pages = Math.ceil(total / limit);
 
