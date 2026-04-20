@@ -17,5 +17,5 @@ export function setupRoutes(router: Router, io?: SocketIOServer): void {
   setupUsersRoute(router);
   setupModerationRoute(router);
   setupKarmaRoute(router, io);
-  setupNotificationsRoute(router);
+  setupNotificationsRoute(router, io);
 }

@@ -1,14 +1,34 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
+import { Server as SocketIOServer } from 'socket.io';
 import { z } from 'zod';
 
 const prisma = new PrismaClient();
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-export function setupNotificationsRoute(router: Router) {
+// JWT Authentication middleware
+function authenticateJWT(req: Request, res: Response, next: Function) {
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Missing authorization token' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    (req as any).userId = decoded.userId;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+}
+
+export function setupNotificationsRoute(router: Router, io?: SocketIOServer) {
   // GET /api/notifications - Paginated list with unread count
-  router.get('/api/notifications', async (req: Request, res: Response) => {
+  router.get('/api/notifications', authenticateJWT, async (req: Request, res: Response) => {
     try {
-      const userId = req.query.userId as string;
+      const userId = (req as any).userId;
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
 
@@ -59,7 +79,7 @@ export function setupNotificationsRoute(router: Router) {
   });
 
   // PATCH /api/notifications/:id/read - Mark single notification as read
-  router.patch('/api/notifications/:id/read', async (req: Request, res: Response) => {
+  router.patch('/api/notifications/:id/read', authenticateJWT, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
@@ -76,13 +96,9 @@ export function setupNotificationsRoute(router: Router) {
   });
 
   // POST /api/notifications/read-all - Batch mark all as read for user
-  router.post('/api/notifications/read-all', async (req: Request, res: Response) => {
+  router.post('/api/notifications/read-all', authenticateJWT, async (req: Request, res: Response) => {
     try {
-      const userId = req.body.userId as string;
-
-      if (!userId) {
-        return res.status(400).json({ error: 'userId required' });
-      }
+      const userId = (req as any).userId;
 
       const result = await prisma.notification.updateMany({
         where: {
@@ -104,7 +120,7 @@ export function setupNotificationsRoute(router: Router) {
   });
 
   // DELETE /api/notifications/:id - Soft delete single notification
-  router.delete('/api/notifications/:id', async (req: Request, res: Response) => {
+  router.delete('/api/notifications/:id', authenticateJWT, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
