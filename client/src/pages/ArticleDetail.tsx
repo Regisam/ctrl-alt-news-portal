@@ -22,6 +22,7 @@ import CommentsSection from "@/components/CommentsSection";
 import Footer from "@/components/Footer";
 import Sidebar from "@/components/Sidebar";
 import LatestInCategory from "@/components/LatestInCategory";
+import { useLanguage } from "@/hooks/useLanguage";
 import { aiArticles, scienceArticles, roboticsArticles, trendingArticles } from "@/lib/data";
 import { articleBodies } from "@/lib/articleContent";
 import type { Article } from "@/lib/data";
@@ -72,26 +73,7 @@ function getInitials(name: string) {
 export default function ArticleDetail() {
   const params = useParams<{ id: string }>();
   const articleId = parseInt(params.id || "0", 10);
-  const [lang, setLang] = useState<"en" | "pt">(() => {
-    if (typeof window === "undefined") return "en";
-    return (localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null) || "en";
-  });
-
-  function handleLangChange(newLang: "en" | "pt") {
-    setLang(newLang);
-    localStorage.setItem("ctrl-alt-lang", newLang);
-    document.documentElement.lang = newLang === "pt" ? "pt-BR" : "en-UK";
-  }
-
-  // Sync language from localStorage (set by Header toggle)
-  useEffect(() => {
-    const handler = () => {
-      const updated = localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null;
-      if (updated) setLang(updated);
-    };
-    window.addEventListener("storage", handler);
-    return () => window.removeEventListener("storage", handler);
-  }, []);
+  const { lang, setLang } = useLanguage();
 
   // Scroll to top on mount
   useEffect(() => {
@@ -137,7 +119,7 @@ export default function ArticleDetail() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#0A0A0B" }}>
-      <Header lang={lang} onLangChange={handleLangChange} />
+      <Header lang={lang} onLangChange={setLang} />
 
       {/* ── Hero ── */}
       <div className="relative w-full overflow-hidden" style={{ height: "480px" }}>

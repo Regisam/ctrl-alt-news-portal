@@ -10,6 +10,7 @@ import { useLocation, Link } from "wouter";
 import { Search, Clock, Eye, ArrowLeft } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { useLanguage } from "@/hooks/useLanguage";
 import {
   aiArticles,
   scienceArticles,
@@ -65,7 +66,7 @@ function filterArticles(
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function SearchPage() {
-  const [lang, setLang] = useState<"en" | "pt">("en");
+  const { lang, setLang } = useLanguage();
   const [, navigate] = useLocation();
   const [query, setQuery] = useState(getQuery);
   const [activeCategory, setActiveCategory] = useState("ALL");
