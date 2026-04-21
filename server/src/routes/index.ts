@@ -12,10 +12,12 @@ import { setupUsersRoute } from './users';
 import { setupModerationRoute } from './moderation';
 import { setupKarmaRoute } from './karma';
 import { setupNotificationsRoute } from './notifications';
+import { setupArticlesRoute } from './articles';
 
 export function setupRoutes(router: Router, io?: SocketIOServer): void {
   setupHealthRoute(router);
   setupContactRoute(router);
+  setupArticlesRoute(router);
   setupCommentsRoute(router, io);
   setupAuthRoute(router);
   setupAdminAuthRoute(router);

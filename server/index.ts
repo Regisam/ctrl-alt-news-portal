@@ -10,6 +10,7 @@ import { requestLogger } from './src/middleware/requestLogger';
 import { setupRoutes } from './src/routes';
 import { initializeWebSocket } from './src/websocket';
 import { startNotificationCleanup } from './src/services/notification-cleanup';
+import { cacheService } from './src/services/cache';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +19,11 @@ async function startServer(): Promise<void> {
   const app = express();
   const server = createServer(app);
   const apiRouter = express.Router();
+
+  // Initialize Cache Service
+  await cacheService.connect();
+  const cacheHealth = await cacheService.health();
+  logger.info(`Cache service: ${cacheHealth.status} - ${cacheHealth.message}`);
 
   // Middleware Stack
   app.use(helmet());
