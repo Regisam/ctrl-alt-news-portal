@@ -146,7 +146,7 @@ export default function Header({ lang, onLangChange }: HeaderProps) {
           {/* ---- RIGHT: Search + Notifications + Language ---- */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
             {/* Search */}
-            <SearchBar lang={lang} />
+            <SearchBar />
 
             {/* Notifications Bell */}
             {userId && token && (

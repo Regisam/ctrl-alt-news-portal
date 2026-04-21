@@ -59,8 +59,13 @@
     "viewAll": "Ver Todos"
   },
   "searchBar": {
-    "placeholder": "Pesquisar artigos...",
-    "noResults": "Nenhum artigo encontrado"
+    "placeholder": "Buscar artigos, categorias, autores…",
+    "search": "Buscar",
+    "close": "Fechar busca",
+    "openSearch": "Abrir busca",
+    "searchResults": "Resultados da busca",
+    "noResults": "Nenhum resultado encontrado",
+    "viewAll": "Ver todos os {{count}} resultado{{plural}}"
   },
   "errors": {
     "notFound": "Não Encontrado",

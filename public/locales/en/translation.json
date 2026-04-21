@@ -59,8 +59,13 @@
     "viewAll": "View All"
   },
   "searchBar": {
-    "placeholder": "Search articles...",
-    "noResults": "No articles found"
+    "placeholder": "Search articles, categories, authors…",
+    "search": "Search",
+    "close": "Close search",
+    "openSearch": "Open search",
+    "searchResults": "Search results",
+    "noResults": "No results found",
+    "viewAll": "View all {{count}} result{{plural}}"
   },
   "errors": {
     "notFound": "Not Found",

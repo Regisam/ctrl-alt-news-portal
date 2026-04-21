@@ -10,6 +10,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { Search, X, ChevronRight } from "lucide-react";
 import {
   aiArticles,
@@ -61,20 +62,18 @@ function searchArticles(query: string, lang: "en" | "pt"): CategoryArticle[] {
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
-interface SearchBarProps {
-  lang: "en" | "pt";
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function SearchBar({ lang }: SearchBarProps) {
+export default function SearchBar() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [highlighted, setHighlighted] = useState(-1);
   const [, navigate] = useLocation();
+  const { i18n } = useTranslation();
 
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   const PREVIEW_LIMIT = 6;
 
@@ -85,7 +84,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
     setHighlighted(-1);
   }, []);
 
-  const computedResults = useMemo(() => searchArticles(query, lang), [query, lang]);
+  const computedResults = useMemo(() => searchArticles(query, i18n.language as 'en' | 'pt'), [query, i18n.language]);
 
   // ── Click outside to close ──────────────────────────────────────────────────
   useEffect(() => {
@@ -140,11 +139,6 @@ export default function SearchBar({ lang }: SearchBarProps) {
   const preview = computedResults.slice(0, PREVIEW_LIMIT);
   const showDropdown = open && query.trim().length > 0;
 
-  const t = {
-    en: { placeholder: "Search articles, categories, authors…", search: "Search", close: "Close search", viewAll: (n: number) => `View all ${n} result${n !== 1 ? "s" : ""}`, noResults: "No results found" },
-    pt: { placeholder: "Buscar artigos, categorias, autores…", search: "Buscar", close: "Fechar busca", viewAll: (n: number) => `Ver todos os ${n} resultado${n !== 1 ? "s" : ""}`, noResults: "Nenhum resultado encontrado" },
-  }[lang];
-
   return (
     <div ref={containerRef} style={{ position: "relative" }}>
       {/* ── Collapsed button ── */}
@@ -152,7 +146,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
         <button
           type="button"
           onClick={handleOpen}
-          aria-label={lang === "en" ? "Open search" : "Abrir busca"}
+          aria-label={t('searchBar.openSearch')}
           className="focus-neon search-toggle-btn"
           style={{
             display: "flex",
@@ -170,7 +164,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
           }}
         >
           <Search size={14} aria-hidden="true" />
-          <span className="hidden lg:inline">{t.search}</span>
+          <span className="hidden lg:inline">{t('searchBar.search')}</span>
         </button>
       )}
 
@@ -179,7 +173,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
         <form
           onSubmit={handleSubmit}
           role="search"
-          aria-label={t.placeholder}
+          aria-label={t('searchBar.placeholder')}
           style={{ display: "flex", alignItems: "center", gap: "6px" }}
         >
           <div style={{ position: "relative" }}>
@@ -201,8 +195,8 @@ export default function SearchBar({ lang }: SearchBarProps) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={t.placeholder}
-              aria-label={t.placeholder}
+              placeholder={t('searchBar.placeholder')}
+              aria-label={t('searchBar.placeholder')}
               aria-autocomplete="list"
               role="combobox"
               aria-expanded={showDropdown}
@@ -228,7 +222,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
           <button
             type="button"
             onClick={closeSearch}
-            aria-label={t.close}
+            aria-label={t('searchBar.close')}
             style={{
               background: "none",
               border: "none",
@@ -248,7 +242,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
       {showDropdown && (
         <div
           role="listbox"
-          aria-label={lang === "en" ? "Search results" : "Resultados da busca"}
+          aria-label={t('searchBar.searchResults')}
           style={{
             position: "absolute",
             top: "calc(100% + 8px)",
@@ -265,7 +259,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
         >
           {preview.length === 0 ? (
             <div style={{ padding: "20px 16px", color: "rgba(255,255,255,0.35)", fontSize: "0.85rem", textAlign: "center" }}>
-              {t.noResults}
+              {t('searchBar.noResults')}
             </div>
           ) : (
             <>
@@ -333,7 +327,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
                               whiteSpace: "nowrap",
                             }}
                           >
-                            {article.title[lang] ?? article.title.en}
+                            {article.title[i18n.language as 'en' | 'pt'] ?? article.title.en}
                           </p>
                           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                             <span
@@ -387,7 +381,9 @@ export default function SearchBar({ lang }: SearchBarProps) {
                       padding: 0,
                     }}
                   >
-                    {t.viewAll(computedResults.length)}
+                    {i18n.language === 'en'
+                      ? `View all ${computedResults.length} result${computedResults.length !== 1 ? 's' : ''}`
+                      : `Ver todos os ${computedResults.length} resultado${computedResults.length !== 1 ? 's' : ''}`}
                     <ChevronRight size={14} />
                   </button>
                 </div>
