@@ -29,7 +29,7 @@ export class CacheInvalidationManager {
     } else {
       await cacheService.invalidate('comments:*');
     }
-    this.invalidateArticles();
+    await this.invalidateArticles();
   }
 
   static async invalidateAll(): Promise<void> {
