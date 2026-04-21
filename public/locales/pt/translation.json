@@ -8,7 +8,20 @@
     "delete": "Deletar",
     "edit": "Editar",
     "close": "Fechar",
-    "search": "Pesquisar"
+    "search": "Pesquisar",
+    "minRead": "min leitura",
+    "latestIn": "Últimas em",
+    "viewAll": "Ver Todos",
+    "page": "Página",
+    "previousPage": "Página anterior",
+    "nextPage": "Próxima página",
+    "viewAllArticles": "Ver todos os artigos",
+    "about": "Sobre",
+    "contact": "Contato",
+    "home": "Início",
+    "privacy": "Política de Privacidade",
+    "terms": "Termos de Serviço",
+    "language": "Idioma"
   },
   "pages": {
     "home": {
@@ -29,7 +42,25 @@
     },
     "contact": {
       "title": "Contato"
+    },
+    "privacy": {
+      "title": "Política de Privacidade"
+    },
+    "terms": {
+      "title": "Termos de Serviço"
     }
+  },
+  "carousel": {
+    "minRead": "min leitura",
+    "latestIn": "Últimas em",
+    "page": "Página",
+    "previousPage": "Página anterior",
+    "nextPage": "Próxima página",
+    "viewAll": "Ver Todos"
+  },
+  "searchBar": {
+    "placeholder": "Pesquisar artigos...",
+    "noResults": "Nenhum artigo encontrado"
   },
   "errors": {
     "notFound": "Não Encontrado",

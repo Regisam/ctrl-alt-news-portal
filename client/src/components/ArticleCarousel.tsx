@@ -5,11 +5,11 @@
 
 import { useState, useCallback } from 'react';
 import { useLocation } from 'wouter';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import type { CategoryArticle } from '@/lib/data';
 
 interface ArticleCarouselProps {
-  lang: 'en' | 'pt';
   articles: CategoryArticle[];
   categoryLabel: string;
   accentColor: string;
@@ -17,7 +17,7 @@ interface ArticleCarouselProps {
   badgeBg: string;
   sectionIcon: string;
   sectionId: string;
-  categoryPath: string; // e.g. "/ai"
+  categoryPath: string;
 }
 
 const COLS = 4;
@@ -27,20 +27,19 @@ const PAGE_SIZE = COLS * ROWS; // 8 cards per page
 // ─── Single Article Card ──────────────────────────────────────────────────────
 function CarouselCard({
   article,
-  lang,
   accentColor,
   accentColorRgb,
   badgeBg,
 }: {
   article: CategoryArticle;
-  lang: 'en' | 'pt';
   accentColor: string;
   accentColorRgb: string;
   badgeBg: string;
 }) {
   const [, navigate] = useLocation();
-  const title = lang === 'en' ? article.title.en : article.title.pt;
-  const excerpt = lang === 'en' ? article.excerpt.en : article.excerpt.pt;
+  const { i18n } = useTranslation();
+  const title = i18n.language === 'en' ? article.title.en : article.title.pt;
+  const excerpt = i18n.language === 'en' ? article.excerpt.en : article.excerpt.pt;
 
   const baseStyle: React.CSSProperties = {
     background: 'rgba(15,15,20,0.95)',
@@ -141,7 +140,8 @@ function CarouselCard({
               fontFamily: "'Roboto', sans-serif",
             }}
           >
-            {article.readTime} {lang === 'en' ? 'min read' : 'min leitura'}
+            {/* readTime in parent keeps using i18n.language */}
+            {article.readTime} min {i18n.language === 'en' ? 'read' : 'leitura'}
           </span>
         </div>
 
@@ -222,7 +222,6 @@ function CarouselCard({
 
 // ─── Main Carousel ────────────────────────────────────────────────────────────
 export default function ArticleCarousel({
-  lang,
   articles,
   categoryLabel,
   accentColor,
@@ -233,6 +232,7 @@ export default function ArticleCarousel({
   categoryPath,
 }: ArticleCarouselProps) {
   const [, navigate] = useLocation();
+  const { t, i18n } = useTranslation();
   const [page, setPage] = useState(0);
 
   const totalPages = Math.ceil(articles.length / PAGE_SIZE);
@@ -246,7 +246,7 @@ export default function ArticleCarousel({
   return (
     <section
       id={sectionId}
-      aria-label={`${sectionIcon} ${lang === 'en' ? 'Latest in' : 'Últimas em'} ${categoryLabel}`}
+      aria-label={`${sectionIcon} ${t('carousel.latestIn')} ${categoryLabel}`}
       style={{ marginBottom: '56px' }}
     >
       {/* ── Section Header ── */}
@@ -285,7 +285,7 @@ export default function ArticleCarousel({
                 fontFamily: "'Roboto', sans-serif",
               }}
             >
-              {lang === 'en' ? 'Latest in' : 'Últimas em'}
+              {t('carousel.latestIn')}
             </p>
             <h2
               style={{
@@ -323,7 +323,7 @@ export default function ArticleCarousel({
                 <button
                   key={i}
                   onClick={() => setPage(i)}
-                  aria-label={`${lang === 'en' ? 'Page' : 'Página'} ${i + 1}`}
+                  aria-label={`${t('carousel.page')} ${i + 1}`}
                   aria-current={i === page ? 'true' : undefined}
                   style={{
                     width: i === page ? '20px' : '7px',
@@ -347,7 +347,7 @@ export default function ArticleCarousel({
               <button
                 onClick={prev}
                 disabled={page === 0}
-                aria-label={lang === 'en' ? 'Previous page' : 'Página anterior'}
+                aria-label={t('carousel.previousPage')}
                 style={{
                   width: '32px',
                   height: '32px',
@@ -367,7 +367,7 @@ export default function ArticleCarousel({
               <button
                 onClick={next}
                 disabled={page === totalPages - 1}
-                aria-label={lang === 'en' ? 'Next page' : 'Próxima página'}
+                aria-label={t('carousel.nextPage')}
                 style={{
                   width: '32px',
                   height: '32px',
@@ -391,7 +391,7 @@ export default function ArticleCarousel({
           <button
             type="button"
             onClick={handleViewAll}
-            aria-label={`${lang === 'en' ? 'View all' : 'Ver todos'} ${categoryLabel}`}
+            aria-label={`${t('carousel.viewAll')} ${categoryLabel}`}
             style={{
               background: 'transparent',
               border: 'none',
@@ -407,7 +407,7 @@ export default function ArticleCarousel({
             }}
             className="carousel-view-all-btn"
           >
-            {lang === 'en' ? 'View All' : 'Ver Todos'}
+            {t('carousel.viewAll')}
             <ArrowRight size={14} aria-hidden="true" />
           </button>
         </div>
@@ -437,7 +437,6 @@ export default function ArticleCarousel({
           <CarouselCard
             key={article.id}
             article={article}
-            lang={lang}
             accentColor={accentColor}
             accentColorRgb={accentColorRgb}
             badgeBg={badgeBg}
@@ -457,7 +456,7 @@ export default function ArticleCarousel({
             letterSpacing: '0.1em',
           }}
         >
-          {lang === 'en'
+          {i18n.language === 'en'
             ? `Page ${page + 1} of ${totalPages} · ${articles.length} articles`
             : `Página ${page + 1} de ${totalPages} · ${articles.length} artigos`}
         </div>

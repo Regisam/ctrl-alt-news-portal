@@ -8,7 +8,20 @@
     "delete": "Delete",
     "edit": "Edit",
     "close": "Close",
-    "search": "Search"
+    "search": "Search",
+    "minRead": "min read",
+    "latestIn": "Latest in",
+    "viewAll": "View All",
+    "page": "Page",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "viewAllArticles": "View all articles",
+    "about": "About",
+    "contact": "Contact",
+    "home": "Home",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "language": "Language"
   },
   "pages": {
     "home": {
@@ -29,7 +42,25 @@
     },
     "contact": {
       "title": "Contact"
+    },
+    "privacy": {
+      "title": "Privacy Policy"
+    },
+    "terms": {
+      "title": "Terms of Service"
     }
+  },
+  "carousel": {
+    "minRead": "min read",
+    "latestIn": "Latest in",
+    "page": "Page",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "viewAll": "View All"
+  },
+  "searchBar": {
+    "placeholder": "Search articles...",
+    "noResults": "No articles found"
   },
   "errors": {
     "notFound": "Not Found",

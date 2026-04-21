@@ -27,7 +27,6 @@ export default function ArticlesSection({ lang }: ArticlesSectionProps) {
     >
       {/* 🤖 AI Carousel */}
       <ArticleCarousel
-        lang={lang}
         articles={aiArticles}
         categoryLabel="Artificial Intelligence"
         accentColor="var(--color-neon-ai)"
@@ -62,7 +61,6 @@ export default function ArticlesSection({ lang }: ArticlesSectionProps) {
 
       {/* 🔬 Science Carousel */}
       <ArticleCarousel
-        lang={lang}
         articles={scienceArticles}
         categoryLabel="Science"
         accentColor="var(--color-neon-science)"
@@ -97,7 +95,6 @@ export default function ArticlesSection({ lang }: ArticlesSectionProps) {
 
       {/* ⚙️ Robotics Carousel */}
       <ArticleCarousel
-        lang={lang}
         articles={roboticsArticles}
         categoryLabel="Robotics"
         accentColor="var(--color-neon-robotics)"
