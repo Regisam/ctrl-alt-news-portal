@@ -260,4 +260,15 @@ export function setupArticlesRoute(router: Router): void {
       res.status(500).json({ success: false, error: 'Failed to create comment' });
     }
   });
+
+  // GET /api/cache/health - Cache health check endpoint
+  router.get('/api/cache/health', async (_req, res: Response, _next: NextFunction): Promise<void> => {
+    const health = await cacheService.health();
+    const metrics = cacheService.getMetrics();
+    res.status(health.status === 'ok' ? 200 : 503).json({
+      success: health.status === 'ok',
+      health,
+      metrics,
+    });
+  });
 }

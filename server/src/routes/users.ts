@@ -3,6 +3,8 @@ import type { Response } from 'express';
 import { AuthRequest, verifyJWT } from '../middleware/auth';
 import { prisma } from '../prisma';
 import logger from '../logger';
+import { cacheService } from '../services/cache';
+import { CacheInvalidationManager } from '../services/cache-invalidation';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
 
@@ -73,10 +75,21 @@ router.get('/me', verifyJWT, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// GET /api/users/:id - Get public user profile
+// GET /api/users/:id - Get public user profile (cached 10 minutes)
 router.get('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const cacheKey = `user:profile:${id}`;
+
+    const cached = await cacheService.get<any>(cacheKey);
+    if (cached) {
+      res.json({
+        success: true,
+        data: cached,
+        _cache: 'HIT',
+      });
+      return;
+    }
 
     const user = await prisma.user.findUnique({
       where: { id },
@@ -116,9 +129,12 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
       articleCount: user._count.articles,
     };
 
+    await cacheService.set(cacheKey, profile, 600);
+
     res.json({
       success: true,
       data: profile,
+      _cache: 'MISS',
     });
   } catch (error) {
     logger.error('Error fetching public profile', {
@@ -273,6 +289,8 @@ router.put('/me', verifyJWT, async (req: AuthRequest, res: Response) => {
         email: true,
       },
     });
+
+    await CacheInvalidationManager.invalidateUsers();
 
     logger.info('User profile updated', { userId: req.userId });
     res.json({
