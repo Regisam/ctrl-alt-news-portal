@@ -196,4 +196,68 @@ export function setupArticlesRoute(router: Router): void {
       res.status(500).json({ success: false, error: 'Search failed' });
     }
   });
+
+  // GET /api/articles/:id/comments - Comments for article with caching
+  router.get('/api/articles/:id/comments', async (req, res: Response, _next: NextFunction): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const cacheKey = `comments:article:${id}`;
+
+      const cached = await cacheService.get<any>(cacheKey);
+      if (cached) {
+        res.status(200).json({ success: true, data: cached, _cache: 'HIT' });
+        return;
+      }
+
+      const comments = await prisma.comment.findMany({
+        where: { articleId: id, deletedAt: null },
+        select: {
+          id: true,
+          content: true,
+          authorId: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      });
+
+      await cacheService.set(cacheKey, comments, 120);
+
+      res.status(200).json({ success: true, data: comments, _cache: 'MISS' });
+    } catch (error) {
+      logger.error('Error fetching comments', { error: error instanceof Error ? error.message : String(error) });
+      res.status(500).json({ success: false, error: 'Failed to fetch comments' });
+    }
+  });
+
+  // POST /api/articles/:id/comments - Add comment (invalidates cache)
+  router.post('/api/articles/:id/comments', async (req, res: Response, _next: NextFunction): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const { content, authorId } = req.body;
+
+      if (!content || !authorId) {
+        res.status(400).json({ success: false, error: 'Missing required fields' });
+        return;
+      }
+
+      const comment = await prisma.comment.create({
+        data: {
+          content,
+          articleId: id,
+          authorId,
+        },
+        select: { id: true, content: true, createdAt: true },
+      });
+
+      // Invalidate caches
+      await CacheInvalidationManager.invalidateComments(id);
+      await CacheInvalidationManager.invalidateSearch();
+
+      res.status(201).json({ success: true, data: comment });
+    } catch (error) {
+      logger.error('Error creating comment', { error: error instanceof Error ? error.message : String(error) });
+      res.status(500).json({ success: false, error: 'Failed to create comment' });
+    }
+  });
 }
