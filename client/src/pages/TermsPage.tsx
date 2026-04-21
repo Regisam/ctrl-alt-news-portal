@@ -7,6 +7,7 @@ import { Link } from "wouter";
 import { FileText, ChevronRight } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { useLanguage } from "@/hooks/useLanguage";
 
 // ─── Content ──────────────────────────────────────────────────────────────────
 
@@ -88,11 +89,7 @@ const SECTIONS = [
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function TermsPage() {
-  const [lang, setLang] = useState<"en" | "pt">(() => {
-    if (typeof window === "undefined") return "en";
-    const stored = localStorage.getItem("ctrl-alt-lang");
-    return (stored === "pt" || stored === "en") ? stored : "en";
-  });
+  const { lang, setLang } = useLanguage();
   const [activeSection, setActiveSection] = useState("acceptance");
 
   // Scroll spy

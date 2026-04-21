@@ -2,9 +2,10 @@
 // Design: Cyberpunk Brutalism — deep matte charcoal, neon accents, glassmorphism
 // Layout: Full-width header → constrained content column → footer
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { useLanguage } from "@/hooks/useLanguage";
 import { Cpu, Globe, Zap, Users, Award, BookOpen } from "lucide-react";
 
 const TEAM = [
@@ -97,25 +98,7 @@ const STATS = [
 ];
 
 export default function AboutPage() {
-  const [lang, setLang] = useState<"en" | "pt">(() => {
-    if (typeof window === "undefined") return "en";
-    return (localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null) || "en";
-  });
-
-  function handleLangChange(newLang: "en" | "pt") {
-    setLang(newLang);
-    localStorage.setItem("ctrl-alt-lang", newLang);
-    document.documentElement.lang = newLang === "pt" ? "pt-BR" : "en-UK";
-  }
-
-  useEffect(() => {
-    const handler = () => {
-      const updated = localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null;
-      if (updated) setLang(updated);
-    };
-    window.addEventListener("storage", handler);
-    return () => window.removeEventListener("storage", handler);
-  }, []);
+  const { lang, setLang } = useLanguage();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -156,7 +139,7 @@ export default function AboutPage() {
 
   return (
     <div style={{ background: "#0A0A0B", minHeight: "100vh", color: "#F0F0F5" }}>
-      <Header lang={lang} onLangChange={handleLangChange} />
+      <Header lang={lang} onLangChange={setLang} />
 
       {/* Hero */}
       <section
