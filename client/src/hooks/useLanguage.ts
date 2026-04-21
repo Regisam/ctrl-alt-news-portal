@@ -1,16 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export function useLanguage() {
   const { i18n } = useTranslation();
-  const [lang, setLang] = useState<'en' | 'pt'>(() => {
-    if (typeof window === 'undefined') return 'en';
-    return (localStorage.getItem('ctrl-alt-lang') as 'en' | 'pt' | null) || 'en';
-  });
 
-  useEffect(() => {
-    setLang((i18n.language as 'en' | 'pt') || 'en');
-  }, [i18n.language]);
+  const lang = useSyncExternalStore(
+    (listener) => {
+      const onLanguageChanged = () => listener();
+      i18n.on('languageChanged', onLanguageChanged);
+      return () => {
+        i18n.off('languageChanged', onLanguageChanged);
+      };
+    },
+    () => {
+      if (typeof window === 'undefined') return 'en';
+      return (localStorage.getItem('ctrl-alt-lang') as 'en' | 'pt' | null) ||
+             (i18n.language as 'en' | 'pt') ||
+             'en';
+    },
+    () => 'en'
+  );
 
   function handleLangChange(newLang: 'en' | 'pt') {
     i18n.changeLanguage(newLang);
@@ -23,7 +32,6 @@ export function useLanguage() {
       const updated = localStorage.getItem('ctrl-alt-lang') as 'en' | 'pt' | null;
       if (updated) {
         i18n.changeLanguage(updated);
-        setLang(updated);
       }
     };
     window.addEventListener('storage', handler);
