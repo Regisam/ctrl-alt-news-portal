@@ -9,6 +9,7 @@ import { ArrowLeft, Clock, Eye } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Sidebar from "@/components/Sidebar";
+import { useLanguage } from "@/hooks/useLanguage";
 import {
   aiArticles,
   scienceArticles,
@@ -293,12 +294,8 @@ function GadgetCard({ product, lang, accentColor }: { product: (typeof gadgetPro
 }
 
 export default function CategoryPage({ category }: CategoryPageProps) {
-  const [lang, setLang] = useState<Lang>("en");
+  const { lang, setLang } = useLanguage();
   const cfg = CATEGORY_CONFIG[category];
-
-  useEffect(() => {
-    document.documentElement.lang = lang === "pt" ? "pt-BR" : "en";
-  }, [lang]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
