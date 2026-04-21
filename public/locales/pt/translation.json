@@ -1,0 +1,54 @@
+{
+  "common": {
+    "loading": "Carregando...",
+    "error": "Ocorreu um erro",
+    "success": "Sucesso",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "delete": "Deletar",
+    "edit": "Editar",
+    "close": "Fechar",
+    "search": "Pesquisar"
+  },
+  "pages": {
+    "home": {
+      "title": "Ctrl Alt News",
+      "tagline": "Notícias e Insights de Tecnologia"
+    },
+    "articles": {
+      "title": "Artigos",
+      "search": "Pesquisar artigos...",
+      "noResults": "Nenhum artigo encontrado"
+    },
+    "search": {
+      "title": "Resultados da Pesquisa",
+      "noResults": "Nenhum artigo encontrado para sua busca"
+    },
+    "about": {
+      "title": "Sobre Nós"
+    },
+    "contact": {
+      "title": "Contato"
+    }
+  },
+  "errors": {
+    "notFound": "Não Encontrado",
+    "unauthorized": "Não Autorizado",
+    "forbidden": "Proibido",
+    "serverError": "Erro no Servidor"
+  },
+  "admin": {
+    "articles": {
+      "title": "Gerenciar Artigos",
+      "description": "Gerencie todos os artigos"
+    },
+    "users": {
+      "title": "Gerenciar Usuários",
+      "description": "Gerencie todos os usuários"
+    },
+    "analytics": {
+      "title": "Análises",
+      "description": "Veja análises e métricas"
+    }
+  }
+}
