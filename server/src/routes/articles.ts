@@ -2,6 +2,7 @@ import type { Router, Response, NextFunction } from 'express';
 import { prisma } from '../prisma';
 import logger from '../logger';
 import { cacheService } from '../services/cache';
+import { CacheInvalidationManager } from '../services/cache-invalidation';
 
 export function setupArticlesRoute(router: Router): void {
   // GET /api/articles - Public article list with caching
@@ -121,6 +122,78 @@ export function setupArticlesRoute(router: Router): void {
     } catch (error) {
       logger.error('Error fetching article', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to fetch article' });
+    }
+  });
+
+  // GET /api/categories - Categories with caching
+  router.get('/api/categories', async (_req, res: Response, _next: NextFunction): Promise<void> => {
+    try {
+      const cacheKey = 'categories:all';
+
+      const cached = await cacheService.get<any>(cacheKey);
+      if (cached) {
+        res.status(200).json({ success: true, data: cached, _cache: 'HIT' });
+        return;
+      }
+
+      const categories = await prisma.category.findMany({
+        select: { id: true, nameEn: true, namePt: true, slug: true },
+        orderBy: { nameEn: 'asc' },
+      });
+
+      await cacheService.set(cacheKey, categories, 3600);
+
+      res.status(200).json({ success: true, data: categories, _cache: 'MISS' });
+    } catch (error) {
+      logger.error('Error fetching categories', { error: error instanceof Error ? error.message : String(error) });
+      res.status(500).json({ success: false, error: 'Failed to fetch categories' });
+    }
+  });
+
+  // GET /api/search - Full-text search with caching
+  router.get('/api/search', async (req, res: Response, _next: NextFunction): Promise<void> => {
+    try {
+      const query = (req.query.q as string) || '';
+      if (!query || query.length < 2) {
+        res.status(400).json({ success: false, error: 'Query too short' });
+        return;
+      }
+
+      const cacheKey = `search:${query.toLowerCase()}`;
+
+      const cached = await cacheService.get<any>(cacheKey);
+      if (cached) {
+        res.status(200).json({ success: true, data: cached, _cache: 'HIT' });
+        return;
+      }
+
+      const results = await prisma.article.findMany({
+        where: {
+          status: 'PUBLISHED',
+          deletedAt: null,
+          OR: [
+            { titleEn: { contains: query, mode: 'insensitive' } },
+            { titlePt: { contains: query, mode: 'insensitive' } },
+            { excerptEn: { contains: query, mode: 'insensitive' } },
+            { excerptPt: { contains: query, mode: 'insensitive' } },
+          ],
+        },
+        select: {
+          id: true,
+          titleEn: true,
+          slug: true,
+          excerptEn: true,
+          publishedAt: true,
+        },
+        take: 10,
+      });
+
+      await cacheService.set(cacheKey, results, 300);
+
+      res.status(200).json({ success: true, data: { results, count: results.length }, _cache: 'MISS' });
+    } catch (error) {
+      logger.error('Error searching articles', { error: error instanceof Error ? error.message : String(error) });
+      res.status(500).json({ success: false, error: 'Search failed' });
     }
   });
 }
