@@ -117,6 +117,12 @@ i18n
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
     },
+    missingInterpolationHandler: (text, value) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`Missing interpolation: ${text}`, value);
+      }
+      return text;
+    },
   });
 
 export default i18n;
