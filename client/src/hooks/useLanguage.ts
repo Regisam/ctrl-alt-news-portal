@@ -1,7 +1,7 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export function useLanguage() {
+export function useLanguage(): { lang: 'en' | 'pt'; setLang: (newLang: 'en' | 'pt') => void } {
   const { i18n } = useTranslation();
 
   const lang = useSyncExternalStore(
@@ -38,5 +38,5 @@ export function useLanguage() {
     return () => window.removeEventListener('storage', handler);
   }, [i18n]);
 
-  return { lang, setLang: handleLangChange };
+  return { lang: lang as 'en' | 'pt', setLang: handleLangChange };
 }
