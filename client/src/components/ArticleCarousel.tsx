@@ -37,7 +37,7 @@ function CarouselCard({
   badgeBg: string;
 }) {
   const [, navigate] = useLocation();
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const title = i18n.language === 'en' ? article.title.en : article.title.pt;
   const excerpt = i18n.language === 'en' ? article.excerpt.en : article.excerpt.pt;
 
@@ -141,7 +141,7 @@ function CarouselCard({
             }}
           >
             {/* readTime in parent keeps using i18n.language */}
-            {article.readTime} min {i18n.language === 'en' ? 'read' : 'leitura'}
+            {article.readTime} {t('common.minRead')}
           </span>
         </div>
 
