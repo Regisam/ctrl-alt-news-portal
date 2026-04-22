@@ -41,7 +41,29 @@
       "title": "Sobre Nós"
     },
     "contact": {
-      "title": "Contato"
+      "title": "Contato",
+      "heroLabel": "CONTATO",
+      "heroTitle": "Entre em Contato",
+      "heroSub": "Dúvidas, dicas, consultas de imprensa ou propostas de parceria — lemos cada mensagem e respondemos em até dois dias úteis.",
+      "formTitle": "Enviar uma Mensagem",
+      "namePlaceholder": "Seu nome completo",
+      "emailPlaceholder": "seu@email.com",
+      "subjectLabel": "Assunto",
+      "messagePlaceholder": "Nos diga o que está em sua mente…",
+      "submitBtn": "Enviar Mensagem",
+      "submittingBtn": "Enviando…",
+      "successTitle": "Mensagem recebida!",
+      "successBody": "Obrigado por entrar em contato. Nossa equipe retornará em até dois dias úteis.",
+      "sendAnother": "Enviar outra mensagem",
+      "contactInfoTitle": "Outras Formas de Nos Contatar",
+      "responseTime": "Tempo de resposta: 1–2 dias úteis",
+      "nameError": "Por favor, insira seu nome.",
+      "emailError": "Por favor, insira um endereço de e-mail válido.",
+      "subjectError": "Por favor, selecione um tópico.",
+      "messageError": "Por favor, escreva uma mensagem (mínimo 20 caracteres).",
+      "nameLabel": "Nome",
+      "emailLabel": "E-mail",
+      "messageLabel": "Mensagem"
     },
     "privacy": {
       "title": "Política de Privacidade"

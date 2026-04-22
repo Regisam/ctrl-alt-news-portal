@@ -41,7 +41,29 @@
       "title": "About Us"
     },
     "contact": {
-      "title": "Contact"
+      "title": "Contact",
+      "heroLabel": "CONTACT",
+      "heroTitle": "Get in Touch",
+      "heroSub": "Questions, tips, press enquiries, or partnership proposals — we read every message and respond within two business days.",
+      "formTitle": "Send a Message",
+      "namePlaceholder": "Your full name",
+      "emailPlaceholder": "your@email.com",
+      "subjectLabel": "Topic",
+      "messagePlaceholder": "Tell us what's on your mind…",
+      "submitBtn": "Send Message",
+      "submittingBtn": "Sending…",
+      "successTitle": "Message received!",
+      "successBody": "Thank you for reaching out. Our team will get back to you within two business days.",
+      "sendAnother": "Send another message",
+      "contactInfoTitle": "Other Ways to Reach Us",
+      "responseTime": "Response time: 1–2 business days",
+      "nameError": "Please enter your name.",
+      "emailError": "Please enter a valid email address.",
+      "subjectError": "Please select a topic.",
+      "messageError": "Please write a message (minimum 20 characters).",
+      "nameLabel": "Name",
+      "emailLabel": "Email",
+      "messageLabel": "Message"
     },
     "privacy": {
       "title": "Privacy Policy"

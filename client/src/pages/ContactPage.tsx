@@ -3,6 +3,7 @@
 // Layout: Header → two-column form + info → footer
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Mail, MessageSquare, Send, AlertCircle, CheckCircle2, Cpu } from "lucide-react";
@@ -51,6 +52,7 @@ const CONTACT_INFO = [
 
 export default function ContactPage() {
   const { lang, setLang } = useLanguage();
+  const { t } = useTranslation();
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -60,63 +62,12 @@ export default function ContactPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  const t = {
-    en: {
-      heroLabel: "CONTACT",
-      heroTitle: "Get in Touch",
-      heroSub: "Questions, tips, press enquiries, or partnership proposals — we read every message and respond within two business days.",
-      formTitle: "Send a Message",
-      namePlaceholder: "Your full name",
-      emailPlaceholder: "your@email.com",
-      subjectLabel: "Topic",
-      messagePlaceholder: "Tell us what's on your mind…",
-      submitBtn: "Send Message",
-      submittingBtn: "Sending…",
-      successTitle: "Message received!",
-      successBody: "Thank you for reaching out. Our team will get back to you within two business days.",
-      sendAnother: "Send another message",
-      contactInfoTitle: "Other Ways to Reach Us",
-      responseTime: "Response time: 1–2 business days",
-      nameError: "Please enter your name.",
-      emailError: "Please enter a valid email address.",
-      subjectError: "Please select a topic.",
-      messageError: "Please write a message (minimum 20 characters).",
-      nameLabel: "Name",
-      emailLabel: "Email",
-      messageLabel: "Message",
-    },
-    pt: {
-      heroLabel: "CONTATO",
-      heroTitle: "Entre em Contato",
-      heroSub: "Dúvidas, dicas, consultas de imprensa ou propostas de parceria — lemos cada mensagem e respondemos em até dois dias úteis.",
-      formTitle: "Enviar uma Mensagem",
-      namePlaceholder: "Seu nome completo",
-      emailPlaceholder: "seu@email.com",
-      subjectLabel: "Assunto",
-      messagePlaceholder: "Nos diga o que está em sua mente…",
-      submitBtn: "Enviar Mensagem",
-      submittingBtn: "Enviando…",
-      successTitle: "Mensagem recebida!",
-      successBody: "Obrigado por entrar em contato. Nossa equipe retornará em até dois dias úteis.",
-      sendAnother: "Enviar outra mensagem",
-      contactInfoTitle: "Outras Formas de Nos Contatar",
-      responseTime: "Tempo de resposta: 1–2 dias úteis",
-      nameError: "Por favor, insira seu nome.",
-      emailError: "Por favor, insira um endereço de e-mail válido.",
-      subjectError: "Por favor, selecione um assunto.",
-      messageError: "Por favor, escreva uma mensagem (mínimo 20 caracteres).",
-      nameLabel: "Nome",
-      emailLabel: "E-mail",
-      messageLabel: "Mensagem",
-    },
-  }[lang];
-
   function validate(): boolean {
     const next = { ...form };
     let valid = true;
 
     if (!form.name.value.trim()) {
-      next.name = { ...next.name, error: t.nameError };
+      next.name = { ...next.name, error: t('pages.contact.nameError') };
       valid = false;
     } else {
       next.name = { ...next.name, error: "" };
@@ -124,21 +75,21 @@ export default function ContactPage() {
 
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRe.test(form.email.value.trim())) {
-      next.email = { ...next.email, error: t.emailError };
+      next.email = { ...next.email, error: t('pages.contact.emailError') };
       valid = false;
     } else {
       next.email = { ...next.email, error: "" };
     }
 
     if (!form.subject.value) {
-      next.subject = { ...next.subject, error: t.subjectError };
+      next.subject = { ...next.subject, error: t('pages.contact.subjectError') };
       valid = false;
     } else {
       next.subject = { ...next.subject, error: "" };
     }
 
     if (form.message.value.trim().length < 20) {
-      next.message = { ...next.message, error: t.messageError };
+      next.message = { ...next.message, error: t('pages.contact.messageError') };
       valid = false;
     } else {
       next.message = { ...next.message, error: "" };
@@ -279,7 +230,7 @@ export default function ContactPage() {
                 fontFamily: "var(--font-mono)",
               }}
             >
-              {t.heroLabel}
+              {t('pages.contact.heroLabel')}
             </span>
           </div>
           <h1
@@ -293,10 +244,10 @@ export default function ContactPage() {
               marginBottom: "20px",
             }}
           >
-            {t.heroTitle}
+            {t('pages.contact.heroTitle')}
           </h1>
           <p style={{ fontSize: "1.1rem", lineHeight: 1.7, color: "rgba(240,240,245,0.6)", maxWidth: "600px" }}>
-            {t.heroSub}
+            {t('pages.contact.heroSub')}
           </p>
         </div>
       </section>
@@ -326,7 +277,7 @@ export default function ContactPage() {
               letterSpacing: "-0.01em",
             }}
           >
-            {t.formTitle}
+            {t('pages.contact.formTitle')}
           </h2>
 
           {submitError && (
@@ -372,10 +323,10 @@ export default function ContactPage() {
                   marginBottom: "12px",
                 }}
               >
-                {t.successTitle}
+                {t('pages.contact.successTitle')}
               </h3>
               <p style={{ color: "rgba(240,240,245,0.6)", marginBottom: "24px", lineHeight: 1.7 }}>
-                {t.successBody}
+                {t('pages.contact.successBody')}
               </p>
               <button
                 type="button"
@@ -392,19 +343,19 @@ export default function ContactPage() {
                   fontFamily: "var(--font-body)",
                 }}
               >
-                {t.sendAnother}
+                {t('pages.contact.sendAnother')}
               </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
               {/* Name */}
               <div>
-                <label htmlFor="contact-name" style={labelStyle}>{t.nameLabel}</label>
+                <label htmlFor="contact-name" style={labelStyle}>{t('pages.contact.nameLabel')}</label>
                 <input
                   id="contact-name"
                   type="text"
                   autoComplete="name"
-                  placeholder={t.namePlaceholder}
+                  placeholder={t('pages.contact.namePlaceholder')}
                   value={form.name.value}
                   onChange={e => handleField("name", e.target.value)}
                   aria-invalid={!!form.name.error}
@@ -424,12 +375,12 @@ export default function ContactPage() {
 
               {/* Email */}
               <div>
-                <label htmlFor="contact-email" style={labelStyle}>{t.emailLabel}</label>
+                <label htmlFor="contact-email" style={labelStyle}>{t('pages.contact.emailLabel')}</label>
                 <input
                   id="contact-email"
                   type="email"
                   autoComplete="email"
-                  placeholder={t.emailPlaceholder}
+                  placeholder={t('pages.contact.emailPlaceholder')}
                   value={form.email.value}
                   onChange={e => handleField("email", e.target.value)}
                   aria-invalid={!!form.email.error}
@@ -449,7 +400,7 @@ export default function ContactPage() {
 
               {/* Subject */}
               <div>
-                <label htmlFor="contact-subject" style={labelStyle}>{t.subjectLabel}</label>
+                <label htmlFor="contact-subject" style={labelStyle}>{t('pages.contact.subjectLabel')}</label>
                 <select
                   id="contact-subject"
                   value={form.subject.value}
@@ -478,11 +429,11 @@ export default function ContactPage() {
 
               {/* Message */}
               <div>
-                <label htmlFor="contact-message" style={labelStyle}>{t.messageLabel}</label>
+                <label htmlFor="contact-message" style={labelStyle}>{t('pages.contact.messageLabel')}</label>
                 <textarea
                   id="contact-message"
                   rows={6}
-                  placeholder={t.messagePlaceholder}
+                  placeholder={t('pages.contact.messagePlaceholder')}
                   value={form.message.value}
                   onChange={e => handleField("message", e.target.value)}
                   aria-invalid={!!form.message.error}
@@ -526,7 +477,7 @@ export default function ContactPage() {
                 }}
               >
                 <Send size={15} aria-hidden="true" />
-                {submitting ? t.submittingBtn : t.submitBtn}
+                {submitting ? t('pages.contact.submittingBtn') : t('pages.contact.submitBtn')}
               </button>
             </form>
           )}
@@ -545,7 +496,7 @@ export default function ContactPage() {
               letterSpacing: "-0.01em",
             }}
           >
-            {t.contactInfoTitle}
+            {t('pages.contact.contactInfoTitle')}
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {CONTACT_INFO.map(info => {
@@ -605,7 +556,7 @@ export default function ContactPage() {
               lineHeight: 1.6,
             }}
           >
-            {t.responseTime}
+            {t('pages.contact.responseTime')}
           </div>
         </aside>
       </div>
