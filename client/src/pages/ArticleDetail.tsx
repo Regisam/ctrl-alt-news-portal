@@ -2,7 +2,7 @@
 // Design: Cyberpunk Brutalism — deep matte charcoal, neon category accents, glassmorphism
 // Layout: Full-width hero → constrained body column → related articles grid
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, Link } from "wouter";
 import { toast } from "sonner";
 import {

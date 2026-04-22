@@ -13,10 +13,10 @@ import {
 type Lang = "en" | "pt";
 
 interface ArticlesSectionProps {
-  lang: Lang;
+  _lang: Lang;
 }
 
-export default function ArticlesSection({ lang }: ArticlesSectionProps) {
+export default function ArticlesSection({ _lang }: ArticlesSectionProps) {
   return (
     <div
       style={{

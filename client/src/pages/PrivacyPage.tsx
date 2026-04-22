@@ -2,7 +2,7 @@
 // Design: Cyberpunk Brutalism — deep matte charcoal, neon accents
 // Layout: Header → document-style content → footer
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Shield, Cpu } from "lucide-react";

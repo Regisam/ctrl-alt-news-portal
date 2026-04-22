@@ -171,7 +171,6 @@ export default function SearchPage() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder={t.placeholder}
-                autoFocus
                 style={{
                   width: "100%",
                   paddingLeft: "48px",

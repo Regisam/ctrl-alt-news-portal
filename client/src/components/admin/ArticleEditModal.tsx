@@ -16,6 +16,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+interface ArticleData {
+  titleEn: string;
+  titlePt: string;
+  excerptEn: string;
+  excerptPt: string;
+  categoryId: string;
+  [key: string]: string;
+}
+
 interface ArticleEditModalProps {
   isOpen: boolean;
   articleId: string | null;
@@ -29,7 +38,7 @@ interface ArticleEditModalProps {
   } | null;
   categories: Array<{ id: string; nameEn: string }>;
   onClose: () => void;
-  onSave: (data: any) => Promise<void>;
+  onSave: (data: ArticleData) => Promise<void>;
 }
 
 export function ArticleEditModal({
@@ -46,7 +55,7 @@ export function ArticleEditModal({
   const [categoryId, setCategoryId] = useState('');
   const [saving, setSaving] = useState(false);
 
-  /* eslint-disable react-hooks/exhaustive-deps */
+   
   useEffect(() => {
     if (article) {
       // Populate form fields when article changes
@@ -62,7 +71,7 @@ export function ArticleEditModal({
       populate();
     }
   }, [article]);
-  /* eslint-enable react-hooks/exhaustive-deps */
+   
 
   const handleSave = async () => {
     setSaving(true);

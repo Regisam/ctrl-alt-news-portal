@@ -209,7 +209,7 @@ function ArticleCard({ article, lang, accentColor }: { article: CategoryArticle;
 }
 
 // Gadgets card for the GADGETS category page
-function GadgetCard({ product, lang, accentColor }: { product: (typeof gadgetProducts)[0]; lang: Lang; accentColor: string }) {
+function GadgetCard({ product, _lang, accentColor }: { product: (typeof gadgetProducts)[0]; _lang: Lang; accentColor: string }) {
   const [hovered, setHovered] = useState(false);
   return (
     <a
@@ -442,7 +442,7 @@ export default function CategoryPage({ category }: CategoryPageProps) {
                 }}
               >
                 {gadgetProducts.map((p) => (
-                  <GadgetCard key={p.id} product={p} lang={lang} accentColor={cfg.color} />
+                  <GadgetCard key={p.id} product={p} _lang={lang} accentColor={cfg.color} />
                 ))}
               </div>
             ) : articles.length > 0 ? (

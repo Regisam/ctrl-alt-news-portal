@@ -89,9 +89,14 @@ export function AdminLayout({ children, lang }: AdminLayoutProps) {
       <main className="flex-1 md:ml-0 w-full md:w-auto">
         {/* Mobile overlay */}
         {sidebarOpen && (
-          <div
+          <button
             className="fixed inset-0 bg-black/50 z-30 md:hidden"
             onClick={() => setSidebarOpen(false)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setSidebarOpen(false);
+            }}
+            aria-label="Close sidebar"
+            type="button"
           />
         )}
 

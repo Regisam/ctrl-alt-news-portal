@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { prisma } from '../../server/src/prisma';
 import jwt from 'jsonwebtoken';
+
+interface JWTPayload {
+  userId: string;
+  email: string;
+  role: string;
+  type: string;
+}
 
 describe('Story 5.1: Admin Authentication', () => {
   const JWT_SECRET = 'your-secret-key-change-me-in-production';
@@ -24,7 +30,7 @@ describe('Story 5.1: Admin Authentication', () => {
         { expiresIn: '15m' }
       );
 
-      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
       expect(decoded.role).toBe('ADMIN');
       expect(decoded.userId).toBe(TEST_USER_ID);
       expect(decoded.email).toBe(TEST_USER_EMAIL);
@@ -42,7 +48,7 @@ describe('Story 5.1: Admin Authentication', () => {
         { expiresIn: '15m' }
       );
 
-      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
       expect(decoded.role).toBe('EDITOR');
     });
 
@@ -58,7 +64,7 @@ describe('Story 5.1: Admin Authentication', () => {
         { expiresIn: '15m' }
       );
 
-      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
       expect(decoded.role).toBe('USER');
     });
   });

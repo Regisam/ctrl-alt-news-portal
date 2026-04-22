@@ -35,7 +35,7 @@ const AdLeaderboard = () => (
 
 export default function Home() {
    const [lang, setLang] = useState<Lang>('en');
-  const [location, navigate] = useLocation();
+  useLocation();
 
   // Sync <html lang> with selected language for screen readers and SEO
   useEffect(() => {
@@ -68,7 +68,7 @@ export default function Home() {
       }
     };
     tryScroll();
-  }, [location]);
+  }, []);
 
   return (
     <div style={{ minHeight: '100vh', background: '#0A0A0B', color: '#F0F0F5' }}>
@@ -109,7 +109,7 @@ export default function Home() {
       <TrendingSection lang={lang} />
 
       {/* ---- AI / SCIENCE / ROBOTICS ARTICLES ---- */}
-      <ArticlesSection lang={lang} />
+      <ArticlesSection _lang={lang} />
 
       {/* ---- GADGETS REVIEWS ---- */}
       <GadgetsSection lang={lang} />
