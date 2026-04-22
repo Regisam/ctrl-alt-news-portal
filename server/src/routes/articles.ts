@@ -21,24 +21,15 @@ export function setupArticlesRoute(router: Router): void {
         return;
       }
 
-      // Fetch from database
+      // Fetch from database with eager loading (performance optimization via composite indexes)
       const articles = await prisma.article.findMany({
         where: {
           status: 'PUBLISHED',
           deletedAt: null,
         },
-        select: {
-          id: true,
-          titleEn: true,
-          titlePt: true,
-          slug: true,
-          excerptEn: true,
-          excerptPt: true,
-          viewCount: true,
-          publishedAt: true,
-          createdAt: true,
-          authorId: true,
-          categoryId: true,
+        include: {
+          author: { select: { id: true, fullName: true, avatarUrl: true } },
+          category: { select: { id: true, nameEn: true, namePt: true, colorHex: true } },
         },
         orderBy: { publishedAt: 'desc' },
         take: 20,
@@ -51,9 +42,9 @@ export function setupArticlesRoute(router: Router): void {
           excerpt: a.excerptEn,
           slug: a.slug,
           views: a.viewCount,
-          authorId: a.authorId,
-          categoryId: a.categoryId,
           publishedAt: a.publishedAt,
+          author: a.author,
+          category: a.category,
         })),
         count: articles.length,
       };
@@ -94,12 +85,9 @@ export function setupArticlesRoute(router: Router): void {
           author: { select: { id: true, fullName: true, email: true } },
           category: { select: { id: true, nameEn: true, namePt: true } },
           comments: {
-            where: { deletedAt: null },
-            select: {
-              id: true,
-              content: true,
-              authorId: true,
-              createdAt: true,
+            where: { deletedAt: null, status: 'APPROVED' },
+            include: {
+              author: { select: { id: true, fullName: true, avatarUrl: true } },
             },
             orderBy: { createdAt: 'desc' },
             take: 10,
