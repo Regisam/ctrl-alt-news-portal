@@ -87,6 +87,10 @@ function CarouselCard({
           src={article.image}
           alt={title}
           className="carousel-card-img"
+          loading="lazy"
+          decoding="async"
+          width={480}
+          height={270}
           style={{
             width: '100%',
             height: '100%',

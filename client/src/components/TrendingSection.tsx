@@ -105,6 +105,9 @@ export default function TrendingSection({ lang }: TrendingSectionProps) {
                       src={article.image}
                       alt={article.title[lang]}
                       loading="lazy"
+                      decoding="async"
+                      width={400}
+                      height={180}
                       style={{
                         width: '100%',
                         height: '100%',

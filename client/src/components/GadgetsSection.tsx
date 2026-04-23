@@ -121,6 +121,9 @@ export default function GadgetsSection({ lang }: GadgetsSectionProps) {
                     src={product.image}
                     alt={product.name}
                     loading="lazy"
+                    decoding="async"
+                    width={300}
+                    height={300}
                     style={{
                       position: 'absolute',
                       inset: 0,
