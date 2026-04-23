@@ -23,7 +23,17 @@ jobs:
         run: npm run check
 
       - name: Build production
-        run: npm run build
+        run: npm run build 2>&1
+
+      - name: Check build artifacts
+        if: failure()
+        run: |
+          echo "=== Directory Structure ==="
+          ls -la dist/ || echo "dist/ does not exist"
+          echo "=== Node version ==="
+          node --version
+          echo "=== npm version ==="
+          npm --version
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
