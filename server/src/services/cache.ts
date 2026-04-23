@@ -143,6 +143,19 @@ export class CacheService {
       return { status: 'error', message: `Redis health check failed: ${error}` };
     }
   }
+
+  async warmup(data: Record<string, { value: any; ttl: number }>): Promise<void> {
+    if (!this.redis) return;
+
+    try {
+      for (const [key, { value, ttl }] of Object.entries(data)) {
+        await this.set(key, value, ttl);
+      }
+      if (this.debugMode) console.log(`[Cache] Warm-up complete: ${Object.keys(data).length} keys cached`);
+    } catch (error) {
+      console.error('[Cache] Warm-up failed:', error);
+    }
+  }
 }
 
 export const cacheService = new CacheService();

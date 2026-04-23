@@ -11,6 +11,7 @@ import { setupRoutes } from './src/routes';
 import { initializeWebSocket } from './src/websocket';
 import { startNotificationCleanup } from './src/services/notification-cleanup';
 import { cacheService } from './src/services/cache';
+import { warmupCache } from './src/services/cache-warmup';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,6 +25,11 @@ async function startServer(): Promise<void> {
   await cacheService.connect();
   const cacheHealth = await cacheService.health();
   logger.info(`Cache service: ${cacheHealth.status} - ${cacheHealth.message}`);
+
+  // Warm up the cache (non-blocking)
+  warmupCache().catch((error) => {
+    logger.warn('Cache warm-up error (non-critical)', { error });
+  });
 
   // Middleware Stack
   app.use(helmet());

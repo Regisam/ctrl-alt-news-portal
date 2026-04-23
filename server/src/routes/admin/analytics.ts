@@ -3,6 +3,7 @@ import { prisma } from '../../prisma';
 import logger from '../../logger';
 import { verifyJWT, type AuthRequest } from '../../middleware/auth';
 import { isAdmin } from '../../middleware/isAdmin';
+import { cacheService } from '../../services/cache';
 
 export function setupAdminAnalyticsRoute(router: Router): void {
   // GET /api/admin/analytics/summary - KPI Summary
@@ -282,6 +283,37 @@ export function setupAdminAnalyticsRoute(router: Router): void {
       } catch (error) {
         logger.error('Error exporting analytics', { error: error instanceof Error ? error.message : String(error) });
         res.status(500).json({ success: false, error: 'Failed to export data' });
+      }
+    }
+  );
+
+  // GET /api/admin/cache/stats - Cache statistics
+  router.get(
+    '/api/admin/cache/stats',
+    verifyJWT,
+    isAdmin,
+    async (req: AuthRequest, res: Response, _next: NextFunction): Promise<void> => {
+      try {
+        const metrics = cacheService.getMetrics();
+        const health = await cacheService.health();
+        const isConnected = cacheService.isConnected();
+
+        res.status(200).json({
+          success: true,
+          data: {
+            connected: isConnected,
+            health: health.status,
+            healthMessage: health.message,
+            metrics: {
+              hits: metrics.hits,
+              misses: metrics.misses,
+              hitRate: parseFloat(metrics.hitRate.toFixed(2)),
+            },
+          },
+        });
+      } catch (error) {
+        logger.error('Error fetching cache stats', { error: error instanceof Error ? error.message : String(error) });
+        res.status(500).json({ success: false, error: 'Failed to fetch cache statistics' });
       }
     }
   );
