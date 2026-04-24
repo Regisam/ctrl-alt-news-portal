@@ -68,7 +68,10 @@
     "streamdown": "^1.4.0",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
+    "uuid": "^9.0.1",
     "vaul": "^1.1.2",
+    "winston": "^3.11.0",
+    "winston-loki": "^6.1.0",
     "wouter": "^3.3.5",
     "zod": "^4.1.12"
   },

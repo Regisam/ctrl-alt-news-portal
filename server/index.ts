@@ -3,6 +3,8 @@ import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import healthRouter from "./health.js";
+import { loggingMiddleware } from "./middleware/loggingMiddleware.js";
+import { logger } from "./logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,6 +12,24 @@ const __dirname = path.dirname(__filename);
 async function startServer() {
   const app = express();
   const server = createServer(app);
+
+  // Body parser middleware (before logging middleware)
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+  // Logging middleware (early in the chain)
+  app.use(loggingMiddleware);
+
+  // Client logs endpoint
+  app.post('/api/logs', (req, res) => {
+    const { level, message, context, timestamp } = req.body;
+    logger.log(level || 'info', message, {
+      source: 'client',
+      user_agent: req.get('user-agent'),
+      ...context,
+    });
+    res.json({ status: 'ok' });
+  });
 
   // Health check endpoints (before static files)
   app.use(healthRouter);
