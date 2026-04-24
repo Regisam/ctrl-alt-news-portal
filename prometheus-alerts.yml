@@ -1,0 +1,65 @@
+groups:
+  - name: application_alerts
+    interval: 30s
+    rules:
+      # High error rate alert - triggers when error rate exceeds 5%
+      - alert: HttpErrorRateHigh
+        expr: rate(http_errors_total[5m]) > 0.05
+        for: 1m
+        labels:
+          severity: critical
+          category: performance
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} errors/sec (threshold: >5%)"
+          runbook: "https://wiki/runbook/high-error-rate"
+          dashboard: "https://grafana.local/dashboard/app-metrics"
+
+      # High latency alert - triggers when p99 latency exceeds 2 seconds
+      - alert: HttpLatencyHigh
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 2m
+        labels:
+          severity: critical
+          category: performance
+        annotations:
+          summary: "High request latency detected"
+          description: "P99 latency is {{ $value | humanize }}s (threshold: >2s)"
+          runbook: "https://wiki/runbook/high-latency"
+          dashboard: "https://grafana.local/dashboard/app-metrics"
+
+      # High memory usage alert - triggers when memory exceeds 500MB
+      - alert: MemoryUsageHigh
+        expr: process_resident_memory_bytes > 500000000
+        for: 5m
+        labels:
+          severity: warning
+          category: resource
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value | humanize1024 }}B (threshold: >500MB)"
+          runbook: "https://wiki/runbook/high-memory"
+
+      # High CPU usage alert - triggers when CPU exceeds 80%
+      - alert: CpuUsageHigh
+        expr: rate(process_cpu_seconds_total[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          category: resource
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value | humanizePercentage }} (threshold: >80%)"
+          runbook: "https://wiki/runbook/high-cpu"
+
+      # Disk space low alert - triggers when less than 10% free
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          category: resource
+        annotations:
+          summary: "Low disk space detected"
+          description: "Disk usage is {{ $value | humanizePercentage }} full (threshold: >90%)"
+          runbook: "https://wiki/runbook/low-disk-space"

@@ -1,0 +1,116 @@
+global:
+  resolve_timeout: 5m
+  slack_api_url: '${SLACK_WEBHOOK_URL}'
+  smtp_smarthost: '${SMTP_SERVER:mailhog:1025}'
+  smtp_from: '${SMTP_FROM:alertmanager@example.com}'
+  smtp_auth_username: '${SMTP_USERNAME:}'
+  smtp_auth_password: '${SMTP_PASSWORD:}'
+
+route:
+  receiver: 'default'
+  group_by: ['alertname', 'instance']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 12h
+  routes:
+    # Critical alerts go to email + page
+    - match:
+        severity: critical
+      receiver: 'critical'
+      continue: true
+      group_wait: 10s
+      group_interval: 2m
+      repeat_interval: 4h
+
+    # Warning alerts go to default (Slack only)
+    - match:
+        severity: warning
+      receiver: 'default'
+      continue: false
+
+receivers:
+  # Default receiver: all alerts to Slack
+  - name: 'default'
+    slack_configs:
+      - channel: '${SLACK_ALERTS_CHANNEL:#alerts}'
+        title: 'Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          **{{ .Annotations.summary }}**
+          Metric: {{ .Annotations.description }}
+          Status: {{ .Status }}
+          {{ if .Annotations.runbook }}Runbook: {{ .Annotations.runbook }}{{ end }}
+          {{ if .Annotations.dashboard }}Dashboard: {{ .Annotations.dashboard }}{{ end }}
+          {{ end }}
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        actions:
+          - type: button
+            text: 'View Dashboard'
+            url: 'https://grafana.local/d/app-metrics'
+          - type: button
+            text: 'View Logs'
+            url: 'https://logs.local/search'
+
+  # Critical receiver: email + critical Slack channel
+  - name: 'critical'
+    email_configs:
+      - to: '${CRITICAL_EMAIL:oncall@example.com}'
+        from: '${SMTP_FROM:alertmanager@example.com}'
+        smarthost: '${SMTP_SERVER:mailhog:1025}'
+        auth_username: '${SMTP_USERNAME:}'
+        auth_password: '${SMTP_PASSWORD:}'
+        headers:
+          Subject: '[🚨 CRITICAL] {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>🚨 Critical Alert</h2>
+          <p><strong>{{ .GroupLabels.alertname }}</strong></p>
+          {{ range .Alerts }}
+          <p><strong>Summary:</strong> {{ .Annotations.summary }}</p>
+          <p><strong>Details:</strong> {{ .Annotations.description }}</p>
+          {{ if .Annotations.runbook }}<p><strong>Runbook:</strong> <a href="{{ .Annotations.runbook }}">{{ .Annotations.runbook }}</a></p>{{ end }}
+          {{ end }}
+          <p><strong>Time:</strong> {{ .GroupLabels.alertname }} firing since {{ (index .Alerts 0).StartsAt }}</p>
+
+    slack_configs:
+      - channel: '${SLACK_CRITICAL_CHANNEL:#critical-alerts}'
+        title: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          **{{ .Annotations.summary }}**
+
+          {{ .Annotations.description }}
+
+          {{ if .Annotations.runbook }}
+          📖 [Runbook]({{ .Annotations.runbook }})
+          {{ end }}
+          {{ end }}
+        send_resolved: true
+        color: 'danger'
+        actions:
+          - type: button
+            text: 'Acknowledge'
+            url: '{{ (index .Alerts 0).GeneratorURL }}'
+
+# Inhibit rules: suppress alerts when certain conditions are met
+inhibit_rules:
+  # Inhibit lower severity alerts when critical alert is firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']
+
+  # Suppress duplicate alerts within 5 minutes
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'critical'
+    equal: ['alertname', 'instance']
+
+  # Inhibit memory alerts when CPU is also high (related issue)
+  - source_match_re:
+      alertname: '.*CpuUsageHigh.*'
+    target_match_re:
+      alertname: '.*MemoryUsageHigh.*'
+    equal: ['instance']
