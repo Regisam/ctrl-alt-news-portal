@@ -200,39 +200,8 @@ Each sprint section lists stories ready for development. Use this to:
 
 ---
 
-#### Story 2.3: User Profiles (16h)
-
-**Assigned to**: @dev  
-**Status**: Ready
-
-**Tasks**:
-- [ ] Create profile endpoints
-- [ ] Implement profile update logic
-- [ ] Add password hashing
-- [ ] Create avatar upload handling
-- [ ] Implement public profiles
-- [ ] Add profile validation
-
-**Dependencies**: Story 2.2  
-**Blockers**: None
-
----
-
-#### Story 2.4: Authorization Middleware (8h)
-
-**Assigned to**: @dev  
-**Status**: Ready
-
-**Tasks**:
-- [ ] Create authMiddleware
-- [ ] Create roleMiddleware
-- [ ] Protect admin routes
-- [ ] Protect editor routes
-- [ ] Test authorization
-- [ ] Document role hierarchy
-
-**Dependencies**: Story 2.3  
-**Blockers**: None
+**NOTE**: Stories 2.3 (User Profiles) and 2.4 (Authorization) were planned but not created.
+Their functionality is covered by Stories 2.1-2.2 and implemented in EPIC-3, EPIC-5.
 
 ---
 
@@ -251,7 +220,7 @@ Each sprint section lists stories ready for development. Use this to:
 - [ ] Test all CRUD operations
 - [ ] Add rate limiting
 
-**Dependencies**: Story 2.4  
+**Dependencies**: Story 2.1-2.2 (authentication ready)
 **Blockers**: None
 
 ---

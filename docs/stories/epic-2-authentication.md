@@ -66,7 +66,7 @@ Implement JWT token generation, validation, and refresh token mechanism. Tokens 
 ### Dependencies
 
 - **Blocked by**: Story 1.1 (server running)
-- **Blocks**: Stories 2.2, 2.3, 2.4
+- **Blocks**: Story 2.2
 
 ### Notes
 
@@ -117,7 +117,7 @@ Integrate Google OAuth 2.0 allowing users to authenticate via their Google accou
 ### Dependencies
 
 - **Blocked by**: Story 2.1 (JWT working)
-- **Blocks**: Story 2.3
+- **Blocks**: EPIC-3 (Articles), EPIC-5 (Admin)
 
 ### Notes
 
@@ -129,105 +129,8 @@ Integrate Google OAuth 2.0 allowing users to authenticate via their Google accou
 
 ---
 
-## Story 2.3: User Profiles & Settings Management
-
-**Status**: Ready  
-**Sprint**: 3  
-**Effort**: M (16 hours)  
-**Owner**: @dev (Dex)
-
-### Description
-
-Implement user profile endpoints and settings management. Users can view/edit their profile, preferences, and account settings.
-
-**Reference**: PRD section 2.4 (User system), UX/UI Analysis section 3.2
-
-### Acceptance Criteria
-
-- [ ] `GET /users/me` returns authenticated user profile
-- [ ] `PUT /users/me` updates profile (name, bio, avatar)
-- [ ] `PUT /users/me/preferences` updates user preferences
-- [ ] `POST /users/me/password` changes password (with old password verify)
-- [ ] `POST /users/me/avatar` uploads avatar image
-- [ ] `GET /users/:id` returns public user profile (read-only)
-- [ ] User profile includes: name, bio, avatar, joined date, article count
-- [ ] Email change requires verification link (optional, Phase 2)
-- [ ] All profile updates validated with Zod
-
-### Tasks
-
-1. Create profile endpoints in `routes/users.ts`
-2. Implement user profile update logic
-3. Add password hashing for local accounts (bcrypt)
-4. Create settings preferences model (Prisma)
-5. Implement avatar upload handling (file storage)
-6. Add Zod validation for profile updates
-7. Test profile update flows
-8. Implement public profile view (limited data)
-
-### Dependencies
-
-- **Blocked by**: Story 2.2 (OAuth integrated)
-- **Blocks**: Story 2.4, 5.1
-
-### Notes
-
-- Use `bcryptjs` for password hashing
-- Avatar upload: store in `/public/avatars/` or cloud storage (Phase 2)
-- Password change requires old password verification
-- Don't expose password hash in API responses
-- Rate limit password change endpoint (max 3x per day)
-
----
-
-## Story 2.4: Authorization Middleware & Role-Based Access Control
-
-**Status**: Ready  
-**Sprint**: 3  
-**Effort**: S (8 hours)  
-**Owner**: @dev (Dex)
-
-### Description
-
-Implement authorization middleware protecting endpoints by user role (ADMIN, EDITOR, USER). Controllers check permissions before executing actions.
-
-**Reference**: PRD section 2.4 (Authorization), Epics 3-5 (requires role checks)
-
-### Acceptance Criteria
-
-- [ ] `authMiddleware` validates JWT token
-- [ ] `roleMiddleware` checks user role (ADMIN, EDITOR, USER)
-- [ ] Admin-only endpoints protected: POST/PUT/DELETE articles
-- [ ] Editor endpoints allow article management
-- [ ] Public endpoints accessible without auth
-- [ ] 401 (Unauthorized) returned for missing/invalid tokens
-- [ ] 403 (Forbidden) returned for insufficient permissions
-- [ ] Authorization logic in middleware (not repeated in controllers)
-- [ ] Super admin can impersonate users (optional, Phase 2)
-
-### Tasks
-
-1. Create `authMiddleware` in `middleware/auth.ts`
-2. Create `roleMiddleware` factory for flexible role checks
-3. Protect admin routes: articles CRUD, user management
-4. Protect editor routes: article creation, editing
-5. Define role constants (`ROLES.ADMIN`, `ROLES.EDITOR`, `ROLES.USER`)
-6. Test authorization on protected endpoints
-7. Document role hierarchy and permissions
-8. Add rate limiting on auth failures
-
-### Dependencies
-
-- **Blocked by**: Story 2.3 (user profiles ready)
-- **Blocks**: Stories 3.1, 4.1, 5.1, 5.2
-
-### Notes
-
-- Role hierarchy: ADMIN > EDITOR > USER
-- Authorization happens in middleware (fail-fast)
-- Consider permission-based approach later (Phase 2)
-- Track authorization failures in logs
-- Rate limit repeated auth failures (DDoS protection)
+**NOTE**: Stories 2.3 (User Profiles) and 2.4 (Authorization) were planned but not created. 
+Their functionality is implemented in Stories 2.1-2.2 and utilized in EPIC-3, EPIC-5.
 
 ---
 
@@ -246,13 +149,9 @@ Implement authorization middleware protecting endpoints by user role (ADMIN, EDI
 
 ```
 Sprint 2:
-├── Story 2.1 (JWT) ────┬──> Story 2.2 (Google OAuth)
-│                       │
-└──> Story 2.3 (User Profiles)
-
-Sprint 3:
-├── Story 2.2 + 2.3 complete
-└──> Story 2.4 (Authorization) ──> Ready for EPIC 3 & 5
+├── Story 2.1 (JWT) ──> Story 2.2 (Google OAuth + User Profiles)
+│                            │
+└──────────────────────> Ready for EPIC 3 & 5 (Articles, Comments, Admin)
 ```
 
 ---

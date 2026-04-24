@@ -38,7 +38,7 @@ Build admin dashboard for content managers and administrators. Features include 
 
 Establish admin-only access control for dashboard. Only ADMIN and EDITOR roles can access restricted areas. Implement permission checks and admin-only endpoints.
 
-**Reference**: Story 2.4 (Authorization), PRD section 2.7 (Admin system)
+**Reference**: Story 2.1-2.2 (Authentication & data models), PRD section 2.7 (Admin system)
 
 ### Acceptance Criteria
 
@@ -68,7 +68,7 @@ Establish admin-only access control for dashboard. Only ADMIN and EDITOR roles c
 
 ### Dependencies
 
-- **Blocked by**: Story 2.4 (authorization ready)
+- **Blocked by**: Story 2.1 (authentication ready), Story 1.2 (database schema)
 - **Blocks**: Stories 5.2, 5.3, 5.4
 
 ### Notes
@@ -146,7 +146,7 @@ Create admin interface for managing articles: list all (published, draft, archiv
 
 Admin interface for user management: list users, view profiles, edit roles, and deactivate accounts. Provides user visibility for moderation.
 
-**Reference**: PRD section 2.7 (Admin - user management), Story 2.3 (User profiles)
+**Reference**: PRD section 2.7 (Admin - user management), Story 2.2 (User data models), Story 5.1 (Admin Auth)
 
 ### Acceptance Criteria
 

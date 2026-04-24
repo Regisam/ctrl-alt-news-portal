@@ -69,7 +69,7 @@ Implement full REST API for article operations: list with pagination, create dra
 
 ### Dependencies
 
-- **Blocked by**: Story 2.4 (authorization ready)
+- **Blocked by**: Story 2.1 (authentication ready), Story 2.2 (data models ready)
 - **Blocks**: Stories 3.2, 3.3, 4.1, 5.2
 
 ### Notes

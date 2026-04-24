@@ -36,8 +36,6 @@ SPRINT 2 (May 11 - May 24) ████████ 140h EPIC 1 + EPIC 2: Auth
 
 SPRINT 3 (May 25 - Jun 7)  ████████████ 160h EPIC 2 + EPIC 3 (start)
 ├── Story 2.2: Google OAuth (cont)
-├── Story 2.3: User Profiles
-├── Story 2.4: Authorization
 ├── Story 3.1: Articles CRUD
 ├── Story 3.2: Search (start)
 └── EPIC 6 (parallel): Accessibility
