@@ -5,19 +5,32 @@ import path from 'path';
 export default defineConfig({
   plugins: [react()],
   test: {
-    environment: 'jsdom',
+    // Use 'node' for server integration tests, 'jsdom' for client component tests
+    environment: process.env.TEST_ENV === 'integration' ? 'node' : 'jsdom',
     globals: true,
-    setupFiles: ['./client/src/__tests__/setup.ts'],
-    include: ['client/src/**/*.{test,spec}.{js,ts,jsx,tsx}'],
+    setupFiles:
+      process.env.TEST_ENV === 'integration'
+        ? ['./server/__tests__/setup.ts']
+        : ['./client/src/__tests__/setup.ts'],
+    // Include both client component tests and server integration tests
+    include: [
+      'client/src/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      'server/__tests__/**/*.{test,spec}.{js,ts}',
+    ],
     exclude: ['node_modules', 'dist'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['client/src/**/*.{ts,tsx}'],
+      include: [
+        'client/src/**/*.{ts,tsx}',
+        'server/**/*.{ts,js}',
+      ],
       exclude: [
         'node_modules/',
         'client/src/**/*.test.{ts,tsx}',
         'client/src/**/__tests__/**',
+        'server/**/*.test.ts',
+        'server/**/__tests__/**',
       ],
     },
   },
