@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import healthRouter from "./health.js";
 import { loggingMiddleware } from "./middleware/loggingMiddleware.js";
+import { metricsMiddleware, setupMetricsEndpoint } from "./middleware/metricsMiddleware.js";
 import { logger } from "./logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,6 +20,12 @@ async function startServer() {
 
   // Logging middleware (early in the chain)
   app.use(loggingMiddleware);
+
+  // Metrics middleware (early in the chain, after logging)
+  app.use(metricsMiddleware);
+
+  // Setup metrics endpoint
+  setupMetricsEndpoint(app);
 
   // Client logs endpoint
   app.post('/api/logs', (req, res) => {
