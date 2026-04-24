@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite --host",
-    "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build": "vite build",
     "start": "NODE_ENV=production node dist/index.js",
     "preview": "vite preview --host",
     "check": "tsc --noEmit",
@@ -13,6 +13,11 @@
     "lint:fix": "eslint client/src --ext .ts,.tsx --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "deploy:staging": "npm run build && echo 'Staging deployment would happen here'",
+    "deploy:production": "npm run build && echo 'Production deployment would happen here'",
+    "rollback": "bash scripts/rollback.sh",
     "prepare": "husky"
   },
   "dependencies": {
