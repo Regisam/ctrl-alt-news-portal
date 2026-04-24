@@ -1,0 +1,13 @@
+{
+  "default_strategy": {
+    "type": "probabilistic",
+    "param": 0.1
+  },
+  "service_strategies": [
+    {
+      "service": "ctrl-alt-news-server",
+      "type": "probabilistic",
+      "param": 0.1
+    }
+  ]
+}
