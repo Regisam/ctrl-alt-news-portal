@@ -1,0 +1,149 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║           CTRL ALT NEWS PORTAL - OBSERVABILITY QUICK REFERENCE             ║
+║                    Print & Post on Team's Workspace                         ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+TOOL ENDPOINTS (Local Development)
+─────────────────────────────────────────────────────────────────────────────
+Grafana (Dashboards)      http://localhost:3001     [admin/admin]
+Prometheus (Metrics)      http://localhost:9090     [no auth]
+Loki (Logs)              http://localhost:3100     [no auth]
+Jaeger (Traces)          http://localhost:16686    [no auth]
+AlertManager             http://localhost:9093     [no auth]
+
+ON-CALL QUICK REFERENCE
+─────────────────────────────────────────────────────────────────────────────
+Alert Fires                    → React with ⏸️ to acknowledge (Slack)
+Within 5 min, investigate      → Check runbook link in alert
+Don't know root cause by min 5 → Page L2 (Senior Dev)
+After 15 min still unresolved  → Escalate to Manager (L3)
+
+KEY METRICS AT A GLANCE
+─────────────────────────────────────────────────────────────────────────────
+Error Rate          <1% = healthy  | 5% = alert | >5% = critical
+Latency (P99)       <500ms = OK    | 2s = alert | >2s = investigate
+Memory              <300MB = OK    | 500MB = alert | >500MB = critical
+CPU Usage           <30% = OK      | 80% = alert | >80% = urgent
+Disk Space          >30% free = OK | <10% = critical
+
+ALERT RESPONSE FLOWCHART
+─────────────────────────────────────────────────────────────────────────────
+1. Alert fires in #alerts
+   ↓
+2. Read alert message (alertname, value, severity)
+   ↓
+3. React with ⏸️ to acknowledge
+   ↓
+4. Open runbook link (included in alert)
+   ↓
+5. Follow runbook steps
+   ├─ Found issue & understand → Fix it
+   └─ Stuck after 5 min → Page L2
+   ↓
+6. Implement mitigation (restart service, scale up, etc.)
+   ↓
+7. Monitor for 5 minutes (alert should clear)
+   ↓
+8. Document in #incidents what happened & how it was fixed
+
+COMMON QUICK CHECKS
+─────────────────────────────────────────────────────────────────────────────
+Service running?           docker ps | grep ctrl-alt-news
+Service recent errors?     docker logs ctrl-alt-news | grep ERROR | tail -20
+Database responding?       psql -U postgres -c "SELECT 1;"
+Port in use?              lsof -i :3000
+Memory usage?             docker stats ctrl-alt-news
+Recent deployments?       git log --oneline -5
+
+LOGGING QUICK COMMANDS
+─────────────────────────────────────────────────────────────────────────────
+All errors:               {level="error"} | json
+Errors on endpoint:       {endpoint="/api/articles"} |= "error" | json
+Specific user logs:       {user_id="12345"} | json
+Slow queries (>500ms):    {service="api"} |= "query_duration" | query_duration > 500
+Database errors:          {service="api"} |= "database" |= "error"
+
+GRAFANA DASHBOARD QUICK LINKS
+─────────────────────────────────────────────────────────────────────────────
+"Ctrl Alt News - Application Metrics"  → Main dashboard, start here
+"Database Performance"                   → Query latency, pool status
+"System Resources"                       → CPU, memory, disk for all services
+"Cache Hit Ratio"                       → Cache effectiveness
+
+TROUBLESHOOTING GUIDES LOCATION
+─────────────────────────────────────────────────────────────────────────────
+docs/runbooks/troubleshooting/
+├─ high-error-rate.md          → Error rate > 5%
+├─ slow-requests.md            → Latency spike
+├─ memory-leak.md              → Memory > 500MB
+├─ service-startup-failure.md  → Service won't start
+└─ intermittent-503s.md        → Random 503 errors
+
+INCIDENT RESPONSE CHECKLIST
+─────────────────────────────────────────────────────────────────────────────
+☐ Acknowledged alert (reacted with ⏸️)
+☐ Read runbook for this alert
+☐ Checked metrics (Grafana dashboard)
+☐ Reviewed logs ({level="error"})
+☐ Identified root cause
+☐ Implemented fix / escalated to L2
+☐ Verified alert cleared
+☐ Documented in #incidents
+☐ Scheduled postmortem (if critical)
+
+ESCALATION NUMBERS
+─────────────────────────────────────────────────────────────────────────────
+L2 (Senior Dev)  [Name: ___________] [Phone: ____________]
+L3 (Manager)     [Name: ___________] [Phone: ____________]
+On-call Schedule [Link: ___________]
+
+FIRST TIME SETUP
+─────────────────────────────────────────────────────────────────────────────
+1. Go to Grafana: http://localhost:3001
+2. Login: admin / admin (you'll be prompted to change password)
+3. Go to Data Sources (Configuration menu)
+4. Add Prometheus: http://prometheus:9090
+5. Add Loki: http://loki:3100
+6. Open "Ctrl Alt News - Application Metrics" dashboard
+7. Bookmark: http://localhost:3001/d/main/ctrl-alt-news
+8. Generate traffic: curl http://localhost:3000 multiple times
+9. Check Jaeger: http://localhost:16686 (should show traces)
+
+KEY METRICS EXPLAINED
+─────────────────────────────────────────────────────────────────────────────
+Error Rate         % of requests returning 5xx errors
+                   <1% = healthy, >5% = critical
+
+Latency (P99)      99th percentile request time
+                   <500ms = excellent, >2s = needs investigation
+
+Memory Usage       Node.js heap memory consumption
+                   <300MB = OK, >500MB = investigate for leak
+
+CPU Usage          Process CPU utilization percentage
+                   <30% = normal, >80% = overloaded
+
+Database Latency   Average query execution time
+                   <100ms = good, >500ms = slow query
+
+Cache Hit Ratio    % of cache requests that hit (vs miss)
+                   >80% = healthy, <50% = cache not helping
+
+POSTMORTEM SCHEDULE
+─────────────────────────────────────────────────────────────────────────────
+If incident lasted > 30 minutes → Schedule postmortem within 48 hours
+Location: [Slack channel or Zoom link]
+Template: docs/runbooks/incident-postmortem-template.md
+
+OBSERVABILITY DOCS LOCATION
+─────────────────────────────────────────────────────────────────────────────
+Main Runbook:        docs/runbooks/observability-runbook.md
+Access Guide:        docs/runbooks/access-guide.md
+Log Querying:        docs/runbooks/log-querying-guide.md
+Metrics:             docs/runbooks/metrics-interpretation.md
+Alerts:              docs/runbooks/alerting-guide.md
+On-Call Guide:       docs/runbooks/on-call-guide.md
+Distributed Tracing: docs/guides/distributed-tracing-guide.md
+
+═══════════════════════════════════════════════════════════════════════════════
+Last Updated: 2026-04-24 | Owner: Observability Team
