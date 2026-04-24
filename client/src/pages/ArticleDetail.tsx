@@ -22,6 +22,7 @@ import CommentsSection from "@/components/CommentsSection";
 import Footer from "@/components/Footer";
 import Sidebar from "@/components/Sidebar";
 import LatestInCategory from "@/components/LatestInCategory";
+import MetaTags from "@/components/MetaTags";
 import { aiArticles, scienceArticles, roboticsArticles, trendingArticles } from "@/lib/data";
 import { articleBodies } from "@/lib/articleContent";
 import type { Article } from "@/lib/data";
@@ -136,6 +137,7 @@ export default function ArticleDetail() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#0A0A0B" }}>
+      {article && <MetaTags article={article} lang={lang} />}
       <Header lang={lang} onLangChange={handleLangChange} />
 
       {/* ── Hero ── */}
