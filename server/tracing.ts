@@ -1,10 +1,8 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { BatchSpanProcessor, ConsoleSpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
-import { Resource } from '@opentelemetry/resources';
+import { TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { ProbabilitySampler } from '@opentelemetry/sdk-trace-node';
 import { trace } from '@opentelemetry/api';
 
 let sdk: NodeSDK | null = null;
@@ -15,30 +13,16 @@ export function initializeTracing(): () => Promise<void> {
     url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318/v1/traces',
   });
 
-  // Resource describes the service being traced
-  const resource = Resource.default().merge(
-    new Resource({
-      [SemanticResourceAttributes.SERVICE_NAME]: 'ctrl-alt-news-server',
-      [SemanticResourceAttributes.SERVICE_VERSION]: '1.0.0',
-    })
-  );
-
   // Sampler: 100% in dev, 10% in production
   const samplingRate = process.env.NODE_ENV === 'development' ? 1.0 : 0.1;
 
   // Initialize SDK with auto-instrumentation
   sdk = new NodeSDK({
-    resource,
+    serviceName: 'ctrl-alt-news-server',
     traceExporter: otlpExporter,
     instrumentations: [getNodeAutoInstrumentations()],
-    sampler: new ProbabilitySampler(samplingRate),
+    sampler: new TraceIdRatioBasedSampler(samplingRate),
   });
-
-  // Add span processors
-  // Console processor for dev debugging (see traces in console)
-  if (process.env.NODE_ENV === 'development') {
-    sdk.traceExporter = otlpExporter;
-  }
 
   // Start SDK
   sdk.start();

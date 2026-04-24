@@ -134,14 +134,13 @@ function ReplyCard({
 // ─── Main CommentsSection ─────────────────────────────────────────────────────
 
 interface CommentsSectionProps {
-  articleId: number;
   lang: "en" | "pt";
   catColor: string;
   catBg: string;
   catBorder: string;
 }
 
-export default function CommentsSection({ articleId, lang, catColor, catBg, catBorder }: CommentsSectionProps) {
+export default function CommentsSection({ lang, catColor, catBg, catBorder }: CommentsSectionProps) {
   const formId = useId();
   const liveRef = useRef<HTMLDivElement>(null);
 

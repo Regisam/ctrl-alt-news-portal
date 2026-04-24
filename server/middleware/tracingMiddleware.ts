@@ -67,7 +67,7 @@ export function tracingMiddleware(
       span.end();
 
       // Call original send
-      return originalSend.apply(res, args);
+      return originalSend.call(res, ...args);
     };
 
     next();

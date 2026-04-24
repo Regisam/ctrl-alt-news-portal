@@ -89,24 +89,16 @@ const SECTIONS: Section[] = [
 ];
 
 export default function PrivacyPage() {
-  const [lang, setLang] = useState<"en" | "pt">("en");
+  const [lang, setLang] = useState<"en" | "pt">(() => {
+    const stored = localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null;
+    return stored || "en";
+  });
 
   function handleLangChange(newLang: "en" | "pt") {
     setLang(newLang);
     localStorage.setItem("ctrl-alt-lang", newLang);
     document.documentElement.lang = newLang === "pt" ? "pt-BR" : "en-UK";
   }
-
-  useEffect(() => {
-    const stored = localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null;
-    if (stored) setLang(stored);
-    const handler = () => {
-      const updated = localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null;
-      if (updated) setLang(updated);
-    };
-    window.addEventListener("storage", handler);
-    return () => window.removeEventListener("storage", handler);
-  }, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });

@@ -5,7 +5,7 @@
 //   • Shows total count, category filter tabs, and sorted results
 //   • Automatically includes new articles added to data.ts
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useLocation, Link } from "wouter";
 import { Search, Clock, Eye, ArrowLeft } from "lucide-react";
 import Header from "@/components/Header";
@@ -67,17 +67,10 @@ function filterArticles(
 export default function SearchPage() {
   const [lang, setLang] = useState<"en" | "pt">("en");
   const [, navigate] = useLocation();
-  const [query, setQuery] = useState(getQuery);
+  const initialQuery = useMemo(() => getQuery(), []);
+  const [query, setQuery] = useState(initialQuery);
   const [activeCategory, setActiveCategory] = useState("ALL");
-  const [inputValue, setInputValue] = useState(getQuery);
-
-  // Sync query from URL when it changes
-  useEffect(() => {
-    const q = getQuery();
-    setQuery(q);
-    setInputValue(q);
-    setActiveCategory("ALL");
-  }, [typeof window !== "undefined" ? window.location.search : ""]);
+  const [inputValue, setInputValue] = useState(initialQuery);
 
   const results = useMemo(
     () => filterArticles(ALL_ARTICLES, query, lang, activeCategory),
@@ -167,7 +160,7 @@ export default function SearchPage() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder={t.placeholder}
-                autoFocus
+                aria-label={t.placeholder}
                 style={{
                   width: "100%",
                   paddingLeft: "48px",

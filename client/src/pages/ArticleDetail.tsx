@@ -72,7 +72,10 @@ function getInitials(name: string) {
 export default function ArticleDetail() {
   const params = useParams<{ id: string }>();
   const articleId = parseInt(params.id || "0", 10);
-  const [lang, setLang] = useState<"en" | "pt">("en");
+  const [lang, setLang] = useState<"en" | "pt">(() => {
+    const stored = localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null;
+    return stored || "en";
+  });
 
   function handleLangChange(newLang: "en" | "pt") {
     setLang(newLang);
@@ -80,10 +83,7 @@ export default function ArticleDetail() {
     document.documentElement.lang = newLang === "pt" ? "pt-BR" : "en-UK";
   }
 
-  // Sync language from localStorage (set by Header toggle)
   useEffect(() => {
-    const stored = localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null;
-    if (stored) setLang(stored);
     const handler = () => {
       const updated = localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null;
       if (updated) setLang(updated);
@@ -434,7 +434,6 @@ export default function ArticleDetail() {
 
         {/* Comments section */}
         <CommentsSection
-          articleId={articleId}
           lang={lang}
           catColor={catStyle.color}
           catBg={catStyle.bg}

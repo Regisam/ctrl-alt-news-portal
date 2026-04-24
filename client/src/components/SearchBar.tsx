@@ -8,7 +8,7 @@
 //   • "View all N results" footer → navigates to /search?q=...
 //   • On form submit → navigates to /search?q=...
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Search, X, ChevronRight } from "lucide-react";
 import {
@@ -70,7 +70,6 @@ interface SearchBarProps {
 export default function SearchBar({ lang }: SearchBarProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<CategoryArticle[]>([]);
   const [highlighted, setHighlighted] = useState(-1);
   const [, navigate] = useLocation();
 
@@ -79,11 +78,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
 
   const PREVIEW_LIMIT = 6;
 
-  // ── Filter on query change ──────────────────────────────────────────────────
-  useEffect(() => {
-    setResults(searchArticles(query, lang));
-    setHighlighted(-1);
-  }, [query, lang]);
+  const results = useMemo(() => searchArticles(query, lang), [query, lang]);
 
   // ── Click outside to close ──────────────────────────────────────────────────
   useEffect(() => {
@@ -97,6 +92,12 @@ export default function SearchBar({ lang }: SearchBarProps) {
   }, []);
 
   // ── Keyboard navigation ─────────────────────────────────────────────────────
+  const closeSearch = useCallback(() => {
+    setOpen(false);
+    setQuery("");
+    setHighlighted(-1);
+  }, []);
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       const previewCount = Math.min(results.length, PREVIEW_LIMIT);
@@ -119,15 +120,8 @@ export default function SearchBar({ lang }: SearchBarProps) {
         closeSearch();
       }
     },
-    [highlighted, results, query, navigate]
+    [highlighted, results, query, navigate, closeSearch]
   );
-
-  const closeSearch = () => {
-    setOpen(false);
-    setQuery("");
-    setResults([]);
-    setHighlighted(-1);
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -208,8 +202,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
               onKeyDown={handleKeyDown}
               placeholder={t.placeholder}
               aria-label={t.placeholder}
-              aria-autocomplete="list"
-              aria-expanded={showDropdown}
+              aria-controls={showDropdown ? "search-results" : undefined}
               autoComplete="off"
               style={{
                 paddingLeft: "32px",
@@ -250,6 +243,7 @@ export default function SearchBar({ lang }: SearchBarProps) {
       {/* ── Dropdown results ── */}
       {showDropdown && (
         <div
+          id="search-results"
           role="listbox"
           aria-label={lang === "en" ? "Search results" : "Resultados da busca"}
           style={{
