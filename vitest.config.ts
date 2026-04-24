@@ -20,7 +20,7 @@ export default defineConfig({
     exclude: ['node_modules', 'dist'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'json', 'json-summary', 'html', 'lcov'],
       include: [
         'client/src/**/*.{ts,tsx}',
         'server/**/*.{ts,js}',
@@ -32,6 +32,15 @@ export default defineConfig({
         'server/**/*.test.ts',
         'server/**/__tests__/**',
       ],
+      // Coverage thresholds (enforced by CI/CD)
+      branches: 60,
+      functions: 60,
+      lines: 60,
+      statements: 60,
+      // Per-path thresholds for critical code
+      perFile: true,
+      // Generate coverage-summary.json for CI/CD reporting
+      reportsDirectory: './coverage',
     },
   },
   resolve: {

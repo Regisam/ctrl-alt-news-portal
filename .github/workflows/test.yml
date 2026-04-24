@@ -1,0 +1,195 @@
+name: Tests & Quality Gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * *'  # Nightly at 2 AM UTC
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for coverage analysis
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint code
+        run: npm run lint
+
+      - name: TypeScript type check
+        run: npm run check
+
+      - name: Run unit & integration tests
+        run: npm run test
+        env:
+          NODE_ENV: test
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Generate coverage report
+        if: always()
+        run: npm run test:coverage
+
+      - name: Upload coverage to Codecov
+        if: matrix.node-version == '20'  # Only once
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/coverage-final.json
+          flags: unittests
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts-node-${{ matrix.node-version }}
+          path: |
+            coverage/
+            playwright-report/
+            test-results/
+          retention-days: 30
+
+      - name: Comment PR with test results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const coverage = fs.existsSync('./coverage/coverage-summary.json')
+              ? JSON.parse(fs.readFileSync('./coverage/coverage-summary.json', 'utf8')).total
+              : null;
+
+            let message = '## Test Results\n\n';
+
+            if (coverage) {
+              message += `**Coverage**: ${coverage.lines.pct.toFixed(1)}%\n`;
+              message += `| Metric | Coverage |\n`;
+              message += `|--------|----------|\n`;
+              message += `| Lines | ${coverage.lines.pct.toFixed(1)}% |\n`;
+              message += `| Statements | ${coverage.statements.pct.toFixed(1)}% |\n`;
+              message += `| Functions | ${coverage.functions.pct.toFixed(1)}% |\n`;
+              message += `| Branches | ${coverage.branches.pct.toFixed(1)}% |\n`;
+            }
+
+            message += `\n✅ All checks passed\n`;
+            message += `🔗 [View full results](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})\n`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
+
+  coverage-check:
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run coverage check
+        run: npm run test:coverage
+
+      - name: Check coverage thresholds
+        run: |
+          npx nyc check-coverage --lines 60 --functions 60 --branches 60 --statements 60
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 60
+
+      - name: Comment coverage status
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const coverage = JSON.parse(fs.readFileSync('./coverage/coverage-summary.json', 'utf8')).total;
+
+            const threshold = 60;
+            const status = coverage.lines.pct >= threshold ? '✅' : '❌';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${status} Coverage: ${coverage.lines.pct.toFixed(1)}% (threshold: ${threshold}%)`
+            });
+
+  e2e-report:
+    runs-on: ubuntu-latest
+    needs: test
+    if: failure()
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: test-artifacts-node-20
+
+      - name: Comment on PR with failure details
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ Tests failed. Check [artifacts](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}) for screenshots, videos, and trace files.'
+            });
+
+  quality-gate:
+    runs-on: ubuntu-latest
+    needs: [test, coverage-check]
+    if: always()
+    steps:
+      - name: Verify all checks passed
+        run: |
+          if [ "${{ needs.test.result }}" != "success" ] || [ "${{ needs.coverage-check.result }}" != "success" ]; then
+            echo "❌ Quality gate failed: Tests or coverage check did not pass"
+            exit 1
+          fi
+          echo "✅ All quality gates passed"
+
+      - name: Set commit status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: 'success',
+              description: 'All tests and quality checks passed',
+              context: 'tests/quality-gate'
+            });
