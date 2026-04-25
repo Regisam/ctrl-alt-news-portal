@@ -1,4 +1,5 @@
-import express from "express";
+import express, { type Request, type Response, type NextFunction } from "express";
+import compression from "compression";
 import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -21,6 +22,20 @@ async function startServer() {
 
   // Logging middleware (early in the chain)
   app.use(loggingMiddleware);
+
+  // Compression middleware (gzip by default, brotli for supported browsers)
+  app.use(
+    compression({
+      level: 6,
+      threshold: 1024,
+      filter: (req, res) => {
+        if (req.headers["x-no-compression"]) {
+          return false;
+        }
+        return compression.filter(req, res);
+      },
+    })
+  );
 
   // Metrics middleware (early in the chain, after logging)
   app.use(metricsMiddleware);
@@ -95,6 +110,18 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
     process.env.NODE_ENV === "production"
       ? path.resolve(__dirname, "public")
       : path.resolve(__dirname, "..", "dist", "public");
+
+  // Cache headers for static assets
+  app.use((_req: Request, res: Response, next: NextFunction) => {
+    if (_req.url.match(/\.(js|css|woff2|woff|ttf|eot)$/)) {
+      // Versioned assets: cache for 1 year
+      res.set("Cache-Control", "public, max-age=31536000, immutable");
+    } else if (_req.url === "/index.html") {
+      // HTML: no cache (revalidate on every request)
+      res.set("Cache-Control", "public, max-age=0, must-revalidate");
+    }
+    next();
+  });
 
   app.use(express.static(staticPath));
 
