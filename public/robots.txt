@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Allow: /article/
+Allow: /category/
+Allow: /search
+
+Disallow: /admin
+Disallow: /api/internal
+Disallow: /api/auth
+
+Sitemap: https://ctrlaltnews.com/sitemap.xml

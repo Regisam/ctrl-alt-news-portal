@@ -6,6 +6,7 @@ import healthRouter from "./health.js";
 import { loggingMiddleware } from "./middleware/loggingMiddleware.js";
 import { metricsMiddleware, setupMetricsEndpoint } from "./middleware/metricsMiddleware.js";
 import { logger } from "./logger.js";
+import { generateSitemapXML } from "../client/src/lib/sitemap.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,6 +41,54 @@ async function startServer() {
 
   // Health check endpoints (before static files)
   app.use(healthRouter);
+
+  // Mock articles for sitemap generation (in production, fetch from database)
+  const mockArticles = [
+    {
+      id: 1,
+      title: { en: "AI Revolution", pt: "Revolução da IA" },
+      excerpt: { en: "Latest AI breakthroughs", pt: "Últimas descobertas em IA" },
+      category: "AI" as const,
+      author: "Tech Writer",
+      date: "2026-04-25",
+      readTime: "5 min",
+      views: "1.2K",
+      image: "https://example.com/ai.jpg",
+      publishedAt: "2026-04-25",
+    },
+  ];
+
+  // Sitemap endpoint
+  app.get("/sitemap.xml", (_req, res) => {
+    try {
+      const sitemap = generateSitemapXML(mockArticles, {
+        siteUrl: process.env.SITE_URL || "https://ctrlaltnews.com",
+        baseUrl: process.env.SITE_URL || "https://ctrlaltnews.com",
+      });
+      res.header("Content-Type", "application/xml");
+      res.send(sitemap);
+    } catch (error) {
+      logger.error("Sitemap generation error", { error });
+      res.status(500).send("Error generating sitemap");
+    }
+  });
+
+  // Robots.txt endpoint
+  app.get("/robots.txt", (_req, res) => {
+    const robotsTxt = `User-agent: *
+Allow: /
+Allow: /article/
+Allow: /category/
+Allow: /search
+
+Disallow: /admin
+Disallow: /api/internal
+Disallow: /api/auth
+
+Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
+    res.header("Content-Type", "text/plain");
+    res.send(robotsTxt);
+  });
 
   // Serve static files from dist/public in production
   const staticPath =

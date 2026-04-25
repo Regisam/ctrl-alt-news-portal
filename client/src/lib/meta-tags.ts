@@ -1,4 +1,5 @@
 import type { Article } from '@/lib/data';
+import { generateCanonicalURL } from '@/lib/sitemap';
 
 interface MetaTagsConfig {
   siteName?: string;
@@ -63,7 +64,7 @@ export function generateMetaTags(
   const excerpt = article.excerpt[lang] || article.excerpt.en;
   const description = truncate(excerpt, 160);
   const featuredImage = article.image || CATEGORY_IMAGES[article.category];
-  const articleUrl = `${mergedConfig.siteUrl}/article/${article.id}`;
+  const articleUrl = generateCanonicalURL(mergedConfig.siteUrl!, title, article.id.toString());
 
   return {
     title: truncate(title, 60),
