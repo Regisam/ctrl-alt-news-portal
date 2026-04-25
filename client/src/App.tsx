@@ -12,6 +12,7 @@ import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
 import SearchPage from "./pages/SearchPage";
 import CategoryPage from "./pages/CategoryPage";
+import ShareAnalyticsDashboard from "./pages/ShareAnalyticsDashboard";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
       <Route path={"/science"} component={() => <CategoryPage category="SCIENCE" />} />
       <Route path={"/robotics"} component={() => <CategoryPage category="ROBOTICS" />} />
       <Route path={"/gadgets"} component={() => <CategoryPage category="GADGETS" />} />
+      <Route path={"/analytics"} component={ShareAnalyticsDashboard} />
       <Route path={"/about"} component={AboutPage} />
       <Route path={"/contact"} component={ContactPage} />
       <Route path={"/privacy"} component={PrivacyPage} />
