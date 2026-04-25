@@ -61,8 +61,8 @@ export const measureLCP = () => {
   return new Promise<number>((resolve) => {
     const observer = new PerformanceObserver((list) => {
       const entries = list.getEntries();
-      const lastEntry = entries[entries.length - 1];
-      resolve(lastEntry.renderTime || lastEntry.loadTime);
+      const lastEntry = entries[entries.length - 1] as any;
+      resolve(lastEntry.renderTime || lastEntry.loadTime || 0);
     });
 
     observer.observe({ entryTypes: ['largest-contentful-paint'] });

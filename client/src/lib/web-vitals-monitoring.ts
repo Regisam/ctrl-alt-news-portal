@@ -1,4 +1,4 @@
-import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
+import { onCLS, onLCP, onINP, onFCP, onTTFB } from 'web-vitals';
 
 export interface WebVitalsMetrics {
   LCP: number | null; // Largest Contentful Paint (milliseconds)
@@ -51,7 +51,7 @@ export const collectWebVitals = async (): Promise<WebVitalsMetrics> => {
   return new Promise((resolve) => {
     const metrics: WebVitalsMetrics = {
       LCP: null,
-      FID: null,
+      FID: null, // Using INP (Interaction to Next Paint) as replacement for FID
       CLS: null,
       FCP: null,
       TTFB: null,
@@ -67,27 +67,27 @@ export const collectWebVitals = async (): Promise<WebVitalsMetrics> => {
       }
     };
 
-    getCLS((metric) => {
+    onCLS((metric: any) => {
       metrics.CLS = metric.value;
       checkComplete();
     });
 
-    getFID((metric) => {
-      metrics.FID = metric.value;
+    onINP((metric: any) => {
+      metrics.FID = metric.value; // INP is the modern replacement for FID
       checkComplete();
     });
 
-    getFCP((metric) => {
+    onFCP((metric: any) => {
       metrics.FCP = metric.value;
       checkComplete();
     });
 
-    getLCP((metric) => {
+    onLCP((metric: any) => {
       metrics.LCP = metric.value;
       checkComplete();
     });
 
-    getTTFB((metric) => {
+    onTTFB((metric: any) => {
       metrics.TTFB = metric.value;
       checkComplete();
     });
