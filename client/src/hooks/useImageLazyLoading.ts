@@ -8,18 +8,14 @@ interface IntersectionOptions {
 
 export const useImageLazyLoading = (options: IntersectionOptions = {}) => {
   const elementRef = useRef<HTMLImageElement | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
+
+  // Native lazy loading is supported, no need for custom hook
+  const isLoaded = 'loading' in HTMLImageElement.prototype;
 
   useEffect(() => {
     const element = elementRef.current;
-    if (!element) return;
-
-    // Use native lazy loading as fallback for browsers without IntersectionObserver
-    if ('loading' in HTMLImageElement.prototype) {
-      setIsLoaded(true);
-      return;
-    }
+    if (!element || isLoaded) return;
 
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
@@ -39,7 +35,7 @@ export const useImageLazyLoading = (options: IntersectionOptions = {}) => {
         observer.unobserve(element);
       }
     };
-  }, [options.threshold, options.rootMargin, options.root]);
+  }, [isLoaded, options.threshold, options.rootMargin, options.root]);
 
   return { elementRef, isInView, isLoaded };
 };
