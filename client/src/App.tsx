@@ -16,6 +16,7 @@ const SearchPage = lazy(() => import("./pages/SearchPage"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const ShareAnalyticsDashboard = lazy(() => import("./pages/ShareAnalyticsDashboard"));
 const GoogleSearchConsolePage = lazy(() => import("./pages/GoogleSearchConsolePage"));
+const AnalyticsDashboardPage = lazy(() => import("./pages/AnalyticsDashboardPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function Router() {
@@ -42,6 +43,7 @@ function Router() {
         />
         <Route path={"/analytics"} component={ShareAnalyticsDashboard} />
         <Route path={"/search-console"} component={GoogleSearchConsolePage} />
+        <Route path={"/dashboard"} component={AnalyticsDashboardPage} />
         <Route path={"/about"} component={AboutPage} />
         <Route path={"/contact"} component={ContactPage} />
         <Route path={"/privacy"} component={PrivacyPage} />
