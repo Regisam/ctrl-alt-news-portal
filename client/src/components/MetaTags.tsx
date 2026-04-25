@@ -40,9 +40,15 @@ export function MetaTags({
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
       <meta property="og:site_name" content={tags.ogSiteName} />
+
+      {/* Article Metadata Tags */}
       <meta property="article:published_time" content={tags.articlePublishedTime} />
+      <meta property="article:modified_time" content={tags.articleModifiedTime} />
       <meta property="article:author" content={tags.articleAuthor} />
-      <meta property="article:section" content={article.category} />
+      <meta property="article:section" content={tags.articleSection} />
+
+      {/* LinkedIn Optimization */}
+      <meta property="og:image:alt" content={tags.ogTitle} />
 
       {/* Twitter Card Tags */}
       <meta name="twitter:card" content={tags.twitterCard} />
@@ -51,6 +57,14 @@ export function MetaTags({
       <meta name="twitter:description" content={tags.twitterDescription} />
       <meta name="twitter:image" content={tags.twitterImage} />
       <meta name="twitter:creator" content={twitterHandle} />
+
+      {/* Pinterest Optimization */}
+      <meta name="pinterest:media" content={tags.pinterestImage} />
+      <meta name="pinterest:description" content={tags.description} />
+
+      {/* WhatsApp Optimization */}
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
 
       {/* Canonical URL */}
       <link rel="canonical" href={tags.canonical} />
