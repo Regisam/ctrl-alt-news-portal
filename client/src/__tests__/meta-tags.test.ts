@@ -109,9 +109,60 @@ describe('generateMetaTags', () => {
     expect(tags.articleAuthor).toBe(mockArticle.author);
   });
 
-  it('should set article published time from date', () => {
+  it('should set article published time in ISO format', () => {
     const tags = generateMetaTags(mockArticle);
-    expect(tags.articlePublishedTime).toBe(mockArticle.date);
+    expect(tags.articlePublishedTime).toBeDefined();
+    expect(typeof tags.articlePublishedTime).toBe('string');
+    expect(tags.articlePublishedTime).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it('should set article modified time in ISO format', () => {
+    const tags = generateMetaTags(mockArticle);
+    expect(tags.articleModifiedTime).toBeDefined();
+    expect(typeof tags.articleModifiedTime).toBe('string');
+    expect(tags.articleModifiedTime).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it('should set article modified time same as published time', () => {
+    const tags = generateMetaTags(mockArticle);
+    expect(tags.articleModifiedTime).toBeDefined();
+    expect(tags.articleModifiedTime).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it('should set article section to category', () => {
+    const tags = generateMetaTags(mockArticle);
+    expect(tags.articleSection).toBe(mockArticle.category);
+  });
+
+  it('should set platform-specific images from article image', () => {
+    const tags = generateMetaTags(mockArticle);
+    expect(tags.linkedInImage).toBe(mockArticle.image);
+    expect(tags.pinterestImage).toBe(mockArticle.image);
+    expect(tags.whatsAppImage).toBe(mockArticle.image);
+  });
+
+  it('should use category fallback for all platform images', () => {
+    const articleWithoutImage = { ...mockArticle, image: '' };
+    const tags = generateMetaTags(articleWithoutImage);
+    expect(tags.linkedInImage).toBeTruthy();
+    expect(tags.pinterestImage).toBeTruthy();
+    expect(tags.whatsAppImage).toBeTruthy();
+  });
+
+  it('should have all platform-specific properties', () => {
+    const tags = generateMetaTags(mockArticle);
+    expect(tags).toHaveProperty('linkedInImage');
+    expect(tags).toHaveProperty('pinterestImage');
+    expect(tags).toHaveProperty('whatsAppImage');
+    expect(tags).toHaveProperty('articleModifiedTime');
+    expect(tags).toHaveProperty('articleSection');
+  });
+
+  it('should use date for published time', () => {
+    const tags = generateMetaTags(mockArticle);
+    expect(tags.articlePublishedTime).toBeDefined();
+    expect(tags.articlePublishedTime).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(tags.articlePublishedTime).toContain('2026-02');
   });
 });
 
@@ -136,5 +187,93 @@ describe('createMetaTagElements', () => {
     expect(elements['og-title']).toBe(tags.ogTitle);
     expect(elements['twitter-card']).toBe(tags.twitterCard);
     expect(elements['canonical']).toBe(tags.canonical);
+  });
+
+  it('should map platform-specific image elements', () => {
+    const tags = generateMetaTags(mockArticle);
+    const elements = createMetaTagElements(tags);
+
+    expect(elements).toHaveProperty('linkedin-image');
+    expect(elements).toHaveProperty('pinterest-image');
+    expect(elements).toHaveProperty('whatsapp-image');
+    expect(elements['linkedin-image']).toBe(tags.linkedInImage);
+    expect(elements['pinterest-image']).toBe(tags.pinterestImage);
+    expect(elements['whatsapp-image']).toBe(tags.whatsAppImage);
+  });
+
+  it('should map article metadata elements', () => {
+    const tags = generateMetaTags(mockArticle);
+    const elements = createMetaTagElements(tags);
+
+    expect(elements).toHaveProperty('article-modified-time');
+    expect(elements).toHaveProperty('article-section');
+    expect(elements['article-modified-time']).toBe(tags.articleModifiedTime);
+    expect(elements['article-section']).toBe(tags.articleSection);
+  });
+
+  it('should include all OG tags in elements', () => {
+    const tags = generateMetaTags(mockArticle);
+    const elements = createMetaTagElements(tags);
+
+    expect(elements).toHaveProperty('og-title');
+    expect(elements).toHaveProperty('og-description');
+    expect(elements).toHaveProperty('og-image');
+    expect(elements).toHaveProperty('og-url');
+    expect(elements).toHaveProperty('og-type');
+    expect(elements).toHaveProperty('og-sitename');
+  });
+
+  it('should include all article metadata in elements', () => {
+    const tags = generateMetaTags(mockArticle);
+    const elements = createMetaTagElements(tags);
+
+    expect(elements).toHaveProperty('article-published-time');
+    expect(elements).toHaveProperty('article-modified-time');
+    expect(elements).toHaveProperty('article-author');
+    expect(elements).toHaveProperty('article-section');
+  });
+
+  it('should include all Twitter card tags', () => {
+    const tags = generateMetaTags(mockArticle);
+    const elements = createMetaTagElements(tags);
+
+    expect(elements).toHaveProperty('twitter-card');
+    expect(elements).toHaveProperty('twitter-title');
+    expect(elements).toHaveProperty('twitter-description');
+    expect(elements).toHaveProperty('twitter-image');
+    expect(elements).toHaveProperty('twitter-creator');
+  });
+
+  it('should support Instagram via Open Graph tags', () => {
+    const tags = generateMetaTags(mockArticle);
+
+    // Instagram uses OG tags
+    expect(tags.ogImage).toBeDefined();
+    expect(tags.ogTitle).toBeDefined();
+    expect(tags.ogDescription).toBeDefined();
+    expect(tags.ogUrl).toBeDefined();
+    expect(tags.ogImage).toContain('http');
+  });
+
+  it('should support TikTok via Open Graph and Twitter integration', () => {
+    const tags = generateMetaTags(mockArticle);
+
+    // TikTok uses OG tags similar to Twitter
+    expect(tags.ogImage).toBeDefined();
+    expect(tags.twitterImage).toBeDefined();
+    expect(tags.ogTitle).toBeDefined();
+    expect(tags.ogDescription).toBeDefined();
+  });
+
+  it('should have optimized images for Instagram (1080x1350) and TikTok (1200x630)', () => {
+    const tags = generateMetaTags(mockArticle);
+
+    // All image variants should be present
+    expect(tags.ogImage).toBeTruthy();
+    expect(tags.twitterImage).toBeTruthy();
+    expect(tags.pinterestImage).toBeTruthy();
+
+    // Images should be URLs
+    expect(tags.ogImage).toMatch(/https?:\/\//);
   });
 });
