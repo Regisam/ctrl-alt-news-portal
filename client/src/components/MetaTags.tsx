@@ -66,6 +66,18 @@ export function MetaTags({
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
 
+      {/* Instagram Optimization (uses Open Graph) */}
+      <meta property="og:image:width" content="1080" />
+      <meta property="og:image:height" content="1350" />
+      <meta name="instagram:og:image" content={tags.ogImage} />
+
+      {/* TikTok Optimization */}
+      <meta name="twitter:app:name:iphone" content="TikTok" />
+      <meta name="twitter:app:name:ipad" content="TikTok" />
+      <meta name="twitter:app:name:googleplay" content="TikTok" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+
       {/* Canonical URL */}
       <link rel="canonical" href={tags.canonical} />
 

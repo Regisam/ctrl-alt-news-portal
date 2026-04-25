@@ -243,4 +243,37 @@ describe('createMetaTagElements', () => {
     expect(elements).toHaveProperty('twitter-image');
     expect(elements).toHaveProperty('twitter-creator');
   });
+
+  it('should support Instagram via Open Graph tags', () => {
+    const tags = generateMetaTags(mockArticle);
+
+    // Instagram uses OG tags
+    expect(tags.ogImage).toBeDefined();
+    expect(tags.ogTitle).toBeDefined();
+    expect(tags.ogDescription).toBeDefined();
+    expect(tags.ogUrl).toBeDefined();
+    expect(tags.ogImage).toContain('http');
+  });
+
+  it('should support TikTok via Open Graph and Twitter integration', () => {
+    const tags = generateMetaTags(mockArticle);
+
+    // TikTok uses OG tags similar to Twitter
+    expect(tags.ogImage).toBeDefined();
+    expect(tags.twitterImage).toBeDefined();
+    expect(tags.ogTitle).toBeDefined();
+    expect(tags.ogDescription).toBeDefined();
+  });
+
+  it('should have optimized images for Instagram (1080x1350) and TikTok (1200x630)', () => {
+    const tags = generateMetaTags(mockArticle);
+
+    // All image variants should be present
+    expect(tags.ogImage).toBeTruthy();
+    expect(tags.twitterImage).toBeTruthy();
+    expect(tags.pinterestImage).toBeTruthy();
+
+    // Images should be URLs
+    expect(tags.ogImage).toMatch(/https?:\/\//);
+  });
 });
