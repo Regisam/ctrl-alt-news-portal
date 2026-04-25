@@ -37,7 +37,7 @@ export function generateSitemapXML(
   config: SitemapConfig = DEFAULT_CONFIG,
 ): string {
   const siteUrl = config.siteUrl || DEFAULT_CONFIG.siteUrl;
-  const baseUrl = config.baseUrl || DEFAULT_CONFIG.baseUrl;
+  const baseUrl = (config.baseUrl || DEFAULT_CONFIG.baseUrl) as string;
 
   const entries: SitemapEntry[] = [];
 
@@ -65,9 +65,10 @@ export function generateSitemapXML(
       ? article.title
       : (article.title as any).en || Object.values(article.title)[0];
     const slug = generateSlug(titleText);
+    const lastmodDate = article.updatedAt || article.publishedAt || article.date || new Date().toISOString();
     entries.push({
       loc: `${baseUrl}/article/${article.id}/${slug}`,
-      lastmod: formatISO8601(new Date(article.updatedAt || article.publishedAt || new Date())),
+      lastmod: formatISO8601(new Date(lastmodDate)),
       changefreq: "weekly",
       priority: 0.6,
     });
