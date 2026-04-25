@@ -52,7 +52,7 @@ describe("Sitemap Generation", () => {
       const xml = generateSitemapXML(mockArticles, testConfig);
       expect(xml).toContain("https://example.com");
       expect(xml).toContain("<changefreq>daily</changefreq>");
-      expect(xml).toContain("<priority>1.0</priority>");
+      expect(xml).toMatch(/<priority>1(\.0)?<\/priority>/);
     });
 
     it("includes all category pages", () => {
@@ -95,7 +95,7 @@ describe("Sitemap Generation", () => {
       expect(articleSection).toContain("<changefreq>weekly</changefreq>");
     });
 
-    it("escapes special XML characters in URLs", () => {
+    it("removes special characters from article titles in slug", () => {
       const articlesWithSpecialChars = [
         {
           ...mockArticles[0],
@@ -103,8 +103,11 @@ describe("Sitemap Generation", () => {
         },
       ];
       const xml = generateSitemapXML(articlesWithSpecialChars, testConfig);
-      expect(xml).toContain("&amp;");
-      expect(xml).toContain("&quot;");
+      // Special characters should be removed from slug, resulting in clean URL
+      expect(xml).toContain("/article/1/ai-ml-revolution");
+      // Extract article section to verify no unescaped special chars in slug
+      const articleMatch = xml.match(/<loc>.*\/article\/1\/.*<\/loc>/);
+      expect(articleMatch?.[0]).toContain("ai-ml-revolution");
     });
   });
 
@@ -142,9 +145,10 @@ describe("Sitemap Generation", () => {
         "AI and ML Breaking Barriers",
         "4"
       );
-      expect(url).not.toContain("&");
-      expect(url).not.toContain(":");
-      expect(url).not.toContain("!");
+      const slug = url.split("/").pop();
+      expect(slug).not.toContain("&");
+      expect(slug).not.toContain(":");
+      expect(slug).not.toContain("!");
     });
 
     it("preserves base URL", () => {

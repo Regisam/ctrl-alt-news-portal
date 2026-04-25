@@ -60,7 +60,7 @@ describe('useIsMobile', () => {
     it('should handle media query changes from desktop to mobile', () => {
       window.innerWidth = 1024;
 
-      let listeners: ((e: MediaQueryListEvent) => void)[] = [];
+      const listeners: ((e: MediaQueryListEvent) => void)[] = [];
 
       window.matchMedia = vi.fn((query) => ({
         matches: window.innerWidth < MOBILE_BREAKPOINT,
@@ -89,7 +89,7 @@ describe('useIsMobile', () => {
     it('should handle media query changes from mobile to desktop', () => {
       window.innerWidth = 640;
 
-      let listeners: ((e: MediaQueryListEvent) => void)[] = [];
+      const listeners: ((e: MediaQueryListEvent) => void)[] = [];
 
       window.matchMedia = vi.fn((query) => ({
         matches: window.innerWidth < MOBILE_BREAKPOINT,
@@ -157,7 +157,7 @@ describe('useIsMobile', () => {
     it('should work correctly with multiple instances', () => {
       window.innerWidth = 1024;
 
-      let listeners: ((e: MediaQueryListEvent) => void)[] = [];
+      const listeners: ((e: MediaQueryListEvent) => void)[] = [];
 
       window.matchMedia = vi.fn((query) => ({
         matches: window.innerWidth < MOBILE_BREAKPOINT,

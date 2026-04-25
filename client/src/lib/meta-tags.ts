@@ -33,6 +33,14 @@ function sanitizeUrl(url: string): string {
   }
 }
 
+function formatISODateTime(date: string): string {
+  try {
+    return new Date(date).toISOString();
+  } catch {
+    return date;
+  }
+}
+
 export interface GeneratedMetaTags {
   title: string;
   description: string;
@@ -44,12 +52,17 @@ export interface GeneratedMetaTags {
   ogType: string;
   ogSiteName: string;
   articlePublishedTime: string;
+  articleModifiedTime: string;
   articleAuthor: string;
+  articleSection: string;
   twitterCard: string;
   twitterTitle: string;
   twitterDescription: string;
   twitterImage: string;
   twitterCreator: string;
+  linkedInImage: string;
+  pinterestImage: string;
+  whatsAppImage: string;
   canonical: string;
   author: string;
 }
@@ -65,6 +78,8 @@ export function generateMetaTags(
   const description = truncate(excerpt, 160);
   const featuredImage = article.image || CATEGORY_IMAGES[article.category];
   const articleUrl = generateCanonicalURL(mergedConfig.siteUrl!, title, article.id.toString());
+  const publishedTime = formatISODateTime(article.date);
+  const modifiedTime = formatISODateTime(article.date);
 
   return {
     title: truncate(title, 60),
@@ -76,13 +91,18 @@ export function generateMetaTags(
     ogUrl: articleUrl,
     ogType: 'article',
     ogSiteName: mergedConfig.siteName || 'Ctrl Alt News',
-    articlePublishedTime: article.date,
+    articlePublishedTime: publishedTime,
+    articleModifiedTime: modifiedTime,
     articleAuthor: article.author,
+    articleSection: article.category,
     twitterCard: 'summary_large_image',
     twitterTitle: truncate(title, 70),
     twitterDescription: truncate(excerpt, 200),
     twitterImage: sanitizeUrl(featuredImage),
     twitterCreator: mergedConfig.twitterHandle || '@ctrlaltnews',
+    linkedInImage: sanitizeUrl(featuredImage),
+    pinterestImage: sanitizeUrl(featuredImage),
+    whatsAppImage: sanitizeUrl(featuredImage),
     canonical: articleUrl,
     author: article.author,
   };
@@ -101,12 +121,17 @@ export function createMetaTagElements(tags: GeneratedMetaTags): Record<string, s
     'og-type': tags.ogType,
     'og-sitename': tags.ogSiteName,
     'article-published-time': tags.articlePublishedTime,
+    'article-modified-time': tags.articleModifiedTime,
     'article-author': tags.articleAuthor,
+    'article-section': tags.articleSection,
     'twitter-card': tags.twitterCard,
     'twitter-title': tags.twitterTitle,
     'twitter-description': tags.twitterDescription,
     'twitter-image': tags.twitterImage,
     'twitter-creator': tags.twitterCreator,
+    'linkedin-image': tags.linkedInImage,
+    'pinterest-image': tags.pinterestImage,
+    'whatsapp-image': tags.whatsAppImage,
     'canonical': tags.canonical,
   };
 }

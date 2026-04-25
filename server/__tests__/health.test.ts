@@ -38,7 +38,7 @@ describe('Health Check Endpoints', () => {
 
     it('should include environment variable from NODE_ENV', async () => {
       const response = await request(app).get('/status');
-      expect(['development', 'staging', 'production']).toContain(
+      expect(['development', 'staging', 'production', 'test']).toContain(
         response.body.environment
       );
     });

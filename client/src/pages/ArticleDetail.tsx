@@ -4,16 +4,11 @@
 
 import { useEffect, useState } from "react";
 import { useParams, Link } from "wouter";
-import { toast } from "sonner";
 import {
   ArrowLeft,
   Clock,
   Eye,
   Calendar,
-  Share2,
-  Twitter,
-  Linkedin,
-  Link2,
   ChevronRight,
   BookOpen,
 } from "lucide-react";
@@ -24,6 +19,8 @@ import Sidebar from "@/components/Sidebar";
 import LatestInCategory from "@/components/LatestInCategory";
 import MetaTags from "@/components/MetaTags";
 import ArticleSchema from "@/components/ArticleSchema";
+import ShareButtons from "@/components/ShareButtons";
+import { createShareEvent, trackShareEvent } from "@/lib/share-utils";
 import { aiArticles, scienceArticles, roboticsArticles, trendingArticles } from "@/lib/data";
 import { articleBodies } from "@/lib/articleContent";
 import type { Article } from "@/lib/data";
@@ -121,19 +118,11 @@ export default function ArticleDetail() {
     .filter((a) => a.category === article.category && a.id !== article.id)
     .slice(0, 3);
 
-  function copyLink() {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      toast.success("Link copied to clipboard!");
-    });
-  }
-
-  function shareTwitter() {
-    const text = encodeURIComponent(article?.title[lang] || article?.title.en || "");
-    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(window.location.href)}`, "_blank");
-  }
-
-  function shareLinkedIn() {
-    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, "_blank");
+  function handleShare(platform: 'facebook' | 'twitter' | 'linkedin' | 'whatsapp' | 'email' | 'copy') {
+    if (article) {
+      const event = createShareEvent(article, platform);
+      trackShareEvent(event);
+    }
   }
 
   return (
@@ -330,54 +319,14 @@ export default function ArticleDetail() {
           </div>
         )}
 
-        {/* Share bar */}
-        <div
-          className="flex flex-wrap items-center gap-3 py-5 mb-10"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.08)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}
-        >
-          <span className="text-sm font-semibold text-white/60 mr-2 flex items-center gap-2">
-            <Share2 size={14} /> Share
-          </span>
-          <button
-            type="button"
-            onClick={shareTwitter}
-            className="flex items-center gap-2 px-4 py-2 rounded text-sm font-medium transition-all"
-            style={{
-              background: "rgba(29,161,242,0.12)",
-              border: "1px solid rgba(29,161,242,0.3)",
-              color: "#1DA1F2",
-            }}
-            aria-label="Share on X / Twitter"
-          >
-            <Twitter size={14} /> X / Twitter
-          </button>
-          <button
-            type="button"
-            onClick={shareLinkedIn}
-            className="flex items-center gap-2 px-4 py-2 rounded text-sm font-medium transition-all"
-            style={{
-              background: "rgba(10,102,194,0.12)",
-              border: "1px solid rgba(10,102,194,0.3)",
-              color: "#0A66C2",
-            }}
-            aria-label="Share on LinkedIn"
-          >
-            <Linkedin size={14} /> LinkedIn
-          </button>
-          <button
-            type="button"
-            onClick={copyLink}
-            className="flex items-center gap-2 px-4 py-2 rounded text-sm font-medium transition-all"
-            style={{
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.15)",
-              color: "rgba(255,255,255,0.7)",
-            }}
-            aria-label="Copy article link"
-          >
-            <Link2 size={14} /> Copy Link
-          </button>
-        </div>
+        {/* Share buttons */}
+        {article && (
+          <ShareButtons
+            article={article}
+            onShare={handleShare}
+            className="mb-10"
+          />
+        )}
 
         {/* Author bio */}
         {authorBio && (
