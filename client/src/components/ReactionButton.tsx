@@ -35,6 +35,7 @@ export function ReactionButton({
   const [isAnimating, setIsAnimating] = useState(false);
   const [displayCount, setDisplayCount] = useState(count);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setDisplayCount(count);
   }, [count]);

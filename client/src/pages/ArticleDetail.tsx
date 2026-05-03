@@ -91,9 +91,10 @@ export default function ArticleDetail() {
     setClapCount(counts.clap);
   }, [articleIdStr, getReactionsByArticle]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     updateReactionCounts();
-  }, [reactions]);
+  }, [reactions, updateReactionCounts]);
 
   function handleLangChange(newLang: "en" | "pt") {
     setLang(newLang);

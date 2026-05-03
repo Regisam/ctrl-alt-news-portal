@@ -21,6 +21,7 @@ export function useReactions() {
   const [reactions, setReactions] = useState<Reaction[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
