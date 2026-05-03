@@ -427,6 +427,17 @@
   .fade-in-up-delay-2 { animation-delay: 0.2s; opacity: 0; }
   .fade-in-up-delay-3 { animation-delay: 0.3s; opacity: 0; }
 
+  /* ---- Fade In and Out Animation (for toasts/notifications) ---- */
+  @keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-10px); }
+    10% { opacity: 1; transform: translateY(0); }
+    90% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-10px); }
+  }
+  .animate-fade-in-out {
+    animation: fadeInOut 1.5s ease-in-out forwards;
+  }
+
   /* ---- Focus Visible Utilities ---- */
   .focus-neon:focus-visible {
     outline: 2px solid var(--color-neon-ai);

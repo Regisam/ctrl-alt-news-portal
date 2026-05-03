@@ -4,6 +4,7 @@
 export const STORAGE_KEYS = {
   USER_PREFERENCES: "ctrl-alt-preferences",
   READING_HISTORY: "ctrl-alt-reading-history",
+  BOOKMARKS: "ctrl-alt-bookmarks",
 } as const;
 
 export const MAX_HISTORY_ITEMS = 100;
@@ -23,6 +24,18 @@ export interface ReadingHistoryItem {
 
 export interface ReadingHistory {
   items: ReadingHistoryItem[];
+}
+
+export interface BookmarkItem {
+  articleId: string;
+  title: string;
+  category: string;
+  dateSaved: number;
+  url?: string;
+}
+
+export interface Bookmarks {
+  items: BookmarkItem[];
 }
 
 // Type guards
@@ -54,6 +67,27 @@ function isValidReadingHistory(data: unknown): data is ReadingHistory {
   return (
     Array.isArray(obj.items) &&
     obj.items.every((item) => isValidReadingHistoryItem(item))
+  );
+}
+
+function isValidBookmarkItem(data: unknown): data is BookmarkItem {
+  if (typeof data !== "object" || data === null) return false;
+  const obj = data as Record<string, unknown>;
+  return (
+    typeof obj.articleId === "string" &&
+    typeof obj.title === "string" &&
+    typeof obj.category === "string" &&
+    typeof obj.dateSaved === "number" &&
+    (obj.url === undefined || typeof obj.url === "string")
+  );
+}
+
+function isValidBookmarks(data: unknown): data is Bookmarks {
+  if (typeof data !== "object" || data === null) return false;
+  const obj = data as Record<string, unknown>;
+  return (
+    Array.isArray(obj.items) &&
+    obj.items.every((item) => isValidBookmarkItem(item))
   );
 }
 
@@ -177,5 +211,64 @@ export const storageHistory = {
   getItemById(articleId: string): ReadingHistoryItem | null {
     const history = this.get();
     return history.items.find((item) => item.articleId === articleId) ?? null;
+  },
+};
+
+// Bookmarks operations
+export const storageBookmarks = {
+  get(): Bookmarks {
+    const data = storage.getItem<unknown>(STORAGE_KEYS.BOOKMARKS, null);
+    if (data === null) {
+      return { items: [] };
+    }
+    if (isValidBookmarks(data)) {
+      return data;
+    }
+    console.warn("[storage] Corrupted bookmarks, resetting to empty");
+    return { items: [] };
+  },
+
+  set(bookmarks: Bookmarks): boolean {
+    return storage.setItem(STORAGE_KEYS.BOOKMARKS, bookmarks);
+  },
+
+  addItem(item: BookmarkItem): boolean {
+    const bookmarks = this.get();
+    // Remove if already exists (update case)
+    bookmarks.items = bookmarks.items.filter(
+      (b) => b.articleId !== item.articleId
+    );
+    // Add new item at the beginning
+    bookmarks.items.unshift(item);
+    return this.set(bookmarks);
+  },
+
+  removeItem(articleId: string): boolean {
+    const bookmarks = this.get();
+    bookmarks.items = bookmarks.items.filter(
+      (item) => item.articleId !== articleId
+    );
+    return this.set(bookmarks);
+  },
+
+  clear(): boolean {
+    return this.set({ items: [] });
+  },
+
+  getItemById(articleId: string): BookmarkItem | null {
+    const bookmarks = this.get();
+    return bookmarks.items.find((item) => item.articleId === articleId) ?? null;
+  },
+
+  getByCategory(category: string): BookmarkItem[] {
+    const bookmarks = this.get();
+    return bookmarks.items.filter((item) => item.category === category);
+  },
+
+  sortByDate(descending = true): BookmarkItem[] {
+    const bookmarks = this.get();
+    return [...bookmarks.items].sort((a, b) => {
+      return descending ? b.dateSaved - a.dateSaved : a.dateSaved - b.dateSaved;
+    });
   },
 };

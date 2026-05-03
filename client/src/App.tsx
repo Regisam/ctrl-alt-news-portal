@@ -17,6 +17,7 @@ const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const ShareAnalyticsDashboard = lazy(() => import("./pages/ShareAnalyticsDashboard"));
 const GoogleSearchConsolePage = lazy(() => import("./pages/GoogleSearchConsolePage"));
 const AnalyticsDashboardPage = lazy(() => import("./pages/AnalyticsDashboardPage"));
+const ReadingListPage = lazy(() => import("./pages/ReadingListPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function Router() {
@@ -49,6 +50,7 @@ function Router() {
         <Route path={"/privacy"} component={PrivacyPage} />
         <Route path={"/terms"} component={TermsPage} />
         <Route path={"/search"} component={SearchPage} />
+        <Route path={"/reading-list"} component={ReadingListPage} />
         <Route path={"/404"} component={NotFound} />
         <Route component={NotFound} />
       </Switch>
