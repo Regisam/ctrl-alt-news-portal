@@ -98,3 +98,4 @@ Tests run automatically on:
 ---
 
 *For more information, see the [docs/](docs/) directory.*
+# E2E tests: non-blocking (Story 11.2 CI/CD fix)
