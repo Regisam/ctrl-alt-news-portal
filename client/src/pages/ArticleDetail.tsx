@@ -22,6 +22,7 @@ import ArticleSchema from "@/components/ArticleSchema";
 import ShareButtons from "@/components/ShareButtons";
 import AdBanner from "@/components/AdBanner";
 import { ReactionButton } from "@/components/ReactionButton";
+import { RecommendationsWidget } from "@/components/RecommendationsWidget";
 import { useReactions } from "@/hooks/useReactions";
 import { createShareEvent, trackShareEvent } from "@/lib/share-utils";
 import { aiArticles, scienceArticles, roboticsArticles, trendingArticles } from "@/lib/data";
@@ -385,6 +386,14 @@ export default function ArticleDetail() {
 
         {/* Leaderboard 728×90 – between author bio and comments */}
         <AdBanner marginBottom="2.5rem" />
+
+        {/* Personalized recommendations */}
+        <RecommendationsWidget
+          readArticleIds={[articleId]}
+          excludeArticleId={articleId}
+          maxRecommendations={5}
+          title="You might also like"
+        />
 
         {/* Comments section */}
         <CommentsSection

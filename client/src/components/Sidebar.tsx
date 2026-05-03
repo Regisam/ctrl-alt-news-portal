@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { popularArticles } from "@/lib/data";
 import { CATEGORY_CONFIG } from "@/lib/constants";
+import { RecommendationsWidget } from "@/components/RecommendationsWidget";
 
 // Map popular article IDs (4,5,6) to full article detail IDs
 const POPULAR_TO_ARTICLE_ID: Record<number, number> = {
@@ -256,6 +257,12 @@ export default function Sidebar({ lang }: SidebarProps) {
           {lang === 'en' ? 'Subscribe Free' : 'Assinar Grátis'}
         </button>
       </section>
+
+      {/* Personalized recommendations */}
+      <RecommendationsWidget
+        maxRecommendations={3}
+        title="Recommended for you"
+      />
     </aside>
   );
 }
