@@ -2,7 +2,7 @@
 // Design: Cyberpunk Brutalism — deep matte charcoal, neon category accents, glassmorphism
 // Layout: Full-width hero → constrained body column → related articles grid
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "wouter";
 import {
   ArrowLeft,
@@ -21,6 +21,8 @@ import MetaTags from "@/components/MetaTags";
 import ArticleSchema from "@/components/ArticleSchema";
 import ShareButtons from "@/components/ShareButtons";
 import AdBanner from "@/components/AdBanner";
+import { ReactionButton } from "@/components/ReactionButton";
+import { useReactions } from "@/hooks/useReactions";
 import { createShareEvent, trackShareEvent } from "@/lib/share-utils";
 import { aiArticles, scienceArticles, roboticsArticles, trendingArticles } from "@/lib/data";
 import { articleBodies } from "@/lib/articleContent";
@@ -76,6 +78,22 @@ export default function ArticleDetail() {
     const stored = localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null;
     return stored || "en";
   });
+
+  const { getReactionsByArticle, reactions } = useReactions();
+  const [likeCount, setLikeCount] = useState(0);
+  const [clapCount, setClapCount] = useState(0);
+  const articleIdStr = `article-${articleId}`;
+  const userId = localStorage.getItem("ctrl-alt-user-id") || "anonymous";
+
+  const updateReactionCounts = useCallback(() => {
+    const counts = getReactionsByArticle(articleIdStr);
+    setLikeCount(counts.like);
+    setClapCount(counts.clap);
+  }, [articleIdStr, getReactionsByArticle]);
+
+  useEffect(() => {
+    updateReactionCounts();
+  }, [reactions]);
 
   function handleLangChange(newLang: "en" | "pt") {
     setLang(newLang);
@@ -342,6 +360,28 @@ export default function ArticleDetail() {
             </div>
           </div>
         )}
+
+        {/* Reaction buttons */}
+        <div className="flex gap-4 mb-12">
+          <ReactionButton
+            articleId={articleIdStr}
+            userId={userId}
+            type="like"
+            count={likeCount}
+            onReactionChange={() => {
+              updateReactionCounts();
+            }}
+          />
+          <ReactionButton
+            articleId={articleIdStr}
+            userId={userId}
+            type="clap"
+            count={clapCount}
+            onReactionChange={() => {
+              updateReactionCounts();
+            }}
+          />
+        </div>
 
         {/* Leaderboard 728×90 – between author bio and comments */}
         <AdBanner marginBottom="2.5rem" />
