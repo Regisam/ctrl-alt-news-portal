@@ -14,6 +14,7 @@ export interface Article {
   views: string;
   image: string;
   featured?: boolean;
+  tags?: string[];
 }
 
 export interface GadgetProduct {
