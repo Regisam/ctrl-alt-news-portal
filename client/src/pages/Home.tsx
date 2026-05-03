@@ -12,26 +12,9 @@ import GadgetsSection from "@/components/GadgetsSection";
 import ArticlesSection from "@/components/ArticlesSection";
 import Sidebar from "@/components/Sidebar";
 import Footer from "@/components/Footer";
+import AdBanner from "@/components/AdBanner";
 
 type Lang = 'en' | 'pt';
-
-const AdLeaderboard = () => (
-  <div style={{ background: 'rgba(5,5,6,0.95)', borderTop: '1px solid rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '10px 2rem' }}>
-    <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-      <div
-        className="ad-placeholder"
-        style={{
-          height: '64px',
-          borderRadius: '4px',
-          maxWidth: '728px',
-          margin: '0 auto',
-        }}
-      >
-        <span>Google AdSense — Leaderboard 728×90</span>
-      </div>
-    </div>
-  </div>
-);
 
 export default function Home() {
    const [lang, setLang] = useState<Lang>('en');
@@ -64,7 +47,11 @@ export default function Home() {
       <Header lang={lang} onLangChange={setLang} />
 
       {/* ---- AD BANNER TOP (728x90 Leaderboard) — above Hero ---- */}
-      <AdLeaderboard />
+      <div style={{ background: 'rgba(5,5,6,0.95)', borderTop: '1px solid rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '10px 2rem' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          <AdBanner marginTop="0" marginBottom="0" />
+        </div>
+      </div>
 
       {/* ---- HERO + SIDEBAR ---- */}
       <div
@@ -91,7 +78,9 @@ export default function Home() {
       </div>
 
       {/* ---- AD BANNER BOTTOM (728x90 Leaderboard) — below Hero, above Trending ---- */}
-      <AdLeaderboard />
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 2rem' }}>
+        <AdBanner />
+      </div>
 
       {/* ---- TRENDING NEWS ---- */}
       <TrendingSection lang={lang} />

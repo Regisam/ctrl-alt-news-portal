@@ -20,6 +20,7 @@ import LatestInCategory from "@/components/LatestInCategory";
 import MetaTags from "@/components/MetaTags";
 import ArticleSchema from "@/components/ArticleSchema";
 import ShareButtons from "@/components/ShareButtons";
+import AdBanner from "@/components/AdBanner";
 import { createShareEvent, trackShareEvent } from "@/lib/share-utils";
 import { aiArticles, scienceArticles, roboticsArticles, trendingArticles } from "@/lib/data";
 import { articleBodies } from "@/lib/articleContent";
@@ -226,18 +227,7 @@ export default function ArticleDetail() {
         </p>
 
         {/* AdSense leaderboard mid-article */}
-        <div
-          className="w-full flex items-center justify-center mb-10 rounded"
-          style={{
-            height: "90px",
-            background: "rgba(255,255,255,0.03)",
-            border: "1px dashed rgba(255,255,255,0.12)",
-          }}
-        >
-          <span className="text-xs tracking-widest uppercase" style={{ color: "rgba(255,255,255,0.25)" }}>
-            Google AdSense — Leaderboard 728×90
-          </span>
-        </div>
+        <AdBanner marginBottom="2.5rem" />
 
         {/* Article body */}
         <article className="prose-custom">
@@ -354,36 +344,7 @@ export default function ArticleDetail() {
         )}
 
         {/* Leaderboard 728×90 – between author bio and comments */}
-        <div
-          className="w-full flex items-center justify-center mb-10"
-          style={{ minHeight: "90px" }}
-        >
-          <div
-            style={{
-              width: "100%",
-              maxWidth: "728px",
-              height: "90px",
-              border: "1px dashed rgba(255,255,255,0.18)",
-              borderRadius: "6px",
-              background: "rgba(255,255,255,0.03)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <span
-              style={{
-                color: "rgba(255,255,255,0.25)",
-                fontSize: "11px",
-                letterSpacing: "0.15em",
-                fontFamily: "monospace",
-                textTransform: "uppercase",
-              }}
-            >
-              GOOGLE ADSENSE — LEADERBOARD 728×90
-            </span>
-          </div>
-        </div>
+        <AdBanner marginBottom="2.5rem" />
 
         {/* Comments section */}
         <CommentsSection
