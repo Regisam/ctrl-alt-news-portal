@@ -128,13 +128,6 @@ jobs:
         run: |
           node scripts/check-coverage.js --lines 28 --functions 60 --branches 70 --statements 28
 
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage/coverage-summary.json
-          retention-days: 30
-
       - name: Comment coverage status
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
