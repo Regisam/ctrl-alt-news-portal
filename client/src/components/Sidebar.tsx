@@ -10,6 +10,7 @@ import { useState } from "react";
 import { popularArticles } from "@/lib/data";
 import { CATEGORY_CONFIG } from "@/lib/constants";
 import { RecommendationsWidget } from "@/components/RecommendationsWidget";
+import { TrendingWidget } from "@/components/TrendingWidget";
 
 // Map popular article IDs (4,5,6) to full article detail IDs
 const POPULAR_TO_ARTICLE_ID: Record<number, number> = {
@@ -257,6 +258,12 @@ export default function Sidebar({ lang }: SidebarProps) {
           {lang === 'en' ? 'Subscribe Free' : 'Assinar Grátis'}
         </button>
       </section>
+
+      {/* Trending articles */}
+      <TrendingWidget
+        maxTrending={3}
+        title="Trending Now"
+      />
 
       {/* Personalized recommendations */}
       <RecommendationsWidget
