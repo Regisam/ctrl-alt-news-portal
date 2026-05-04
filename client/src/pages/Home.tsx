@@ -7,18 +7,32 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
+import { PersonalizedFeed } from "@/components/PersonalizedFeed";
 import TrendingSection from "@/components/TrendingSection";
 import GadgetsSection from "@/components/GadgetsSection";
 import ArticlesSection from "@/components/ArticlesSection";
 import Sidebar from "@/components/Sidebar";
 import Footer from "@/components/Footer";
 import AdBanner from "@/components/AdBanner";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useReadingHistory } from "@/hooks/useReadingHistory";
+import { useTrending } from "@/hooks/useTrending";
+import { trendingArticles } from "@/lib/data";
 
 type Lang = 'en' | 'pt';
 
 export default function Home() {
    const [lang, setLang] = useState<Lang>('en');
   const [location] = useLocation();
+
+  // Personalized feed hooks
+  const { favoriteCategories } = useUserPreferences();
+  const { history } = useReadingHistory();
+  const { trending } = useTrending({ count: 8, maxCount: 10 });
+  const readArticleIds = history.map((h) => Number(h.articleId));
+
+  // A/B test variant (Story 11.8 - stubbed for now)
+  const abVariant: 'personalized' | 'chronological' = 'personalized';
 
   // Sync <html lang> with selected language for screen readers and SEO
   useEffect(() => {
@@ -77,9 +91,22 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ---- AD BANNER BOTTOM (728x90 Leaderboard) — below Hero, above Trending ---- */}
+      {/* ---- AD BANNER BOTTOM (728x90 Leaderboard) — below Hero, above Personalized Feed ---- */}
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 2rem' }}>
         <AdBanner />
+      </div>
+
+      {/* ---- PERSONALIZED FEED ("For You") — Story 11.6 ---- */}
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 2rem' }}>
+        <PersonalizedFeed
+          allArticles={trendingArticles}
+          userPreferences={favoriteCategories}
+          trendingArticles={trending}
+          readArticleIds={readArticleIds}
+          lang={lang}
+          maxItems={8}
+          abVariant={abVariant}
+        />
       </div>
 
       {/* ---- TRENDING NEWS ---- */}
