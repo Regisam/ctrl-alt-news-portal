@@ -6,6 +6,7 @@ export const STORAGE_KEYS = {
   READING_HISTORY: "ctrl-alt-reading-history",
   BOOKMARKS: "ctrl-alt-bookmarks",
   FOLLOWED_AUTHORS: "ctrl-alt-followed-authors",
+  IMPLICIT_FEEDBACK: "ctrl-alt-implicit-feedback",
 } as const;
 
 export const MAX_HISTORY_ITEMS = 100;
@@ -37,6 +38,20 @@ export interface BookmarkItem {
 
 export interface Bookmarks {
   items: BookmarkItem[];
+}
+
+export interface ImplicitSignal {
+  articleId: string;
+  category: string;
+  author: string;
+  signalType: 'read' | 'bookmark' | 'reaction' | 'scroll' | 'completion';
+  value: number;
+  timestamp: number;
+}
+
+export interface ImplicitFeedbackData {
+  signals: ImplicitSignal[];
+  lastUpdated: number;
 }
 
 // Type guards
@@ -89,6 +104,30 @@ function isValidBookmarks(data: unknown): data is Bookmarks {
   return (
     Array.isArray(obj.items) &&
     obj.items.every((item) => isValidBookmarkItem(item))
+  );
+}
+
+function isValidImplicitSignal(data: unknown): data is ImplicitSignal {
+  if (typeof data !== "object" || data === null) return false;
+  const obj = data as Record<string, unknown>;
+  const validSignalTypes = ['read', 'bookmark', 'reaction', 'scroll', 'completion'];
+  return (
+    typeof obj.articleId === "string" &&
+    typeof obj.category === "string" &&
+    typeof obj.author === "string" &&
+    validSignalTypes.includes(obj.signalType as string) &&
+    typeof obj.value === "number" &&
+    typeof obj.timestamp === "number"
+  );
+}
+
+function isValidImplicitFeedbackData(data: unknown): data is ImplicitFeedbackData {
+  if (typeof data !== "object" || data === null) return false;
+  const obj = data as Record<string, unknown>;
+  return (
+    Array.isArray(obj.signals) &&
+    obj.signals.every((signal) => isValidImplicitSignal(signal)) &&
+    typeof obj.lastUpdated === "number"
   );
 }
 
@@ -358,6 +397,47 @@ export const storageAuthorFollow = {
   clear(): FollowedAuthorsData {
     const empty = { items: [] };
     storage.setItem(STORAGE_KEYS.FOLLOWED_AUTHORS, empty);
+    return empty;
+  },
+};
+
+// Implicit Feedback Storage (Story 12.4)
+export const storageImplicitFeedback = {
+  get(): ImplicitFeedbackData {
+    const stored = storage.getItem<unknown>(STORAGE_KEYS.IMPLICIT_FEEDBACK, null);
+
+    if (stored && isValidImplicitFeedbackData(stored)) {
+      return stored;
+    }
+
+    if (typeof window !== 'undefined') {
+      console.warn('[storage] Invalid implicit feedback data, using defaults');
+    }
+
+    return { signals: [], lastUpdated: Date.now() };
+  },
+
+  addSignal(signal: Omit<ImplicitSignal, 'timestamp'>): boolean {
+    const current = this.get();
+    const newSignal: ImplicitSignal = {
+      ...signal,
+      timestamp: Date.now(),
+    };
+
+    current.signals.push(newSignal);
+    current.lastUpdated = Date.now();
+
+    return storage.setItem(STORAGE_KEYS.IMPLICIT_FEEDBACK, current);
+  },
+
+  getByCategory(category: string): ImplicitSignal[] {
+    const current = this.get();
+    return current.signals.filter((signal) => signal.category === category);
+  },
+
+  clear(): ImplicitFeedbackData {
+    const empty: ImplicitFeedbackData = { signals: [], lastUpdated: Date.now() };
+    storage.setItem(STORAGE_KEYS.IMPLICIT_FEEDBACK, empty);
     return empty;
   },
 };

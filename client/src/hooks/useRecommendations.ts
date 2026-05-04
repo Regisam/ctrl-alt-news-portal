@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import type { Article } from "@/lib/data";
 import { aiArticles, scienceArticles, roboticsArticles, trendingArticles } from "@/lib/data";
 import { RulesEngine, type Rule, type UserContext } from "@/lib/rules-engine";
@@ -7,6 +7,7 @@ import { useReadingHistory } from "./useReadingHistory";
 import { useBookmarks } from "./useBookmarks";
 import { useAuthorFollow } from "./useAuthorFollow";
 import { useTrending } from "./useTrending";
+import { useImplicitFeedback } from "./useImplicitFeedback";
 
 // Default rules for Phase 1 (topic-based rules engine)
 const DEFAULT_RULES: Rule[] = [
@@ -159,6 +160,18 @@ export function useRecommendations({
   const { bookmarks } = useBookmarks();
   const { followedAuthors } = useAuthorFollow();
   const { trending } = useTrending({ count: 10 });
+  const { topCategories, hasSignals } = useImplicitFeedback();
+
+  // Enrich favorite categories with implicit preferences when explicit prefs are empty
+  const enrichedCategories = useMemo(
+    () =>
+      favoriteCategories.length > 0
+        ? favoriteCategories
+        : hasSignals
+          ? topCategories
+          : [],
+    [favoriteCategories, hasSignals, topCategories]
+  );
 
   // Initialize rules engine
   useEffect(() => {
@@ -204,7 +217,7 @@ export function useRecommendations({
       }));
 
       const userContext: UserContext = {
-        favoriteCategories,
+        favoriteCategories: enrichedCategories,
         readingHistory: readingHistoryArticles,
         bookmarks: bookmarks.map((b) => b.articleId),
         followedAuthors,
@@ -235,7 +248,7 @@ export function useRecommendations({
     } finally {
       setIsLoading(false);
     }
-  }, [favoriteCategories, history, bookmarks, followedAuthors, trending, count, enableLogging]);
+  }, [enrichedCategories, history, bookmarks, followedAuthors, trending, count, enableLogging]);
 
   return {
     recommendations,

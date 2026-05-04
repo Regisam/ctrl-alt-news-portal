@@ -25,6 +25,7 @@ import { ReactionButton } from "@/components/ReactionButton";
 import { RecommendationsWidget } from "@/components/RecommendationsWidget";
 import { useReactions } from "@/hooks/useReactions";
 import { useScrollDepth } from "@/hooks/useScrollDepth";
+import { useReadingHistory } from "@/hooks/useReadingHistory";
 import { createShareEvent, trackShareEvent } from "@/lib/share-utils";
 import { aiArticles, scienceArticles, roboticsArticles, trendingArticles } from "@/lib/data";
 import { articleBodies } from "@/lib/articleContent";
@@ -97,7 +98,10 @@ export default function ArticleDetail() {
     : 0;
 
   // Track behavioral analytics (scroll depth, reading time)
-  useScrollDepth({ articleId, wordCount });
+  const scrollMetrics = useScrollDepth({ articleId, wordCount });
+
+  // Get reading history hook for saving article reads
+  const { addToHistory } = useReadingHistory();
 
   const updateReactionCounts = useCallback(() => {
     const counts = getReactionsByArticle(articleIdStr);
@@ -128,6 +132,20 @@ export default function ArticleDetail() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [articleId]);
+
+  // Save reading history when user leaves article or switches articles
+  useEffect(() => {
+    return () => {
+      if (article && scrollMetrics) {
+        addToHistory({
+          articleId: String(article.id),
+          title: article.title.en,
+          category: article.category,
+          timeSpentMs: scrollMetrics.timeSpent * 1000,
+        });
+      }
+    };
+  }, [article, scrollMetrics, addToHistory]);
 
   if (!article) {
     return (
