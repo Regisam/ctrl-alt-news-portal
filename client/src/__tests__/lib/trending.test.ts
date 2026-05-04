@@ -45,8 +45,8 @@ const mockArticles: Article[] = [
 
 describe('calculateTrendingScore', () => {
   it('should calculate correct score with all engagement signals', () => {
-    // Use very recent date (5 minutes ago)
-    const recentDate = new Date(Date.now() - 5 * 60 * 1000).toDateString();
+    // Use very recent date (5 minutes ago) - include time to avoid midnight issue
+    const recentDate = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     const score = calculateTrendingScore(10, 5, 2, recentDate);
     // reactions: 10*1.0 = 10
     // bookmarks: 5*1.5 = 7.5
@@ -93,7 +93,7 @@ describe('calculateTrendingScore', () => {
   });
 
   it('should handle edge case with very large engagement numbers', () => {
-    const recentDate = new Date(Date.now() - 5 * 60 * 1000).toDateString();
+    const recentDate = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     const score = calculateTrendingScore(1000, 500, 100, recentDate);
     // reactions: 1000*1.0 = 1000
     // bookmarks: 500*1.5 = 750
