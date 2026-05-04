@@ -19,6 +19,7 @@ const GoogleSearchConsolePage = lazy(() => import("./pages/GoogleSearchConsolePa
 const AnalyticsDashboardPage = lazy(() => import("./pages/AnalyticsDashboardPage"));
 const ReadingListPage = lazy(() => import("./pages/ReadingListPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const EngagementDashboardPage = lazy(() => import("./pages/EngagementDashboardPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function Router() {
@@ -53,6 +54,7 @@ function Router() {
         <Route path={"/search"} component={SearchPage} />
         <Route path={"/reading-list"} component={ReadingListPage} />
         <Route path={"/settings"} component={SettingsPage} />
+        <Route path={"/engagement"} component={EngagementDashboardPage} />
         <Route path={"/404"} component={NotFound} />
         <Route component={NotFound} />
       </Switch>
