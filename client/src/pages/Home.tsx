@@ -17,6 +17,8 @@ import AdBanner from "@/components/AdBanner";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
 import { useTrending } from "@/hooks/useTrending";
+import { useABTest } from "@/hooks/useABTest";
+import { feedLayoutExperiment } from "@/lib/ab-experiments";
 import { trendingArticles } from "@/lib/data";
 
 type Lang = 'en' | 'pt';
@@ -31,8 +33,9 @@ export default function Home() {
   const { trending } = useTrending({ count: 8, maxCount: 10 });
   const readArticleIds = history.map((h) => Number(h.articleId));
 
-  // A/B test variant (Story 11.8 - stubbed for now)
-  const abVariant: 'personalized' | 'chronological' = 'personalized';
+  // A/B test variant (Story 11.8 - dynamic from experiment)
+  const feedLayoutVariant = useABTest(feedLayoutExperiment);
+  const abVariant: 'personalized' | 'chronological' = (feedLayoutVariant as 'personalized' | 'chronological') || 'personalized';
 
   // Sync <html lang> with selected language for screen readers and SEO
   useEffect(() => {

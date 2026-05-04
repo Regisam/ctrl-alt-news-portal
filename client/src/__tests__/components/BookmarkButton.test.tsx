@@ -3,15 +3,20 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BookmarkButton } from "../../components/BookmarkButton";
 import { useBookmarks } from "../../hooks/useBookmarks";
+import { useABTest } from "../../hooks/useABTest";
 
 vi.mock("../../hooks/useBookmarks");
+vi.mock("../../hooks/useABTest");
 
 describe("BookmarkButton component", () => {
   const mockUseBookmarks = useBookmarks as ReturnType<typeof vi.fn>;
+  const mockUseABTest = useABTest as ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    // Mock useABTest to return null by default (use fallback text)
+    mockUseABTest.mockReturnValue(null);
   });
 
   it("should render bookmark button", () => {
@@ -41,7 +46,7 @@ describe("BookmarkButton component", () => {
     expect(button).toBeInTheDocument();
   });
 
-  it("should have correct aria-label when not bookmarked", () => {
+  it("should have correct aria-label when not bookmarked", async () => {
     mockUseBookmarks.mockReturnValue({
       isBookmarked: vi.fn().mockReturnValue(false),
       toggleBookmark: vi.fn().mockReturnValue(true),
@@ -64,14 +69,16 @@ describe("BookmarkButton component", () => {
       />
     );
 
-    const button = screen.getByRole("button");
-    expect(button).toHaveAttribute(
-      "aria-label",
-      'Adicionar "Test Article" aos favoritos'
-    );
+    await waitFor(() => {
+      const button = screen.getByRole("button");
+      expect(button).toHaveAttribute(
+        "aria-label",
+        'Adicionar "Test Article" aos favoritos'
+      );
+    });
   });
 
-  it("should have correct aria-label when bookmarked", () => {
+  it("should have correct aria-label when bookmarked", async () => {
     mockUseBookmarks.mockReturnValue({
       isBookmarked: vi.fn().mockReturnValue(true),
       toggleBookmark: vi.fn().mockReturnValue(true),
@@ -94,11 +101,13 @@ describe("BookmarkButton component", () => {
       />
     );
 
-    const button = screen.getByRole("button");
-    expect(button).toHaveAttribute(
-      "aria-label",
-      'Remover "Test Article" dos favoritos'
-    );
+    await waitFor(() => {
+      const button = screen.getByRole("button");
+      expect(button).toHaveAttribute(
+        "aria-label",
+        'Remover "Test Article" dos favoritos'
+      );
+    });
   });
 
   it("should have aria-pressed attribute", () => {
@@ -186,6 +195,11 @@ describe("BookmarkButton component", () => {
       />
     );
 
+    await waitFor(() => {
+      const button = screen.getByRole("button");
+      expect(button).toBeInTheDocument();
+    });
+
     const button = screen.getByRole("button");
     await userEvent.click(button);
 
@@ -196,7 +210,7 @@ describe("BookmarkButton component", () => {
     });
   });
 
-  it("should show label when showLabel prop is true", () => {
+  it("should show label when showLabel prop is true", async () => {
     mockUseBookmarks.mockReturnValue({
       isBookmarked: vi.fn().mockReturnValue(false),
       toggleBookmark: vi.fn().mockReturnValue(true),
@@ -220,10 +234,12 @@ describe("BookmarkButton component", () => {
       />
     );
 
-    expect(screen.getByText("Favoritar")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Favoritar")).toBeInTheDocument();
+    });
   });
 
-  it("should show 'Favorito' label when bookmarked", () => {
+  it("should show 'Favorito' label when bookmarked", async () => {
     mockUseBookmarks.mockReturnValue({
       isBookmarked: vi.fn().mockReturnValue(true),
       toggleBookmark: vi.fn().mockReturnValue(true),
@@ -247,7 +263,9 @@ describe("BookmarkButton component", () => {
       />
     );
 
-    expect(screen.getByText("Favorito")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Favorito")).toBeInTheDocument();
+    });
   });
 
   it("should apply custom className", () => {

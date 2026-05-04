@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Bookmark } from "lucide-react";
 import { useBookmarks } from "../hooks/useBookmarks";
+import { useABTest } from "@/hooks/useABTest";
+import { bookmarkCopyExperiment, getBookmarkCopyText, getBookmarkAriaLabel, getBookmarkFeedbackText } from "@/lib/ab-experiments";
 
 export interface BookmarkButtonProps {
   articleId: string;
@@ -21,6 +23,7 @@ export function BookmarkButton({
 }: BookmarkButtonProps) {
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
+  const bookmarkCopyVariant = useABTest(bookmarkCopyExperiment);
 
   const bookmarked = isBookmarked(articleId);
 
@@ -41,11 +44,8 @@ export function BookmarkButton({
     }
   };
 
-  const ariaLabel = bookmarked
-    ? `Remover "${title}" dos favoritos`
-    : `Adicionar "${title}" aos favoritos`;
-
-  const feedbackText = bookmarked ? "Adicionado aos favoritos" : "Removido dos favoritos";
+  const ariaLabel = getBookmarkAriaLabel(bookmarkCopyVariant, title, bookmarked);
+  const feedbackText = getBookmarkFeedbackText(bookmarkCopyVariant, bookmarked);
 
   return (
     <div className={`relative inline-block ${className}`}>
@@ -68,7 +68,7 @@ export function BookmarkButton({
         />
         {showLabel && (
           <span className="text-sm font-medium">
-            {bookmarked ? "Favorito" : "Favoritar"}
+            {getBookmarkCopyText(bookmarkCopyVariant, bookmarked)}
           </span>
         )}
       </button>
