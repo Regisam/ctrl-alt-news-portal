@@ -5,6 +5,7 @@ import { RulesEngine, type Rule, type UserContext } from "@/lib/rules-engine";
 import { useUserPreferences } from "./useUserPreferences";
 import { useReadingHistory } from "./useReadingHistory";
 import { useBookmarks } from "./useBookmarks";
+import { useAuthorFollow } from "./useAuthorFollow";
 
 // Default rules for Phase 1 (topic-based rules engine)
 const DEFAULT_RULES: Rule[] = [
@@ -58,6 +59,42 @@ const DEFAULT_RULES: Rule[] = [
     metadata: { ab_test_group: "topic_rules_v1", ctr_target: 0.35, impressions: 0, clicks: 0, firing_count: 0 },
   },
   {
+    id: "rule_author_alex_chen",
+    name: "Alex Chen Articles",
+    description: "Boost articles from Alex Chen for users following this author",
+    priority: 200,
+    enabled: true,
+    conditions: [
+      { type: "author_follow", field: "followedAuthors", value: "Alex Chen" },
+    ],
+    actions: [{ type: "boost_articles", field: "author", value: "Alex Chen", weight: 2.5 }],
+    metadata: { ab_test_group: "author_rules_v1", ctr_target: 0.40, impressions: 0, clicks: 0, firing_count: 0 },
+  },
+  {
+    id: "rule_author_james_wright",
+    name: "James Wright Articles",
+    description: "Boost articles from James Wright for users following this author",
+    priority: 201,
+    enabled: true,
+    conditions: [
+      { type: "author_follow", field: "followedAuthors", value: "James Wright" },
+    ],
+    actions: [{ type: "boost_articles", field: "author", value: "James Wright", weight: 2.5 }],
+    metadata: { ab_test_group: "author_rules_v1", ctr_target: 0.40, impressions: 0, clicks: 0, firing_count: 0 },
+  },
+  {
+    id: "rule_author_generic",
+    name: "Generic Author Follow",
+    description: "Boost any articles from authors user is following",
+    priority: 210,
+    enabled: true,
+    conditions: [
+      { type: "bookmarked_author", field: "author", threshold: 1 },
+    ],
+    actions: [{ type: "boost_articles", field: "author", weight: 2.0 }],
+    metadata: { ab_test_group: "author_rules_v1", ctr_target: 0.35, impressions: 0, clicks: 0, firing_count: 0 },
+  },
+  {
     id: "rule_default_chronological",
     name: "Default Chronological",
     priority: 999,
@@ -107,6 +144,7 @@ export function useRecommendations({
   const { favoriteCategories } = useUserPreferences();
   const { history } = useReadingHistory();
   const { bookmarks } = useBookmarks();
+  const { followedAuthors } = useAuthorFollow();
 
   // Initialize rules engine
   useEffect(() => {
@@ -155,6 +193,7 @@ export function useRecommendations({
         favoriteCategories,
         readingHistory: readingHistoryArticles,
         bookmarks: bookmarks.map((b) => b.articleId),
+        followedAuthors,
       };
 
       const result = engineRef.current.evaluate(userContext);
@@ -181,7 +220,7 @@ export function useRecommendations({
     } finally {
       setIsLoading(false);
     }
-  }, [favoriteCategories, history, bookmarks, count, enableLogging]);
+  }, [favoriteCategories, history, bookmarks, followedAuthors, count, enableLogging]);
 
   return {
     recommendations,

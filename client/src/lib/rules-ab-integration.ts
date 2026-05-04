@@ -1,4 +1,4 @@
-import { getVariantForUser } from './ab-testing';
+import { getUserVariant } from './ab-testing';
 import type { Rule } from './rules-engine';
 
 /**
@@ -20,8 +20,8 @@ export interface RulesABConfig {
  * @returns Rules assigned to user's variant
  */
 export function getRulesForUser(config: RulesABConfig, userId: string): Rule[] {
-  const variant = getVariantForUser(userId, config.experimentId);
-  return config.variants[variant] || Object.values(config.variants)[0] || [];
+  const variant = getUserVariant(userId, config.experimentId);
+  return config.variants[variant || ''] || Object.values(config.variants)[0] || [];
 }
 
 /**

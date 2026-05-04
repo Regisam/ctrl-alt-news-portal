@@ -5,6 +5,7 @@ export const STORAGE_KEYS = {
   USER_PREFERENCES: "ctrl-alt-preferences",
   READING_HISTORY: "ctrl-alt-reading-history",
   BOOKMARKS: "ctrl-alt-bookmarks",
+  FOLLOWED_AUTHORS: "ctrl-alt-followed-authors",
 } as const;
 
 export const MAX_HISTORY_ITEMS = 100;
@@ -270,5 +271,93 @@ export const storageBookmarks = {
     return [...bookmarks.items].sort((a, b) => {
       return descending ? b.dateSaved - a.dateSaved : a.dateSaved - b.dateSaved;
     });
+  },
+};
+
+// Author Follow Storage (Story 12.2)
+export interface AuthorFollowItem {
+  authorName: string;
+  dateFollowed: number;
+}
+
+export interface FollowedAuthorsData {
+  items: AuthorFollowItem[];
+}
+
+function isValidAuthorFollowItem(item: unknown): item is AuthorFollowItem {
+  return (
+    typeof item === 'object' &&
+    item !== null &&
+    'authorName' in item &&
+    'dateFollowed' in item &&
+    typeof (item as any).authorName === 'string' &&
+    typeof (item as any).dateFollowed === 'number'
+  );
+}
+
+function isValidFollowedAuthorsData(data: unknown): data is FollowedAuthorsData {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'items' in data &&
+    Array.isArray((data as any).items) &&
+    (data as any).items.every(isValidAuthorFollowItem)
+  );
+}
+
+export const storageAuthorFollow = {
+  get(): FollowedAuthorsData {
+    const stored = storage.getItem<unknown>(STORAGE_KEYS.FOLLOWED_AUTHORS, null);
+
+    if (stored && isValidFollowedAuthorsData(stored)) {
+      return stored;
+    }
+
+    if (typeof window !== 'undefined') {
+      console.warn('[storage] Invalid followed authors data, using defaults');
+    }
+
+    return { items: [] };
+  },
+
+  follow(authorName: string): FollowedAuthorsData {
+    const current = this.get();
+
+    const existing = current.items.findIndex((item) => item.authorName === authorName);
+    if (existing >= 0) {
+      current.items.splice(existing, 1);
+    }
+
+    const newItem: AuthorFollowItem = {
+      authorName,
+      dateFollowed: Date.now(),
+    };
+
+    current.items.unshift(newItem);
+    storage.setItem(STORAGE_KEYS.FOLLOWED_AUTHORS, current);
+
+    return current;
+  },
+
+  unfollow(authorName: string): FollowedAuthorsData {
+    const current = this.get();
+    current.items = current.items.filter((item) => item.authorName !== authorName);
+    storage.setItem(STORAGE_KEYS.FOLLOWED_AUTHORS, current);
+    return current;
+  },
+
+  isFollowing(authorName: string): boolean {
+    const current = this.get();
+    return current.items.some((item) => item.authorName === authorName);
+  },
+
+  getAll(): AuthorFollowItem[] {
+    return this.get().items;
+  },
+
+  clear(): FollowedAuthorsData {
+    const empty = { items: [] };
+    storage.setItem(STORAGE_KEYS.FOLLOWED_AUTHORS, empty);
+    return empty;
   },
 };

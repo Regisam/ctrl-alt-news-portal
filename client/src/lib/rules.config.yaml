@@ -133,6 +133,69 @@ rules:
       clicks: 0
       firing_count: 0
 
+# Author-based rules (Story 12.2)
+- id: rule_author_alex_chen
+  name: "Alex Chen Articles"
+  description: "Boost articles from Alex Chen for users following this author"
+  priority: 200
+  enabled: true
+  conditions:
+    - type: "author_follow"
+      field: "followedAuthors"
+      value: "Alex Chen"
+  actions:
+    - type: "boost_articles"
+      field: "author"
+      value: "Alex Chen"
+      weight: 2.5
+  metadata:
+    ab_test_group: "author_rules_v1"
+    ctr_target: 0.40
+    impressions: 0
+    clicks: 0
+    firing_count: 0
+
+- id: rule_author_james_wright
+  name: "James Wright Articles"
+  description: "Boost articles from James Wright for users following this author"
+  priority: 201
+  enabled: true
+  conditions:
+    - type: "author_follow"
+      field: "followedAuthors"
+      value: "James Wright"
+  actions:
+    - type: "boost_articles"
+      field: "author"
+      value: "James Wright"
+      weight: 2.5
+  metadata:
+    ab_test_group: "author_rules_v1"
+    ctr_target: 0.40
+    impressions: 0
+    clicks: 0
+    firing_count: 0
+
+- id: rule_author_generic
+  name: "Generic Author Follow"
+  description: "Boost any articles from authors user is following (if not matched by specific rule)"
+  priority: 210
+  enabled: true
+  conditions:
+    - type: "bookmarked_author"
+      field: "author"
+      threshold: 1
+  actions:
+    - type: "boost_articles"
+      field: "author"
+      weight: 2.0
+  metadata:
+    ab_test_group: "author_rules_v1"
+    ctr_target: 0.35
+    impressions: 0
+    clicks: 0
+    firing_count: 0
+
 # Configuration options
 config:
   max_recommendations: 5

@@ -2,7 +2,7 @@ import type { Article, Category } from "./data";
 
 // Type definitions for rules engine
 export interface RuleCondition {
-  type: "topic_interest" | "reading_history" | "bookmarked_author" | "always_match";
+  type: "topic_interest" | "reading_history" | "bookmarked_author" | "author_follow" | "always_match";
   field?: string;
   value?: string | number;
   operator?: "equals" | "includes" | "gt" | "lt";
@@ -38,6 +38,7 @@ export interface UserContext {
   favoriteCategories: string[];
   readingHistory: Article[];
   bookmarks: string[]; // articleIds
+  followedAuthors: string[]; // author names
 }
 
 export interface RecommendationResult {
@@ -128,6 +129,9 @@ export class RulesEngine {
           return authorBookmarks.length >= threshold;
         }
 
+        case "author_follow":
+          return context.followedAuthors.includes(condition.value as string);
+
         case "always_match":
           return true;
 
@@ -161,7 +165,8 @@ export class RulesEngine {
           // Boost articles matching the field/value with weight multiplier
           const boosted = result.map((article) => {
             const matches =
-              action.field === "category" && article.category === action.value;
+              (action.field === "category" && article.category === action.value) ||
+              (action.field === "author" && article.author === action.value);
             if (matches && action.weight) {
               return { ...article, _boostWeight: ((article._boostWeight || 1) * action.weight) };
             }
