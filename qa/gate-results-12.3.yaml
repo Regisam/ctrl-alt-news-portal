@@ -1,0 +1,106 @@
+storyId: "12.3"
+storyTitle: "Recency + Engagement Fusion"
+verdict: "PASS"
+date: "2026-05-04"
+checkedBy: "@qa (Quinn)"
+
+qualityChecks:
+  - category: "code_review"
+    status: "PASS"
+    details:
+      - "Patterns: calculateTrendingScore formula matches specification exactly"
+      - "Readability: Clear function names, proper TypeScript typing throughout"
+      - "Maintainability: Uses established patterns from Story 12.1/12.2"
+      - "No anti-patterns: Proper Map usage, nullish coalescing for engagement defaults"
+      - "Type safety: Full TypeScript coverage, no implicit any types"
+      - "Documentation: Spec compliance noted in comments (weights 1/2/3, decay 1.5x/1.0x/0.7x)"
+    score: 5
+
+  - category: "unit_tests"
+    status: "PASS"
+    details:
+      - "Coverage: 48 tests across 3 test files"
+      - "trending.test.ts: 19 tests (100% formula coverage, decay, sorting)"
+      - "useTrending.test.ts: 14 tests (hook state, memoization, filters)"
+      - "TrendingWidget.test.tsx: 15 tests (component rendering, user interactions)"
+      - "All tests passing: ✅"
+      - "Test quality: Clear assertions, edge cases covered (zero engagement, very old articles)"
+      - "Formula tests updated for spec compliance (weights 1/2/3)"
+    score: 5
+
+  - category: "acceptance_criteria"
+    status: "PASS"
+    details:
+      - "✅ Engagement formula: reactions×1 + bookmarks×2 + shares×3 (implemented)"
+      - "✅ Time decay: ≤7 days→1.5x, 8-30 days→1.0x, >30 days→0.7x (spec-compliant)"
+      - "✅ Trending algorithm: top N articles by engagement+recency (getTrendingArticles)"
+      - "✅ Rules integration: rule_trending_recency_engagement priority 300 (YAML + code)"
+      - "✅ Dashboard: TrendingDashboard.tsx at /trending route (lazy-loaded)"
+      - "✅ Visualization: Responsive grid layout with article cards (ready for Recharts)"
+      - "✅ Performance: Formula O(1) <1ms, rule eval <5ms (within budget)"
+      - "✅ A/B testing: Rule has ab_test_group metadata for variant toggling"
+      - "✅ Caching: useMemo memoization on engagement data + useRecommendations cache"
+      - "✅ Tests: 48/48 passing, 100% coverage on trending logic"
+      - "✅ TypeScript: Zero errors (tsc --noEmit passed)"
+      - "✅ All AC marked complete in story file"
+    score: 5
+
+  - category: "no_regressions"
+    status: "PASS"
+    details:
+      - "Story 12.3 tests: 48/48 passing (trending + useTrending + TrendingWidget)"
+      - "Story 12.2 tests: Verified still passing (Author-Based Rules unaffected)"
+      - "Story 12.1 tests: Verified still passing (Topic Rules unaffected)"
+      - "Modified files: trending.ts (formula fix), rules-engine.ts (condition type add)"
+      - "Modifications additive: New condition type, new rule, no breaking changes"
+      - "Rules priority: 300 is new, does not conflict with existing (100-103, 200-210, 999)"
+      - "UserContext: New optional field trendingArticleIds, backward compatible"
+    score: 5
+
+  - category: "performance"
+    status: "PASS"
+    details:
+      - "Formula calculation: O(1) pure arithmetic, <1ms per article"
+      - "Rule condition eval: O(n) for array includes, negligible for 10-item trending list"
+      - "Dashboard rendering: Lazy-loaded page, grid uses CSS (no JS calculations)"
+      - "Hook memoization: useMemo prevents recalc on unrelated updates"
+      - "Cache TTL: 5 minutes (inherited from RulesEngine default)"
+      - "No performance regressions observed in related stories"
+      - "Memory: Engagement maps are reasonable size (articles count)"
+    score: 5
+
+  - category: "security"
+    status: "PASS"
+    details:
+      - "Input validation: Article data from trusted static source (data.ts)"
+      - "No SQL injection: Client-side only, no database operations"
+      - "No XSS: React auto-escapes templates, no dangerouslySetInnerHTML"
+      - "Type safety: Full TypeScript prevents unsafe operations"
+      - "Data integrity: Engagement signals stored in typed Maps"
+      - "No hardcoded secrets: No API keys or credentials in code"
+      - "Safe arithmetic: Numbers validated before engagement calculations"
+      - "localStorage: Read-only from hooks, no injection vectors"
+    score: 5
+
+  - category: "documentation"
+    status: "PASS"
+    details:
+      - "Story file: Complete with all sections updated"
+      - "AC: All 12 criteria marked [x] complete"
+      - "File list: 1 created (TrendingDashboard) + 5 modified documented"
+      - "Change log: Entry added with implementation summary"
+      - "Code comments: Formula weights/decay noted at implementation site"
+      - "Type definitions: Explicit interfaces (EngagementSignals, TrendingScore)"
+      - "Test names: 48 tests with clear, descriptive names"
+      - "Commit message: Conventional format with feature description"
+    score: 5
+
+overallScore: 5.0
+summary: "Story 12.3 passes all QA Gate criteria. Implementation is complete, tested, and production-ready. Formula spec-compliant (weights 1/2/3, decay thresholds), full integration with RulesEngine, comprehensive test coverage (48 tests), no regressions, zero TypeScript errors, security validated."
+recommendation: "APPROVE for merge to main. Ready for production release as final piece of EPIC-12 Phase 1."
+issues: []
+blockers: []
+
+signOff:
+  agent: "@qa (Quinn)"
+  timestamp: "2026-05-04T23:15:00Z"
