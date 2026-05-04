@@ -45,15 +45,15 @@ const mockArticles: Article[] = [
 
 describe('calculateTrendingScore', () => {
   it('should calculate correct score with all engagement signals', () => {
-    // Use very recent date (5 minutes ago) - include time to avoid midnight issue
+    // Use very recent date (5 minutes ago)
     const recentDate = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     const score = calculateTrendingScore(10, 5, 2, recentDate);
-    // reactions: 10*1.0 = 10
-    // bookmarks: 5*1.5 = 7.5
-    // shares: 2*2.0 = 4.0
-    // baseScore = 21.5, multiply by ageDecay (~0.998 for 5 min)
-    expect(score).toBeGreaterThan(21);
-    expect(score).toBeLessThan(22);
+    // reactions: 10*1 = 10
+    // bookmarks: 5*2 = 10
+    // shares: 2*3 = 6
+    // baseScore = 26, multiply by decay multiplier = 1.5 (≤7 days)
+    // score = 26 * 1.5 = 39
+    expect(score).toBeCloseTo(39, 0);
   });
 
   it('should return 0 for articles with no engagement', () => {
@@ -66,7 +66,11 @@ describe('calculateTrendingScore', () => {
     const score2 = calculateTrendingScore(0, 10, 0, 'Feb 24, 2026');
     const score3 = calculateTrendingScore(0, 0, 10, 'Feb 24, 2026');
 
-    // shares (score3) > bookmarks (score2) > reactions (score1)
+    // shares weight=3 (score3) > bookmarks weight=2 (score2) > reactions weight=1 (score1)
+    // With >30 days decay 0.7:
+    // score1 = 10*1*0.7 = 7
+    // score2 = 10*2*0.7 = 14
+    // score3 = 10*3*0.7 = 21
     expect(score3).toBeGreaterThan(score2);
     expect(score2).toBeGreaterThan(score1);
   });
@@ -83,23 +87,24 @@ describe('calculateTrendingScore', () => {
     expect(scoreRecent).toBeGreaterThan(scoreOld);
   });
 
-  it('should maintain minimum decay of 0.1 for very old articles', () => {
+  it('should maintain 0.7 decay multiplier for very old articles', () => {
     // Article from 2 years ago
     const veryOld = 'Feb 24, 2024';
     const score = calculateTrendingScore(10, 5, 2, veryOld);
-    // baseScore = 21.5, min decay = 0.1, so score >= 2.15
-    expect(score).toBeGreaterThanOrEqual(2.0);
-    expect(score).toBeLessThan(3);
+    // baseScore = 26, decay multiplier = 0.7 (>30 days)
+    // score = 26 * 0.7 = 18.2
+    expect(score).toBeCloseTo(18.2, 0);
   });
 
   it('should handle edge case with very large engagement numbers', () => {
     const recentDate = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     const score = calculateTrendingScore(1000, 500, 100, recentDate);
-    // reactions: 1000*1.0 = 1000
-    // bookmarks: 500*1.5 = 750
-    // shares: 100*2.0 = 200
-    // baseScore = 1950, multiply by ageDecay ~0.998
-    expect(score).toBeGreaterThan(1940);
+    // reactions: 1000*1 = 1000
+    // bookmarks: 500*2 = 1000
+    // shares: 100*3 = 300
+    // baseScore = 2300, multiply by decay multiplier = 1.5
+    // score = 2300 * 1.5 = 3450
+    expect(score).toBeCloseTo(3450, 0);
   });
 });
 

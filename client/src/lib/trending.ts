@@ -13,8 +13,6 @@ export interface TrendingScore {
   score: number;
 }
 
-const WEEK_IN_HOURS = 168;
-const MIN_AGE_DECAY = 0.1;
 
 export function calculateTrendingScore(
   reactions: number,
@@ -26,16 +24,24 @@ export function calculateTrendingScore(
   const articleDate = new Date(articleDateStr).getTime();
   const now = Date.now();
   const ageMs = now - articleDate;
-  const ageHours = ageMs / (1000 * 60 * 60);
+  const ageDays = ageMs / (1000 * 60 * 60 * 24);
 
-  // Linear decay over 7 days, minimum 0.1
-  const ageDecay = Math.max(MIN_AGE_DECAY, 1.0 - ageHours / WEEK_IN_HOURS);
+  // Time decay multiplier: spec compliance
+  // ≤7 days: 1.5x, 8-30 days: 1.0x, >30 days: 0.7x
+  let decayMultiplier: number;
+  if (ageDays <= 7) {
+    decayMultiplier = 1.5;
+  } else if (ageDays <= 30) {
+    decayMultiplier = 1.0;
+  } else {
+    decayMultiplier = 0.7;
+  }
 
-  // Weighted score: reactions=1.0, bookmarks=1.5, shares=2.0
-  const baseScore = reactions * 1.0 + bookmarks * 1.5 + shares * 2.0;
+  // Weighted score: reactions=1x, bookmarks=2x, shares=3x (per spec)
+  const baseScore = reactions * 1 + bookmarks * 2 + shares * 3;
 
   // Apply time decay
-  return baseScore * ageDecay;
+  return baseScore * decayMultiplier;
 }
 
 export function getTrendingArticles(

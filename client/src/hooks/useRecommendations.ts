@@ -6,6 +6,7 @@ import { useUserPreferences } from "./useUserPreferences";
 import { useReadingHistory } from "./useReadingHistory";
 import { useBookmarks } from "./useBookmarks";
 import { useAuthorFollow } from "./useAuthorFollow";
+import { useTrending } from "./useTrending";
 
 // Default rules for Phase 1 (topic-based rules engine)
 const DEFAULT_RULES: Rule[] = [
@@ -95,6 +96,18 @@ const DEFAULT_RULES: Rule[] = [
     metadata: { ab_test_group: "author_rules_v1", ctr_target: 0.35, impressions: 0, clicks: 0, firing_count: 0 },
   },
   {
+    id: "rule_trending_recency_engagement",
+    name: "Trending: Recency + Engagement Fusion",
+    description: "Boost articles trending by engagement + recency signals",
+    priority: 300,
+    enabled: true,
+    conditions: [
+      { type: "trending_score" },
+    ],
+    actions: [{ type: "boost_articles", field: "trending", weight: 1.8 }],
+    metadata: { ab_test_group: "trending_v1", ctr_target: 0.30, impressions: 0, clicks: 0, firing_count: 0 },
+  },
+  {
     id: "rule_default_chronological",
     name: "Default Chronological",
     priority: 999,
@@ -145,6 +158,7 @@ export function useRecommendations({
   const { history } = useReadingHistory();
   const { bookmarks } = useBookmarks();
   const { followedAuthors } = useAuthorFollow();
+  const { trending } = useTrending({ count: 10 });
 
   // Initialize rules engine
   useEffect(() => {
@@ -194,6 +208,7 @@ export function useRecommendations({
         readingHistory: readingHistoryArticles,
         bookmarks: bookmarks.map((b) => b.articleId),
         followedAuthors,
+        trendingArticleIds: trending.map((a) => String(a.id)),
       };
 
       const result = engineRef.current.evaluate(userContext);
@@ -220,7 +235,7 @@ export function useRecommendations({
     } finally {
       setIsLoading(false);
     }
-  }, [favoriteCategories, history, bookmarks, followedAuthors, count, enableLogging]);
+  }, [favoriteCategories, history, bookmarks, followedAuthors, trending, count, enableLogging]);
 
   return {
     recommendations,

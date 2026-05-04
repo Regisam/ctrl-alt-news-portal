@@ -22,6 +22,7 @@ const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const EngagementDashboardPage = lazy(() => import("./pages/EngagementDashboardPage"));
 const ImpactReportPage = lazy(() => import("./pages/ImpactReportPage"));
 const AuthorPage = lazy(() => import("./pages/AuthorPage"));
+const TrendingDashboard = lazy(() => import("./pages/TrendingDashboard"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function Router() {
@@ -59,6 +60,7 @@ function Router() {
         <Route path={"/engagement"} component={EngagementDashboardPage} />
         <Route path={"/impact-report"} component={ImpactReportPage} />
         <Route path={"/authors/:slug"} component={AuthorPage} />
+        <Route path={"/trending"} component={TrendingDashboard} />
         <Route path={"/404"} component={NotFound} />
         <Route component={NotFound} />
       </Switch>

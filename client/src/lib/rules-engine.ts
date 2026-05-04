@@ -2,7 +2,7 @@ import type { Article, Category } from "./data";
 
 // Type definitions for rules engine
 export interface RuleCondition {
-  type: "topic_interest" | "reading_history" | "bookmarked_author" | "author_follow" | "always_match";
+  type: "topic_interest" | "reading_history" | "bookmarked_author" | "author_follow" | "trending_score" | "always_match";
   field?: string;
   value?: string | number;
   operator?: "equals" | "includes" | "gt" | "lt";
@@ -39,6 +39,7 @@ export interface UserContext {
   readingHistory: Article[];
   bookmarks: string[]; // articleIds
   followedAuthors: string[]; // author names
+  trendingArticleIds?: string[]; // articleIds of trending articles
 }
 
 export interface RecommendationResult {
@@ -131,6 +132,9 @@ export class RulesEngine {
 
         case "author_follow":
           return context.followedAuthors.includes(condition.value as string);
+
+        case "trending_score":
+          return (context.trendingArticleIds || []).length > 0;
 
         case "always_match":
           return true;

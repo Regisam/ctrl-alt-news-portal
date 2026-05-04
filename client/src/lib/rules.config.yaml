@@ -196,6 +196,26 @@ rules:
     clicks: 0
     firing_count: 0
 
+# TRENDING-BASED RULES
+# Rule 6: Trending articles (Story 12.3)
+- id: rule_trending_recency_engagement
+  name: "Trending: Recency + Engagement Fusion"
+  description: "Boost articles trending by engagement + recency signals"
+  priority: 300
+  enabled: true
+  conditions:
+    - type: "trending_score"
+  actions:
+    - type: "boost_articles"
+      field: "trending"
+      weight: 1.8
+  metadata:
+    ab_test_group: "trending_v1"
+    ctr_target: 0.30
+    impressions: 0
+    clicks: 0
+    firing_count: 0
+
 # Configuration options
 config:
   max_recommendations: 5
