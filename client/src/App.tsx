@@ -18,6 +18,7 @@ const ShareAnalyticsDashboard = lazy(() => import("./pages/ShareAnalyticsDashboa
 const GoogleSearchConsolePage = lazy(() => import("./pages/GoogleSearchConsolePage"));
 const AnalyticsDashboardPage = lazy(() => import("./pages/AnalyticsDashboardPage"));
 const ReadingListPage = lazy(() => import("./pages/ReadingListPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function Router() {
@@ -51,6 +52,7 @@ function Router() {
         <Route path={"/terms"} component={TermsPage} />
         <Route path={"/search"} component={SearchPage} />
         <Route path={"/reading-list"} component={ReadingListPage} />
+        <Route path={"/settings"} component={SettingsPage} />
         <Route path={"/404"} component={NotFound} />
         <Route component={NotFound} />
       </Switch>
