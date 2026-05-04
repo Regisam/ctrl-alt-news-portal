@@ -1,0 +1,142 @@
+# Recommendation Rules Configuration
+# IF/THEN declarative rules for EPIC-12 Phase 1 (Topic-Based Rules Engine)
+# Rules execute in priority order (lower priority = higher importance)
+# Each rule has: id, name, conditions, actions, priority, enabled, metadata
+
+rules:
+  # TOPIC-BASED RULES
+  # Rule 1: AI enthusiasts get more AI content
+  - id: rule_topic_ai
+    name: "AI Topic Preference"
+    description: "Boost AI articles for users interested in AI"
+    priority: 100
+    enabled: true
+    conditions:
+      - type: "topic_interest"
+        field: "favoriteCategories"
+        value: "AI"
+      - type: "reading_history"
+        field: "category"
+        operator: "equals"
+        value: "AI"
+        threshold: 3  # At least 3 AI articles read
+    actions:
+      - type: "boost_articles"
+        field: "category"
+        value: "AI"
+        weight: 2.0  # 2x boost for AI articles
+    metadata:
+      ab_test_group: "topic_rules_v1"
+      ctr_target: 0.35
+      impressions: 0
+      clicks: 0
+      firing_count: 0
+
+  # Rule 2: Science enthusiasts
+  - id: rule_topic_science
+    name: "Science Topic Preference"
+    description: "Boost Science articles for users interested in Science"
+    priority: 101
+    enabled: true
+    conditions:
+      - type: "topic_interest"
+        field: "favoriteCategories"
+        value: "SCIENCE"
+      - type: "reading_history"
+        field: "category"
+        operator: "equals"
+        value: "SCIENCE"
+        threshold: 3
+    actions:
+      - type: "boost_articles"
+        field: "category"
+        value: "SCIENCE"
+        weight: 2.0
+    metadata:
+      ab_test_group: "topic_rules_v1"
+      ctr_target: 0.35
+      impressions: 0
+      clicks: 0
+      firing_count: 0
+
+  # Rule 3: Robotics enthusiasts
+  - id: rule_topic_robotics
+    name: "Robotics Topic Preference"
+    description: "Boost Robotics articles for users interested in Robotics"
+    priority: 102
+    enabled: true
+    conditions:
+      - type: "topic_interest"
+        field: "favoriteCategories"
+        value: "ROBOTICS"
+      - type: "reading_history"
+        field: "category"
+        operator: "equals"
+        value: "ROBOTICS"
+        threshold: 3
+    actions:
+      - type: "boost_articles"
+        field: "category"
+        value: "ROBOTICS"
+        weight: 2.0
+    metadata:
+      ab_test_group: "topic_rules_v1"
+      ctr_target: 0.35
+      impressions: 0
+      clicks: 0
+      firing_count: 0
+
+  # Rule 4: Gadgets enthusiasts
+  - id: rule_topic_gadgets
+    name: "Gadgets Topic Preference"
+    description: "Boost Gadgets articles for users interested in Gadgets"
+    priority: 103
+    enabled: true
+    conditions:
+      - type: "topic_interest"
+        field: "favoriteCategories"
+        value: "GADGETS"
+      - type: "reading_history"
+        field: "category"
+        operator: "equals"
+        value: "GADGETS"
+        threshold: 3
+    actions:
+      - type: "boost_articles"
+        field: "category"
+        value: "GADGETS"
+        weight: 2.0
+    metadata:
+      ab_test_group: "topic_rules_v1"
+      ctr_target: 0.35
+      impressions: 0
+      clicks: 0
+      firing_count: 0
+
+  # FALLBACK RULE
+  # Rule 5: Default recommendation (no matching topic)
+  - id: rule_default_chronological
+    name: "Default Chronological"
+    description: "Fallback: recommend recent articles when no topic match"
+    priority: 999
+    enabled: true
+    conditions:
+      - type: "always_match"
+    actions:
+      - type: "sort_articles"
+        field: "date"
+        order: "descending"
+    metadata:
+      ab_test_group: "baseline"
+      ctr_target: 0.15
+      impressions: 0
+      clicks: 0
+      firing_count: 0
+
+# Configuration options
+config:
+  max_recommendations: 5
+  cache_ttl_ms: 300000  # 5 minutes cache
+  performance_budget_ms: 5  # Must evaluate <5ms
+  enable_logging: true
+  enable_dashboard: true

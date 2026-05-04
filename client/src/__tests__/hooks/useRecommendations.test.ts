@@ -1,177 +1,201 @@
-import { renderHook } from '@testing-library/react';
-import { useRecommendations, useRecommendationsForArticles } from '@/hooks/useRecommendations';
-import { aiArticles, scienceArticles } from '@/lib/data';
+import { renderHook, waitFor } from '@testing-library/react';
+import { useRecommendations } from '@/hooks/useRecommendations';
+import { aiArticles, scienceArticles, roboticsArticles, trendingArticles } from '@/lib/data';
 import { describe, it, expect } from 'vitest';
 
 describe('useRecommendations hook', () => {
-  it('should return recommendations object with count property', () => {
-    const { result } = renderHook(() => useRecommendations({}));
+  const allArticles = [...aiArticles, ...scienceArticles, ...roboticsArticles, ...trendingArticles];
 
-    expect(result.current).toHaveProperty('recommendations');
-    expect(result.current).toHaveProperty('count');
-    expect(Array.isArray(result.current.recommendations)).toBe(true);
-  });
-
-  it('should return fallback recommendations for new users (no read history)', () => {
+  it('should return recommendations object with proper structure', async () => {
     const { result } = renderHook(() => useRecommendations({
-      readArticleIds: [],
-      count: 5,
-    }));
-
-    expect(result.current.recommendations.length).toBeGreaterThan(0);
-    expect(result.current.recommendations.length).toBeLessThanOrEqual(5);
-  });
-
-  it('should respect count parameter', () => {
-    const { result } = renderHook(() => useRecommendations({
-      readArticleIds: [aiArticles[0].id],
+      articles: allArticles,
       count: 3,
     }));
 
+    await waitFor(() => {
+      expect(result.current).toHaveProperty('recommendations');
+      expect(result.current).toHaveProperty('firedRules');
+      expect(result.current).toHaveProperty('executionTime');
+      expect(result.current).toHaveProperty('isLoading');
+      expect(result.current).toHaveProperty('error');
+      expect(result.current).toHaveProperty('cacheHit');
+    });
+
+    expect(Array.isArray(result.current.recommendations)).toBe(true);
+    expect(Array.isArray(result.current.firedRules)).toBe(true);
+  });
+
+  it('should return recommendations with articles parameter', async () => {
+    const { result } = renderHook(() => useRecommendations({
+      articles: aiArticles,
+      count: 3,
+    }));
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.recommendations.length).toBeGreaterThan(0);
     expect(result.current.recommendations.length).toBeLessThanOrEqual(3);
   });
 
-  it('should respect maxCount parameter', () => {
+  it('should respect count parameter', async () => {
     const { result } = renderHook(() => useRecommendations({
-      readArticleIds: [aiArticles[0].id],
-      count: 5,
-      maxCount: 2,
+      articles: allArticles,
+      count: 2,
     }));
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
 
     expect(result.current.recommendations.length).toBeLessThanOrEqual(2);
   });
 
-  it('should exclude specified article from recommendations', () => {
+  it('should exclude specified article from recommendations', async () => {
     const { result } = renderHook(() => useRecommendations({
-      readArticleIds: [aiArticles[0].id],
-      excludeArticleId: aiArticles[1].id,
-      count: 10,
+      articles: allArticles,
+      excludeArticleId: aiArticles[0].id,
+      count: 5,
     }));
 
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
     const hasExcludedArticle = result.current.recommendations.some(
-      r => r.id === aiArticles[1].id
+      r => r.id === aiArticles[0].id
     );
     expect(hasExcludedArticle).toBe(false);
   });
 
-  it('should not recommend articles from read history', () => {
-    const readIds = [aiArticles[0].id, aiArticles[1].id];
+  it('should track execution time', async () => {
     const { result } = renderHook(() => useRecommendations({
-      readArticleIds: readIds,
-      count: 5,
+      articles: allArticles,
+      count: 3,
     }));
 
-    result.current.recommendations.forEach(rec => {
-      expect(readIds).not.toContain(rec.id);
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
     });
+
+    expect(result.current.executionTime).toBeGreaterThanOrEqual(0);
   });
 
-  it('should prefer articles from favorite categories', () => {
+  it('should fire rules and track them', async () => {
     const { result } = renderHook(() => useRecommendations({
-      readArticleIds: [aiArticles[0].id, aiArticles[1].id],
-      count: 5,
+      articles: allArticles,
+      count: 3,
+      enableLogging: false,
     }));
 
-    const aiRecommendations = result.current.recommendations.filter(r => r.category === 'AI');
-    expect(aiRecommendations.length).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(Array.isArray(result.current.firedRules)).toBe(true);
   });
 
-  it('should update recommendations when reading history changes', () => {
+  it('should cache results on subsequent calls', async () => {
     const { result, rerender } = renderHook(
-      ({ readIds }) => useRecommendations({ readArticleIds: readIds, count: 5 }),
-      { initialProps: { readIds: [aiArticles[0].id] } }
+      ({ articles }) => useRecommendations({ articles, count: 3 }),
+      { initialProps: { articles: allArticles } }
     );
 
-    const firstRecommendations = result.current.recommendations.map(r => r.id);
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
 
-    rerender({ readIds: [scienceArticles[0].id] });
+    const firstCacheHit = result.current.cacheHit;
 
-    const updatedRecommendations = result.current.recommendations.map(r => r.id);
+    rerender({ articles: allArticles });
 
-    // Different read history should potentially give different recommendations
-    // (Not guaranteed, but likely)
-    expect(firstRecommendations).not.toEqual(updatedRecommendations);
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    // Second call should use cache
+    expect(result.current.cacheHit).toBe(true);
   });
 
-  it('should accept liked articles in context', () => {
+  it('should handle empty articles array', async () => {
     const { result } = renderHook(() => useRecommendations({
-      readArticleIds: [aiArticles[0].id],
-      likedArticleIds: [aiArticles[1].id],
-      count: 5,
+      articles: [],
+      count: 3,
     }));
 
-    expect(result.current.recommendations.length).toBeGreaterThan(0);
-  });
-
-  it('should accept bookmarked articles in context', () => {
-    const { result } = renderHook(() => useRecommendations({
-      readArticleIds: [aiArticles[0].id],
-      bookmarkedArticleIds: [scienceArticles[0].id],
-      count: 5,
-    }));
-
-    expect(result.current.recommendations.length).toBeGreaterThan(0);
-  });
-
-  it('should return count property matching recommendations length', () => {
-    const { result } = renderHook(() => useRecommendations({
-      readArticleIds: [aiArticles[0].id],
-      count: 5,
-    }));
-
-    expect(result.current.count).toBe(result.current.recommendations.length);
-  });
-
-  it('should handle empty article lists gracefully', () => {
-    const { result } = renderHook(() => useRecommendations({
-      readArticleIds: [],
-      likedArticleIds: [],
-      bookmarkedArticleIds: [],
-      count: 5,
-    }));
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
 
     expect(Array.isArray(result.current.recommendations)).toBe(true);
   });
-});
 
-describe('useRecommendationsForArticles hook', () => {
-  it('should return recommendations based on article ids', () => {
-    const { result } = renderHook(() =>
-      useRecommendationsForArticles([aiArticles[0].id, aiArticles[1].id], 5)
-    );
+  it('should return performance metrics', async () => {
+    const { result } = renderHook(() => useRecommendations({
+      articles: allArticles,
+      count: 3,
+    }));
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.executionTime).toBeLessThan(100); // Should be very fast
+  });
+
+  it('should handle logging parameter', async () => {
+    const { result } = renderHook(() => useRecommendations({
+      articles: allArticles,
+      count: 3,
+      enableLogging: true,
+    }));
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
 
     expect(result.current.recommendations.length).toBeGreaterThan(0);
   });
 
-  it('should respect count parameter', () => {
-    const { result } = renderHook(() =>
-      useRecommendationsForArticles([aiArticles[0].id], 3)
-    );
+  it('should return consistent results for same input', async () => {
+    const { result: result1 } = renderHook(() => useRecommendations({
+      articles: allArticles,
+      count: 3,
+    }));
 
-    expect(result.current.recommendations.length).toBeLessThanOrEqual(3);
+    await waitFor(() => {
+      expect(result1.current.isLoading).toBe(false);
+    });
+
+    const ids1 = result1.current.recommendations.map(r => r.id);
+
+    const { result: result2 } = renderHook(() => useRecommendations({
+      articles: allArticles,
+      count: 3,
+    }));
+
+    await waitFor(() => {
+      expect(result2.current.isLoading).toBe(false);
+    });
+
+    const ids2 = result2.current.recommendations.map(r => r.id);
+
+    expect(ids1).toEqual(ids2);
   });
 
-  it('should respect maxCount parameter', () => {
-    const { result } = renderHook(() =>
-      useRecommendationsForArticles([aiArticles[0].id], 5, 2)
-    );
+  it('should handle large article lists', async () => {
+    const largeList = [...allArticles, ...allArticles, ...allArticles];
 
-    expect(result.current.recommendations.length).toBeLessThanOrEqual(2);
-  });
+    const { result } = renderHook(() => useRecommendations({
+      articles: largeList,
+      count: 5,
+    }));
 
-  it('should exclude specified article', () => {
-    const { result } = renderHook(() =>
-      useRecommendationsForArticles(
-        [aiArticles[0].id],
-        5,
-        10,
-        aiArticles[1].id
-      )
-    );
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
 
-    const hasExcludedArticle = result.current.recommendations.some(
-      r => r.id === aiArticles[1].id
-    );
-    expect(hasExcludedArticle).toBe(false);
+    expect(result.current.recommendations.length).toBeLessThanOrEqual(5);
   });
 });

@@ -2,13 +2,11 @@ import { Link } from 'wouter';
 import { Clock, Eye, ChevronRight } from 'lucide-react';
 import { useRecommendations } from '@/hooks/useRecommendations';
 import type { Article } from '@/lib/data';
+import { aiArticles, scienceArticles, roboticsArticles, trendingArticles } from '@/lib/data';
 
 interface RecommendationsWidgetProps {
-  readArticleIds?: number[];
-  likedArticleIds?: number[];
-  bookmarkedArticleIds?: number[];
   excludeArticleId?: number;
-  maxRecommendations?: number;
+  count?: number;
   title?: string;
   categoryColor?: string;
   categoryBg?: string;
@@ -39,22 +37,23 @@ const CATEGORY_STYLES: Record<string, { color: string; bg: string; border: strin
 };
 
 export function RecommendationsWidget({
-  readArticleIds = [],
-  likedArticleIds = [],
-  bookmarkedArticleIds = [],
   excludeArticleId,
-  maxRecommendations = 5,
+  count = 3,
   title = 'Recommended For You',
   categoryColor,
   categoryBg,
   categoryBorder,
 }: RecommendationsWidgetProps) {
+  const allArticles = [
+    ...aiArticles,
+    ...scienceArticles,
+    ...roboticsArticles,
+    ...trendingArticles,
+  ];
+
   const { recommendations } = useRecommendations({
-    readArticleIds,
-    likedArticleIds,
-    bookmarkedArticleIds,
-    count: 3,
-    maxCount: maxRecommendations,
+    articles: allArticles,
+    count,
     excludeArticleId,
   });
 

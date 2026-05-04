@@ -267,7 +267,7 @@ export default function Sidebar({ lang }: SidebarProps) {
 
       {/* Personalized recommendations */}
       <RecommendationsWidget
-        maxRecommendations={3}
+        count={3}
         title="Recommended for you"
       />
     </aside>

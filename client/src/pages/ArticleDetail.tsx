@@ -399,9 +399,8 @@ export default function ArticleDetail() {
 
         {/* Personalized recommendations */}
         <RecommendationsWidget
-          readArticleIds={[articleId]}
           excludeArticleId={articleId}
-          maxRecommendations={5}
+          count={5}
           title="You might also like"
         />
 
