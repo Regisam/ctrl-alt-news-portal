@@ -24,6 +24,7 @@ import AdBanner from "@/components/AdBanner";
 import { ReactionButton } from "@/components/ReactionButton";
 import { RecommendationsWidget } from "@/components/RecommendationsWidget";
 import { useReactions } from "@/hooks/useReactions";
+import { useScrollDepth } from "@/hooks/useScrollDepth";
 import { createShareEvent, trackShareEvent } from "@/lib/share-utils";
 import { aiArticles, scienceArticles, roboticsArticles, trendingArticles } from "@/lib/data";
 import { articleBodies } from "@/lib/articleContent";
@@ -86,6 +87,18 @@ export default function ArticleDetail() {
   const articleIdStr = `article-${articleId}`;
   const userId = localStorage.getItem("ctrl-alt-user-id") || "anonymous";
 
+  // Find article first (needed for word count calculation)
+  const article = ALL_ARTICLES.find((a) => a.id === articleId);
+  const body = articleBodies.find((b) => b.id === articleId);
+
+  // Calculate word count for reading time estimation
+  const wordCount = article
+    ? Math.round((article.excerpt[lang].split(/\s+/).length || 0) * 8)
+    : 0;
+
+  // Track behavioral analytics (scroll depth, reading time)
+  useScrollDepth({ articleId, wordCount });
+
   const updateReactionCounts = useCallback(() => {
     const counts = getReactionsByArticle(articleIdStr);
     setLikeCount(counts.like);
@@ -115,9 +128,6 @@ export default function ArticleDetail() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [articleId]);
-
-  const article = ALL_ARTICLES.find((a) => a.id === articleId);
-  const body = articleBodies.find((b) => b.id === articleId);
 
   if (!article) {
     return (
