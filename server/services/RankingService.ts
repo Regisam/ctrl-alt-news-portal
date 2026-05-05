@@ -6,6 +6,12 @@ export interface RankedArticle extends Article {
   ruleScore: number;
   mlScore: number;
   confidenceDecay: number;
+  id: string | number;
+  title: string;
+  url: string;
+  author: string;
+  date: string;
+  category?: string;
 }
 
 export interface RankingConfig {
