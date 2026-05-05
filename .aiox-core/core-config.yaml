@@ -1,20 +1,19 @@
 markdownExploder: true
 project:
   type: brownfield
-  installedAt: '2026-04-25T20:29:12.326Z'
+  installedAt: '2026-05-05T19:58:09.067Z'
   version: 2.1.0
 user_profile: bob
 ide:
   selected:
     - claude-code
-    - antigravity
   configs:
     vscode: false
     codex: false
     gemini: false
     cursor: false
     github-copilot: false
-    antigravity: true
+    antigravity: false
     zed: false
     claude-desktop: false
     claude-code: true
