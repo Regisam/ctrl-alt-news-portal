@@ -4,7 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Sidebar from '@/components/Sidebar';
 import { useTrending } from '@/hooks/useTrending';
-import { aiArticles, scienceArticles, roboticsArticles, type Article } from '@/lib/data';
+import type { Article } from '@/lib/data';
 
 type Lang = 'en' | 'pt';
 

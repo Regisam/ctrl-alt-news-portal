@@ -193,10 +193,14 @@ export default function ImpactReportPage() {
   const { toggleDarkMode } = useUserPreferences();
 
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState<FilterState>({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0],
-  });
+  const [filters, setFilters] = useState<FilterState>({ startDate: '', endDate: '' });
+
+  useEffect(() => {
+    setFilters({
+      startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      endDate: new Date().toISOString().split('T')[0],
+    });
+  }, []);
 
   const metrics = useMemo(() => {
     return calculateMetrics(history, bookmarks, reactions, filters);
