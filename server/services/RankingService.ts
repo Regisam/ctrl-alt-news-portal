@@ -250,4 +250,61 @@ export class RankingService {
     ranked = this.applyDiversityFilter(ranked, userContext);
     return ranked.slice(0, limit);
   }
+
+  /**
+   * Incremental re-ranking for real-time updates (Story 12.6 AC6)
+   * Only re-ranks affected articles, not entire feed
+   * Performance: <200ms even for 1000+ articles
+   */
+  rankDelta(
+    currentFeed: RankedArticle[],
+    affectedArticleIds: Set<string>,
+    newArticles: Article[],
+    ruleScores: Record<string, number>,
+    userContext: UserContext
+  ): RankedArticle[] {
+    // Start timing for performance monitoring
+    const startTime = performance.now();
+
+    // Step 1: Identify which articles to re-rank
+    // Only articles in affectedArticleIds OR new articles
+    const articleMap = new Map<string, Article>();
+    newArticles.forEach((a) => {
+      articleMap.set(a.id.toString(), a);
+    });
+
+    // Step 2: Re-rank only affected articles
+    const reranked: RankedArticle[] = [];
+    for (const article of newArticles) {
+      const id = article.id.toString();
+      if (affectedArticleIds.has(id) || !currentFeed.find((a) => a.id === id)) {
+        // Re-rank this article
+        const ruleScore = ruleScores[id] || 0.5;
+        reranked.push(this.scoreArticle(article, ruleScore, userContext));
+      }
+    }
+
+    // Step 3: Merge re-ranked articles back into current feed
+    // Keep unaffected articles in their positions
+    const result = currentFeed.filter(
+      (a) => !affectedArticleIds.has(a.id.toString())
+    );
+
+    // Add re-ranked articles
+    result.push(...reranked);
+
+    // Step 4: Re-sort the entire feed by score
+    result.sort((a, b) => b.rankScore - a.rankScore);
+
+    const duration = performance.now() - startTime;
+
+    // Log if slow (should be <200ms per AC6)
+    if (duration > 200) {
+      console.warn(
+        `[Performance] rankDelta took ${duration.toFixed(2)}ms (>200ms threshold)`
+      );
+    }
+
+    return result;
+  }
 }
