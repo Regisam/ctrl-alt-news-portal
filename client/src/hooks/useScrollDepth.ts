@@ -23,7 +23,7 @@ export function useScrollDepth({
   const scrollDepthRef = useRef(0);
   const passedMilestonesRef = useRef<Set<number>>(new Set());
   const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
-  const startTimeRef = useRef(Date.now());
+  const startTimeRef = useRef<number>(0);
   const articleStartedRef = useRef(false);
 
   const readingTime = estimateReadingTime(wordCount);
@@ -97,6 +97,10 @@ export function useScrollDepth({
       }
     }, debounceMs);
   }, [articleId, readingTime, debounceMs]);
+
+  useEffect(() => {
+    startTimeRef.current = Date.now();
+  }, []);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });

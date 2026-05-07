@@ -30,7 +30,8 @@
     "rollback": "bash scripts/rollback.sh",
     "images:create-test": "node scripts/create-test-image.js",
     "images:optimize": "node scripts/optimize-images.js",
-    "images:optimize:ci": "npm run images:create-test && npm run images:optimize"
+    "images:optimize:ci": "npm run images:create-test && npm run images:optimize",
+    "aiox": "node bin/aiox.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

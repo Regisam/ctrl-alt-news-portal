@@ -12,7 +12,7 @@ import type { Rule } from '@/lib/rules-engine';
 
 // Mock ab-testing module
 vi.mock('@/lib/ab-testing', () => ({
-  getVariantForUser: (userId: string, experimentId: string) => {
+  getUserVariant: (userId: string, experimentId: string) => {
     // Deterministic: odd user IDs get 'treatment', even get 'control'
     return parseInt(userId) % 2 === 0 ? 'control' : 'treatment';
   },

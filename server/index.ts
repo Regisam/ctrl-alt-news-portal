@@ -8,6 +8,7 @@ import { loggingMiddleware } from "./middleware/loggingMiddleware.js";
 import { metricsMiddleware, setupMetricsEndpoint } from "./middleware/metricsMiddleware.js";
 import { logger } from "./logger.js";
 import { generateSitemapXML } from "../client/src/lib/sitemap.js";
+import { handleFeedStream, broadcastFeedUpdate, feedStreamHealth } from "./api/feed-stream.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -104,6 +105,11 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
     res.header("Content-Type", "text/plain");
     res.send(robotsTxt);
   });
+
+  // Real-time feed stream endpoints (Story 12.6)
+  app.get('/api/feed/stream', handleFeedStream);
+  app.post('/api/feed/stream/update', broadcastFeedUpdate);
+  app.get('/api/feed/stream/health', feedStreamHealth);
 
   // Serve static files from dist/public in production
   const staticPath =
