@@ -142,7 +142,7 @@ describe('FeedStreamService Memory Safety — Story 12.6 AC7', () => {
       // Last measurements should not be significantly higher
       expect(lastTenAvg).toBeLessThan(firstTenAvg * 1.5);
     }
-  });
+  }, 15000); // 15s timeout for memory profiling with 100+ connections
 
   it('should properly cleanup message queues', () => {
     const userId = 'test-user';

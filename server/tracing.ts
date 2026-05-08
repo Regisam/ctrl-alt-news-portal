@@ -1,8 +1,8 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+// import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-node';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+// import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { trace } from '@opentelemetry/api';
 
 let sdk: NodeSDK | null = null;
@@ -16,11 +16,11 @@ export function initializeTracing(): () => Promise<void> {
   // Sampler: 100% in dev, 10% in production
   const samplingRate = process.env.NODE_ENV === 'development' ? 1.0 : 0.1;
 
-  // Initialize SDK with auto-instrumentation
+  // Initialize SDK (auto-instrumentation removed to reduce overhead)
   sdk = new NodeSDK({
     serviceName: 'ctrl-alt-news-server',
     traceExporter: otlpExporter,
-    instrumentations: [getNodeAutoInstrumentations()],
+    instrumentations: [],
     sampler: new TraceIdRatioBasedSampler(samplingRate),
   });
 
