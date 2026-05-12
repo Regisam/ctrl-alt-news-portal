@@ -255,6 +255,7 @@ export class RankingService {
    * Incremental re-ranking for real-time updates (Story 12.6 AC6)
    * Only re-ranks affected articles, not entire feed
    * Performance: <200ms even for 1000+ articles
+   * Optimized: O(k × log n) where k = affected articles, n = feed size
    */
   rankDelta(
     currentFeed: RankedArticle[],
@@ -263,33 +264,31 @@ export class RankingService {
     ruleScores: Record<string, number>,
     userContext: UserContext
   ): RankedArticle[] {
-    // Start timing for performance monitoring
     const startTime = performance.now();
 
-    // Step 1: Build map for fast lookup
     const newArticleMap = new Map<string, Article>();
     for (const article of newArticles) {
       newArticleMap.set(article.id.toString(), article);
     }
 
-    // Step 2: For each affected article, remove from current position and re-rank
-    const result = [...currentFeed];
-
+    // Pre-score all affected articles (O(k))
+    const affectedScored = new Map<string, RankedArticle>();
     affectedArticleIds.forEach((affectedId) => {
       const article = newArticleMap.get(affectedId);
       if (!article) return;
 
-      // Find and remove affected article from result (O(n) but only for affected articles)
-      const index = result.findIndex((a) => a.id.toString() === affectedId);
-      if (index !== -1) {
-        result.splice(index, 1);
-      }
-
-      // Re-score affected article
       const ruleScore = ruleScores[affectedId] || 0.5;
       const reranked = this.scoreArticle(article, ruleScore, userContext);
+      affectedScored.set(affectedId, reranked);
+    });
 
-      // Use binary search to find correct position (O(log n))
+    // Remove affected articles from current feed (O(n))
+    let result = currentFeed.filter(
+      (a) => !affectedScored.has(a.id.toString())
+    );
+
+    // Re-insert affected articles with binary search (O(k × log n))
+    affectedScored.forEach((reranked) => {
       let left = 0;
       let right = result.length;
 
@@ -302,7 +301,6 @@ export class RankingService {
         }
       }
 
-      // Insert at correct position
       result.splice(left, 0, reranked);
     });
 
