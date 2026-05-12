@@ -266,35 +266,45 @@ export class RankingService {
     // Start timing for performance monitoring
     const startTime = performance.now();
 
-    // Step 1: Identify which articles to re-rank
-    // Only articles in affectedArticleIds OR new articles
-    const articleMap = new Map<string, Article>();
-    newArticles.forEach((a) => {
-      articleMap.set(a.id.toString(), a);
-    });
-
-    // Step 2: Re-rank only affected articles
-    const reranked: RankedArticle[] = [];
+    // Step 1: Build map for fast lookup
+    const newArticleMap = new Map<string, Article>();
     for (const article of newArticles) {
-      const id = article.id.toString();
-      if (affectedArticleIds.has(id) || !currentFeed.find((a) => a.id === id)) {
-        // Re-rank this article
-        const ruleScore = ruleScores[id] || 0.5;
-        reranked.push(this.scoreArticle(article, ruleScore, userContext));
-      }
+      newArticleMap.set(article.id.toString(), article);
     }
 
-    // Step 3: Merge re-ranked articles back into current feed
-    // Keep unaffected articles in their positions
-    const result = currentFeed.filter(
-      (a) => !affectedArticleIds.has(a.id.toString())
-    );
+    // Step 2: For each affected article, remove from current position and re-rank
+    const result = [...currentFeed];
 
-    // Add re-ranked articles
-    result.push(...reranked);
+    affectedArticleIds.forEach((affectedId) => {
+      const article = newArticleMap.get(affectedId);
+      if (!article) return;
 
-    // Step 4: Re-sort the entire feed by score
-    result.sort((a, b) => b.rankScore - a.rankScore);
+      // Find and remove affected article from result (O(n) but only for affected articles)
+      const index = result.findIndex((a) => a.id.toString() === affectedId);
+      if (index !== -1) {
+        result.splice(index, 1);
+      }
+
+      // Re-score affected article
+      const ruleScore = ruleScores[affectedId] || 0.5;
+      const reranked = this.scoreArticle(article, ruleScore, userContext);
+
+      // Use binary search to find correct position (O(log n))
+      let left = 0;
+      let right = result.length;
+
+      while (left < right) {
+        const mid = Math.floor((left + right) / 2);
+        if (result[mid].rankScore > reranked.rankScore) {
+          left = mid + 1;
+        } else {
+          right = mid;
+        }
+      }
+
+      // Insert at correct position
+      result.splice(left, 0, reranked);
+    });
 
     const duration = performance.now() - startTime;
 
