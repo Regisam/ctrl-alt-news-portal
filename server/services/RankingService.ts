@@ -255,7 +255,8 @@ export class RankingService {
    * Incremental re-ranking for real-time updates (Story 12.6 AC6)
    * Only re-ranks affected articles, not entire feed
    * Performance: <200ms even for 1000+ articles
-   * Optimized: O(k × log n) where k = affected articles, n = feed size
+   * Optimized: O(n + k log k) where k = affected articles, n = feed size
+   * Algorithm: Score affected → sort them → merge with unaffected (which is already sorted)
    */
   rankDelta(
     currentFeed: RankedArticle[],
@@ -271,38 +272,40 @@ export class RankingService {
       newArticleMap.set(article.id.toString(), article);
     }
 
-    // Pre-score all affected articles (O(k))
-    const affectedScored = new Map<string, RankedArticle>();
+    // Score all affected articles (O(k))
+    const affectedScored: RankedArticle[] = [];
     affectedArticleIds.forEach((affectedId) => {
       const article = newArticleMap.get(affectedId);
       if (!article) return;
 
       const ruleScore = ruleScores[affectedId] || 0.5;
       const reranked = this.scoreArticle(article, ruleScore, userContext);
-      affectedScored.set(affectedId, reranked);
+      affectedScored.push(reranked);
     });
+
+    // Sort affected articles by rank score descending (O(k log k))
+    affectedScored.sort((a, b) => b.rankScore - a.rankScore);
 
     // Remove affected articles from current feed (O(n))
-    let result = currentFeed.filter(
-      (a) => !affectedScored.has(a.id.toString())
+    const unaffected = currentFeed.filter(
+      (a) => !affectedArticleIds.has(a.id.toString())
     );
 
-    // Re-insert affected articles with binary search (O(k × log n))
-    affectedScored.forEach((reranked) => {
-      let left = 0;
-      let right = result.length;
+    // Merge two sorted arrays efficiently (O(n)) instead of repeated splice (was O(k × n))
+    const result: RankedArticle[] = [];
+    let i = 0;
+    let j = 0;
 
-      while (left < right) {
-        const mid = Math.floor((left + right) / 2);
-        if (result[mid].rankScore > reranked.rankScore) {
-          left = mid + 1;
-        } else {
-          right = mid;
-        }
+    while (i < unaffected.length && j < affectedScored.length) {
+      if (unaffected[i].rankScore >= affectedScored[j].rankScore) {
+        result.push(unaffected[i++]);
+      } else {
+        result.push(affectedScored[j++]);
       }
+    }
 
-      result.splice(left, 0, reranked);
-    });
+    result.push(...unaffected.slice(i));
+    result.push(...affectedScored.slice(j));
 
     const duration = performance.now() - startTime;
 
