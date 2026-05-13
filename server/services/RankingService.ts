@@ -255,8 +255,8 @@ export class RankingService {
    * Incremental re-ranking for real-time updates (Story 12.6 AC6)
    * Only re-ranks affected articles, not entire feed
    * Performance: <200ms even for 1000+ articles
-   * Optimized: O(n + k log k) where k = affected articles, n = feed size
-   * Algorithm: Score affected → sort them → merge with unaffected (which is already sorted)
+   * Optimized: O(k log k) per re-ranking of k affected articles
+   * Algorithm: Single pass through feed, update affected in-place, maintain sort order
    */
   rankDelta(
     currentFeed: RankedArticle[],
@@ -267,45 +267,59 @@ export class RankingService {
   ): RankedArticle[] {
     const startTime = performance.now();
 
-    const newArticleMap = new Map<string, Article>();
+    // Map articles by ID for O(1) lookup
+    const articleMap = new Map<string, Article>();
     for (const article of newArticles) {
-      newArticleMap.set(article.id.toString(), article);
+      articleMap.set(article.id.toString(), article);
     }
 
-    // Score all affected articles (O(k))
-    const affectedScored: RankedArticle[] = [];
+    // Build map of affected scores for single pass (O(k))
+    const affectedScoresMap = new Map<string, RankedArticle>();
     affectedArticleIds.forEach((affectedId) => {
-      const article = newArticleMap.get(affectedId);
+      const article = articleMap.get(affectedId);
       if (!article) return;
 
       const ruleScore = ruleScores[affectedId] || 0.5;
-      const reranked = this.scoreArticle(article, ruleScore, userContext);
-      affectedScored.push(reranked);
+      const scored = this.scoreArticle(article, ruleScore, userContext);
+      affectedScoresMap.set(affectedId, scored);
     });
 
-    // Sort affected articles by rank score descending (O(k log k))
-    affectedScored.sort((a, b) => b.rankScore - a.rankScore);
+    // Single pass: collect unaffected + update affected in place (O(n))
+    const unaffected: RankedArticle[] = [];
+    const affected: RankedArticle[] = [];
 
-    // Remove affected articles from current feed (O(n))
-    const unaffected = currentFeed.filter(
-      (a) => !affectedArticleIds.has(a.id.toString())
-    );
+    for (const article of currentFeed) {
+      const id = article.id.toString();
+      if (affectedScoresMap.has(id)) {
+        affected.push(affectedScoresMap.get(id)!);
+      } else {
+        unaffected.push(article);
+      }
+    }
 
-    // Merge two sorted arrays efficiently (O(n)) instead of repeated splice (was O(k × n))
+    // Sort affected articles (O(k log k))
+    affected.sort((a, b) => b.rankScore - a.rankScore);
+
+    // Merge two sorted arrays (O(n + k))
     const result: RankedArticle[] = [];
     let i = 0;
     let j = 0;
 
-    while (i < unaffected.length && j < affectedScored.length) {
-      if (unaffected[i].rankScore >= affectedScored[j].rankScore) {
+    while (i < unaffected.length && j < affected.length) {
+      if (unaffected[i].rankScore >= affected[j].rankScore) {
         result.push(unaffected[i++]);
       } else {
-        result.push(affectedScored[j++]);
+        result.push(affected[j++]);
       }
     }
 
-    result.push(...unaffected.slice(i));
-    result.push(...affectedScored.slice(j));
+    // Append remaining elements
+    while (i < unaffected.length) {
+      result.push(unaffected[i++]);
+    }
+    while (j < affected.length) {
+      result.push(affected[j++]);
+    }
 
     const duration = performance.now() - startTime;
 
