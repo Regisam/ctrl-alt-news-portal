@@ -9,6 +9,7 @@ import { metricsMiddleware, setupMetricsEndpoint } from "./middleware/metricsMid
 import { logger } from "./logger.js";
 import { generateSitemapXML } from "../client/src/lib/sitemap.js";
 import { handleFeedStream, broadcastFeedUpdate, feedStreamHealth } from "./api/feed-stream.js";
+import digestRouter from "./api/digest.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -110,6 +111,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
   app.get('/api/feed/stream', handleFeedStream);
   app.post('/api/feed/stream/update', broadcastFeedUpdate);
   app.get('/api/feed/stream/health', feedStreamHealth);
+
+  // Smart Digest endpoints (Story 12.7)
+  app.use('/api/digest', digestRouter);
 
   // Serve static files from dist/public in production
   const staticPath =
