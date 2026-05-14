@@ -204,6 +204,35 @@ export class DigestScheduler {
   }
 
   /**
+   * Update user's digest config (Subtask 4.1.1: update frequency/time/topics)
+   * Used when user updates preferences via UI
+   */
+  updateUserConfig(userId: string, updates: Partial<SmartDigestConfig>): SmartDigestConfig {
+    const currentConfig = this.getUserConfig(userId);
+    if (!currentConfig) {
+      throw new Error(`User ${userId} not scheduled`);
+    }
+
+    const updatedConfig: SmartDigestConfig = {
+      enabled: updates.enabled !== undefined ? updates.enabled : currentConfig.enabled,
+      frequency: updates.frequency || currentConfig.frequency,
+      preferredTime: updates.preferredTime || currentConfig.preferredTime,
+      topics: updates.topics || currentConfig.topics,
+      lastDigestSent: currentConfig.lastDigestSent,
+    };
+
+    // Update in scheduler
+    this.scheduledUsers.set(userId, {
+      userId,
+      config: updatedConfig,
+      addedAt: new Date(),
+    });
+
+    console.log(`[DigestScheduler] Updated config for user ${userId}:`, updatedConfig);
+    return updatedConfig;
+  }
+
+  /**
    * Get all scheduled users (for testing/debugging)
    */
   getScheduledUsers(): ScheduledUser[] {
