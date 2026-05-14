@@ -204,4 +204,147 @@ router.get('/open/:token', (req: Request, res: Response): void => {
   }
 });
 
+// ============================================================================
+// POST /api/digest/preferences
+// ============================================================================
+// Subtask 4.1.1: Update user's digest preferences (frequency, time, topics)
+router.post('/preferences', (req: Request, res: Response): void => {
+  try {
+    const bodySchema = z.object({
+      userId: z.string().min(1, 'userId is required'),
+      frequency: z.enum(['daily', 'weekly']).optional(),
+      preferredTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format HH:MM').optional(),
+      topics: z.array(z.string()).optional(),
+      enabled: z.boolean().optional(),
+    });
+
+    const data = bodySchema.parse(req.body);
+    const { userId, frequency, preferredTime, topics, enabled } = data;
+
+    // Get current config or create new one
+    let userConfig = digestScheduler.getUserConfig(userId);
+    if (!userConfig) {
+      // Initialize with defaults if not scheduled yet
+      userConfig = {
+        enabled: true,
+        frequency: 'weekly',
+        preferredTime: '08:00',
+        topics: [],
+      };
+      digestScheduler.scheduleUser(userConfig, userId);
+    }
+
+    // Update preferences
+    const updatedConfig = digestScheduler.updateUserConfig(userId, {
+      frequency,
+      preferredTime,
+      topics,
+      enabled,
+    });
+
+    res.json({
+      success: true,
+      message: 'Preferences updated successfully',
+      data: updatedConfig,
+    });
+  } catch (error) {
+    console.error('[/api/digest/preferences]', error);
+    res.status(400).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Invalid request',
+    });
+  }
+});
+
+// ============================================================================
+// GET /api/digest/preferences
+// ============================================================================
+// Subtask 4.1.1: Retrieve user's digest preferences
+router.get('/preferences', (req: Request, res: Response): void => {
+  try {
+    const querySchema = z.object({
+      userId: z.string().min(1, 'userId is required'),
+    });
+
+    const { userId } = querySchema.parse(req.query);
+
+    const userConfig = digestScheduler.getUserConfig(userId);
+    if (!userConfig) {
+      // Return default config if not scheduled
+      res.json({
+        success: true,
+        data: {
+          enabled: true,
+          frequency: 'weekly',
+          preferredTime: '08:00',
+          topics: [],
+        },
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: userConfig,
+    });
+  } catch (error) {
+    console.error('[/api/digest/preferences]', error);
+    res.status(400).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Invalid request',
+    });
+  }
+});
+
+// ============================================================================
+// GET /api/digest/click/:token/:articleId
+// ============================================================================
+// Phase 5 - Subtask 5.1.2: Click tracking (proxy links through analytics endpoint)
+router.get('/click/:token/:articleId', (req: Request, res: Response): void => {
+  try {
+    const { token, articleId } = req.params;
+    const { url } = req.query;
+
+    const record = digestScheduler.validateToken(token, 'tracking');
+    if (!record) {
+      // Token invalid, expired, or already used — always return 410
+      res.status(410).json({
+        success: false,
+        error: 'Token invalid, expired, or already used',
+      });
+      return;
+    }
+
+    // Log the click event (AC8: track click rate)
+    console.log(
+      `[/api/digest/click] Click by user ${record.userId} on article ${articleId}`
+    );
+    digestScheduler.consumeToken(token);
+
+    // Redirect to article URL if provided and valid, otherwise return JSON success
+    if (url && typeof url === 'string') {
+      try {
+        new URL(url);
+        res.redirect(url);
+        return;
+      } catch {
+        // Invalid URL format, continue to JSON response
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Click tracked for article ${articleId}`,
+      userId: record.userId,
+      articleId,
+    });
+  } catch (error) {
+    console.error('[/api/digest/click]', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+    });
+  }
+});
+
 export default router;

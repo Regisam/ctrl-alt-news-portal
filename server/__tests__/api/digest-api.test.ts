@@ -256,4 +256,259 @@ describe('Digest API', () => {
       expect(response.body).toEqual(expectedPixel);
     });
   });
+
+  describe('POST /api/digest/preferences', () => {
+    it('should update user preferences', async () => {
+      const config: SmartDigestConfig = {
+        enabled: true,
+        frequency: 'weekly',
+        preferredTime: '08:00',
+        topics: ['AI'],
+      };
+      digestScheduler.scheduleUser(config, 'pref-user-1');
+
+      const response = await request(app)
+        .post('/api/digest/preferences')
+        .send({
+          userId: 'pref-user-1',
+          frequency: 'daily',
+          preferredTime: '18:00',
+          topics: ['AI', 'Science', 'Robotics'],
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.frequency).toBe('daily');
+      expect(response.body.data.preferredTime).toBe('18:00');
+      expect(response.body.data.topics).toEqual(['AI', 'Science', 'Robotics']);
+    });
+
+    it('should reject invalid frequency', async () => {
+      const config: SmartDigestConfig = {
+        enabled: true,
+        frequency: 'weekly',
+        preferredTime: '08:00',
+        topics: ['AI'],
+      };
+      digestScheduler.scheduleUser(config, 'pref-user-2');
+
+      const response = await request(app)
+        .post('/api/digest/preferences')
+        .send({
+          userId: 'pref-user-2',
+          frequency: 'monthly',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should reject invalid time format', async () => {
+      const config: SmartDigestConfig = {
+        enabled: true,
+        frequency: 'weekly',
+        preferredTime: '08:00',
+        topics: ['AI'],
+      };
+      digestScheduler.scheduleUser(config, 'pref-user-3');
+
+      const response = await request(app)
+        .post('/api/digest/preferences')
+        .send({
+          userId: 'pref-user-3',
+          preferredTime: '25:99',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should create default config for new user', async () => {
+      const response = await request(app)
+        .post('/api/digest/preferences')
+        .send({
+          userId: 'new-pref-user',
+          frequency: 'daily',
+          topics: ['Gadgets'],
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.frequency).toBe('daily');
+      expect(response.body.data.topics).toContain('Gadgets');
+    });
+
+    it('should update enabled flag', async () => {
+      const config: SmartDigestConfig = {
+        enabled: true,
+        frequency: 'weekly',
+        preferredTime: '08:00',
+        topics: ['AI'],
+      };
+      digestScheduler.scheduleUser(config, 'pref-user-4');
+
+      const response = await request(app)
+        .post('/api/digest/preferences')
+        .send({
+          userId: 'pref-user-4',
+          enabled: false,
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.enabled).toBe(false);
+    });
+
+    it('should reject request without userId', async () => {
+      const response = await request(app)
+        .post('/api/digest/preferences')
+        .send({
+          frequency: 'daily',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+  });
+
+  describe('GET /api/digest/preferences', () => {
+    it('should retrieve user preferences', async () => {
+      const config: SmartDigestConfig = {
+        enabled: true,
+        frequency: 'daily',
+        preferredTime: '15:00',
+        topics: ['AI', 'Science'],
+      };
+      digestScheduler.scheduleUser(config, 'get-pref-user-1');
+
+      const response = await request(app)
+        .get('/api/digest/preferences')
+        .query({ userId: 'get-pref-user-1' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.frequency).toBe('daily');
+      expect(response.body.data.preferredTime).toBe('15:00');
+      expect(response.body.data.topics).toEqual(['AI', 'Science']);
+    });
+
+    it('should return defaults for unscheduled user', async () => {
+      const response = await request(app)
+        .get('/api/digest/preferences')
+        .query({ userId: 'unknown-user' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.enabled).toBe(true);
+      expect(response.body.data.frequency).toBe('weekly');
+      expect(response.body.data.preferredTime).toBe('08:00');
+      expect(response.body.data.topics).toEqual([]);
+    });
+
+    it('should reject request without userId', async () => {
+      const response = await request(app)
+        .get('/api/digest/preferences');
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+  });
+
+  describe('GET /api/digest/click/:token/:articleId', () => {
+    let trackingToken: string;
+    let userId: string;
+
+    beforeEach(() => {
+      userId = 'user-click-tracking';
+      const config: SmartDigestConfig = {
+        enabled: true,
+        frequency: 'daily',
+        preferredTime: '08:00',
+        topics: ['AI'],
+      };
+      digestScheduler.scheduleUser(config, userId);
+      trackingToken = digestScheduler['generateToken'](userId, 'tracking');
+    });
+
+    it('should track click with valid token', async () => {
+      const response = await request(app)
+        .get(`/api/digest/click/${trackingToken}/article-123`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('Click tracked');
+      expect(response.body.userId).toBe(userId);
+      expect(response.body.articleId).toBe('article-123');
+    });
+
+    it('should redirect to article URL if provided', async () => {
+      const articleUrl = 'https://example.com/article-456';
+      const response = await request(app)
+        .get(`/api/digest/click/${trackingToken}/article-456`)
+        .query({ url: articleUrl });
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe(articleUrl);
+    });
+
+    it('should return JSON when URL is invalid', async () => {
+      const response = await request(app)
+        .get(`/api/digest/click/${trackingToken}/article-789`)
+        .query({ url: 'not-a-valid-url' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should consume token after click tracking', async () => {
+      const response1 = await request(app)
+        .get(`/api/digest/click/${trackingToken}/article-aaa`);
+
+      expect(response1.status).toBe(200);
+
+      // Try to use the same token again — should fail
+      const response2 = await request(app)
+        .get(`/api/digest/click/${trackingToken}/article-aaa`);
+
+      expect(response2.status).toBe(410);
+      expect(response2.body.success).toBe(false);
+    });
+
+    it('should return 410 for invalid token', async () => {
+      const response = await request(app)
+        .get('/api/digest/click/invalid-tracking-token/article-111')
+        .query({ url: 'https://example.com/article' });
+
+      expect(response.status).toBe(410);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('invalid, expired, or already used');
+    });
+
+    it('should handle multiple clicks on different articles', async () => {
+      const token1 = digestScheduler['generateToken'](userId, 'tracking');
+      const token2 = digestScheduler['generateToken'](userId, 'tracking');
+
+      const response1 = await request(app)
+        .get(`/api/digest/click/${token1}/article-x`);
+
+      const response2 = await request(app)
+        .get(`/api/digest/click/${token2}/article-y`);
+
+      expect(response1.status).toBe(200);
+      expect(response1.body.articleId).toBe('article-x');
+
+      expect(response2.status).toBe(200);
+      expect(response2.body.articleId).toBe('article-y');
+    });
+
+    it('should not track click for expired token', async () => {
+      // Manually mark the token as used to simulate expiration scenario
+      digestScheduler.consumeToken(trackingToken);
+
+      const response = await request(app)
+        .get(`/api/digest/click/${trackingToken}/article-222`);
+
+      expect(response.status).toBe(410);
+      expect(response.body.success).toBe(false);
+    });
+  });
 });
