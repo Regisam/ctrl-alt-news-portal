@@ -1609,6 +1609,180 @@ export function deserializeEmbeddingModel(data: SerializedEmbeddingModel): Embed
   };
 }
 
+// ============================================================================
+// Task 3.2.2: Batch Inference — Corpus Encoding with Caching
+// ============================================================================
+
+export interface EmbeddingCache {
+  embeddings: Map<string, ArticleEmbedding>;
+  hitCount: number;
+  missCount: number;
+  lastUpdated: Date;
+}
+
+export interface BatchEncodeMetrics {
+  totalArticles: number;
+  processedArticles: number;
+  cacheHits: number;
+  cacheMisses: number;
+  cacheHitRate: number; // [0, 1]
+  totalTimeMs: number;
+  avgTimePerArticleMs: number;
+}
+
+/**
+ * Create an embedding cache for efficient batch operations
+ */
+export function createEmbeddingCache(): EmbeddingCache {
+  return {
+    embeddings: new Map(),
+    hitCount: 0,
+    missCount: 0,
+    lastUpdated: new Date(),
+  };
+}
+
+/**
+ * Get embedding from cache (returns null if not found)
+ */
+export function getFromCache(cache: EmbeddingCache, articleId: string): ArticleEmbedding | null {
+  const embedding = cache.embeddings.get(articleId);
+  if (embedding) {
+    cache.hitCount++;
+  } else {
+    cache.missCount++;
+  }
+  return embedding || null;
+}
+
+/**
+ * Store embedding in cache
+ */
+export function storeInCache(
+  cache: EmbeddingCache,
+  embedding: ArticleEmbedding
+): void {
+  cache.embeddings.set(embedding.articleId, embedding);
+  cache.lastUpdated = new Date();
+}
+
+/**
+ * Clear cache
+ */
+export function clearCache(cache: EmbeddingCache): void {
+  cache.embeddings.clear();
+  cache.hitCount = 0;
+  cache.missCount = 0;
+  cache.lastUpdated = new Date();
+}
+
+/**
+ * Get cache statistics
+ */
+export function getCacheStats(cache: EmbeddingCache): {
+  size: number;
+  hitRate: number;
+  totalAccesses: number;
+} {
+  const totalAccesses = cache.hitCount + cache.missCount;
+  const hitRate = totalAccesses > 0 ? cache.hitCount / totalAccesses : 0;
+
+  return {
+    size: cache.embeddings.size,
+    hitRate,
+    totalAccesses,
+  };
+}
+
+/**
+ * Batch encode articles with caching for efficient corpus processing
+ * Returns new embeddings and reuses cached ones
+ */
+export function batchEncodeWithCaching(
+  articles: ArticleFeatures[],
+  cache: EmbeddingCache,
+  encodeFunc: (article: ArticleFeatures) => ArticleEmbedding
+): { embeddings: ArticleEmbedding[]; metrics: BatchEncodeMetrics } {
+  const startTime = Date.now();
+  const embeddings: ArticleEmbedding[] = [];
+  let processedCount = 0;
+
+  for (const article of articles) {
+    // Try to get from cache
+    const cached = getFromCache(cache, article.articleId);
+    if (cached) {
+      embeddings.push(cached);
+    } else {
+      // Encode and cache
+      const embedding = encodeFunc(article);
+      storeInCache(cache, embedding);
+      embeddings.push(embedding);
+      processedCount++;
+    }
+  }
+
+  const totalTimeMs = Date.now() - startTime;
+  const totalAccesses = cache.hitCount + cache.missCount;
+  const cacheHitRate = totalAccesses > 0 ? cache.hitCount / totalAccesses : 0;
+
+  const metrics: BatchEncodeMetrics = {
+    totalArticles: articles.length,
+    processedArticles: processedCount,
+    cacheHits: cache.hitCount,
+    cacheMisses: cache.missCount,
+    cacheHitRate,
+    totalTimeMs,
+    avgTimePerArticleMs: articles.length > 0 ? totalTimeMs / articles.length : 0,
+  };
+
+  return { embeddings, metrics };
+}
+
+/**
+ * Precompute embeddings for entire corpus and cache them
+ * Used for initialization / warm-up
+ */
+export function precomputeCorpusEmbeddings(
+  articles: ArticleFeatures[],
+  encodeFunc: (article: ArticleFeatures) => ArticleEmbedding
+): { cache: EmbeddingCache; metrics: BatchEncodeMetrics } {
+  const cache = createEmbeddingCache();
+  const { metrics } = batchEncodeWithCaching(articles, cache, encodeFunc);
+
+  return { cache, metrics };
+}
+
+/**
+ * Incrementally update cache with new articles
+ * Skips articles already in cache
+ */
+export function incrementalCacheUpdate(
+  newArticles: ArticleFeatures[],
+  cache: EmbeddingCache,
+  encodeFunc: (article: ArticleFeatures) => ArticleEmbedding
+): {
+  newEmbeddings: ArticleEmbedding[];
+  skippedCount: number;
+  addedCount: number;
+} {
+  const newEmbeddings: ArticleEmbedding[] = [];
+  let skippedCount = 0;
+  let addedCount = 0;
+
+  for (const article of newArticles) {
+    if (cache.embeddings.has(article.articleId)) {
+      skippedCount++;
+    } else {
+      const embedding = encodeFunc(article);
+      storeInCache(cache, embedding);
+      newEmbeddings.push(embedding);
+      addedCount++;
+    }
+  }
+
+  return { newEmbeddings, skippedCount, addedCount };
+}
+
 /**
  * Save model to file (returns JSON string for storage)
  */

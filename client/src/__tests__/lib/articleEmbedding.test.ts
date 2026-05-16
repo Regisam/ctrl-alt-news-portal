@@ -30,6 +30,14 @@ import {
   deserializeEmbeddingModel,
   saveModelToJSON,
   loadModelFromJSON,
+  createEmbeddingCache,
+  getFromCache,
+  storeInCache,
+  clearCache,
+  getCacheStats,
+  batchEncodeWithCaching,
+  precomputeCorpusEmbeddings,
+  incrementalCacheUpdate,
   type ArticleFeatures,
   type EmbeddingConfig,
   type EngagementRecord,
@@ -1806,6 +1814,260 @@ describe('articleEmbedding - Task 1.1: Design embedding architecture', () => {
 
         expect(loaded.metadata.version).toBe('1.0.0');
         expect(loaded.metadata.trainingStats).toBeUndefined();
+      });
+    });
+  });
+
+  // ============================================================================
+  // Task 3.2.2: Batch Inference — Corpus Encoding with Caching
+  // ============================================================================
+
+  describe('Subtask 3.2.2: Batch Inference & Caching', () => {
+    describe('createEmbeddingCache', () => {
+      it('should initialize empty cache', () => {
+        const cache = createEmbeddingCache();
+
+        expect(cache.embeddings.size).toBe(0);
+        expect(cache.hitCount).toBe(0);
+        expect(cache.missCount).toBe(0);
+        expect(cache.lastUpdated).toBeInstanceOf(Date);
+      });
+    });
+
+    describe('getFromCache & storeInCache', () => {
+      it('should store and retrieve embeddings from cache', () => {
+        const cache = createEmbeddingCache();
+        const embedding = {
+          articleId: 'a1',
+          embedding: [0.1, 0.2],
+          timestamp: new Date(),
+          dimensionality: 2,
+        };
+
+        storeInCache(cache, embedding);
+        const retrieved = getFromCache(cache, 'a1');
+
+        expect(retrieved).toEqual(embedding);
+        expect(cache.hitCount).toBe(1);
+      });
+
+      it('should return null for missing items and increment missCount', () => {
+        const cache = createEmbeddingCache();
+
+        const result = getFromCache(cache, 'nonexistent');
+
+        expect(result).toBeNull();
+        expect(cache.missCount).toBe(1);
+      });
+
+      it('should track hits and misses correctly', () => {
+        const cache = createEmbeddingCache();
+        const embedding = {
+          articleId: 'a1',
+          embedding: [0.1],
+          timestamp: new Date(),
+          dimensionality: 1,
+        };
+
+        storeInCache(cache, embedding);
+        getFromCache(cache, 'a1'); // Hit
+        getFromCache(cache, 'a1'); // Hit
+        getFromCache(cache, 'a2'); // Miss
+
+        expect(cache.hitCount).toBe(2);
+        expect(cache.missCount).toBe(1);
+      });
+    });
+
+    describe('getCacheStats', () => {
+      it('should compute cache statistics correctly', () => {
+        const cache = createEmbeddingCache();
+        const embedding = {
+          articleId: 'a1',
+          embedding: [0.1],
+          timestamp: new Date(),
+          dimensionality: 1,
+        };
+
+        storeInCache(cache, embedding);
+        getFromCache(cache, 'a1'); // Hit
+        getFromCache(cache, 'a1'); // Hit
+        getFromCache(cache, 'a2'); // Miss
+        getFromCache(cache, 'a2'); // Miss
+
+        const stats = getCacheStats(cache);
+
+        expect(stats.size).toBe(1);
+        expect(stats.totalAccesses).toBe(4);
+        expect(stats.hitRate).toBe(0.5);
+      });
+
+      it('should handle empty cache', () => {
+        const cache = createEmbeddingCache();
+        const stats = getCacheStats(cache);
+
+        expect(stats.size).toBe(0);
+        expect(stats.hitRate).toBe(0);
+        expect(stats.totalAccesses).toBe(0);
+      });
+    });
+
+    describe('clearCache', () => {
+      it('should clear all embeddings and reset counters', () => {
+        const cache = createEmbeddingCache();
+        const embedding = {
+          articleId: 'a1',
+          embedding: [0.1],
+          timestamp: new Date(),
+          dimensionality: 1,
+        };
+
+        storeInCache(cache, embedding);
+        getFromCache(cache, 'a1');
+        clearCache(cache);
+
+        expect(cache.embeddings.size).toBe(0);
+        expect(cache.hitCount).toBe(0);
+        expect(cache.missCount).toBe(0);
+      });
+    });
+
+    describe('batchEncodeWithCaching', () => {
+      it('should batch encode articles with caching', () => {
+        const articles = [
+          { articleId: 'a1', title: 'News 1', summary: 'S1', tags: ['ai'], author: 'A1', topic: 'AI' },
+          { articleId: 'a2', title: 'News 2', summary: 'S2', tags: ['ai'], author: 'A2', topic: 'AI' },
+        ];
+
+        const cache = createEmbeddingCache();
+        const mockEncode = (article: ArticleFeatures) => ({
+          articleId: article.articleId,
+          embedding: [0.1, 0.2],
+          timestamp: new Date(),
+          dimensionality: 2,
+        });
+
+        const { embeddings, metrics } = batchEncodeWithCaching(articles, cache, mockEncode);
+
+        expect(embeddings).toHaveLength(2);
+        expect(metrics.totalArticles).toBe(2);
+        expect(metrics.processedArticles).toBe(2);
+        expect(cache.embeddings.size).toBe(2);
+      });
+
+      it('should use cache for repeated articles', () => {
+        const articles = [
+          { articleId: 'a1', title: 'News 1', summary: 'S1', tags: ['ai'], author: 'A1', topic: 'AI' },
+          { articleId: 'a1', title: 'News 1', summary: 'S1', tags: ['ai'], author: 'A1', topic: 'AI' },
+        ];
+
+        const cache = createEmbeddingCache();
+        let encodeCallCount = 0;
+        const mockEncode = (article: ArticleFeatures) => {
+          encodeCallCount++;
+          return {
+            articleId: article.articleId,
+            embedding: [0.1],
+            timestamp: new Date(),
+            dimensionality: 1,
+          };
+        };
+
+        const { metrics } = batchEncodeWithCaching(articles, cache, mockEncode);
+
+        expect(encodeCallCount).toBe(1);
+        expect(metrics.processedArticles).toBe(1);
+        expect(metrics.cacheHits).toBe(1);
+      });
+
+      it('should compute cache hit rate correctly', () => {
+        const articles = [
+          { articleId: 'a1', title: 'News 1', summary: 'S1', tags: ['ai'], author: 'A1', topic: 'AI' },
+          { articleId: 'a2', title: 'News 2', summary: 'S2', tags: ['ai'], author: 'A2', topic: 'AI' },
+          { articleId: 'a3', title: 'News 3', summary: 'S3', tags: ['ai'], author: 'A3', topic: 'AI' },
+        ];
+
+        const cache = createEmbeddingCache();
+        const mockEncode = (article: ArticleFeatures) => ({
+          articleId: article.articleId,
+          embedding: [0.1],
+          timestamp: new Date(),
+          dimensionality: 1,
+        });
+
+        batchEncodeWithCaching(articles, cache, mockEncode);
+        const { metrics } = batchEncodeWithCaching(
+          articles.slice(0, 2),
+          cache,
+          mockEncode
+        );
+
+        // Second batch should have 2 cache hits and 0 processed (all from cache)
+        expect(metrics.cacheHits).toBe(2);
+        expect(metrics.processedArticles).toBe(0);
+        // Global cache hit rate: 2 hits / (3 misses + 2 hits) = 0.4
+        expect(metrics.cacheHitRate).toBeCloseTo(0.4, 1);
+      });
+    });
+
+    describe('precomputeCorpusEmbeddings', () => {
+      it('should precompute all embeddings and return cache', () => {
+        const articles = [
+          { articleId: 'a1', title: 'News 1', summary: 'S1', tags: ['ai'], author: 'A1', topic: 'AI' },
+          { articleId: 'a2', title: 'News 2', summary: 'S2', tags: ['ai'], author: 'A2', topic: 'AI' },
+          { articleId: 'a3', title: 'News 3', summary: 'S3', tags: ['ai'], author: 'A3', topic: 'AI' },
+        ];
+
+        const mockEncode = (article: ArticleFeatures) => ({
+          articleId: article.articleId,
+          embedding: [0.1, 0.2],
+          timestamp: new Date(),
+          dimensionality: 2,
+        });
+
+        const { cache, metrics } = precomputeCorpusEmbeddings(articles, mockEncode);
+
+        expect(cache.embeddings.size).toBe(3);
+        expect(metrics.processedArticles).toBe(3);
+        expect(metrics.avgTimePerArticleMs).toBeGreaterThanOrEqual(0);
+      });
+    });
+
+    describe('incrementalCacheUpdate', () => {
+      it('should add only new articles to cache', () => {
+        const articles = [
+          { articleId: 'a1', title: 'News 1', summary: 'S1', tags: ['ai'], author: 'A1', topic: 'AI' },
+          { articleId: 'a2', title: 'News 2', summary: 'S2', tags: ['ai'], author: 'A2', topic: 'AI' },
+        ];
+
+        const cache = createEmbeddingCache();
+        const mockEncode = (article: ArticleFeatures) => ({
+          articleId: article.articleId,
+          embedding: [0.1],
+          timestamp: new Date(),
+          dimensionality: 1,
+        });
+
+        // Precompute a1
+        batchEncodeWithCaching(articles.slice(0, 1), cache, mockEncode);
+
+        // Incrementally add a2 and a3
+        const newArticles = [
+          { articleId: 'a1', title: 'News 1', summary: 'S1', tags: ['ai'], author: 'A1', topic: 'AI' },
+          { articleId: 'a2', title: 'News 2', summary: 'S2', tags: ['ai'], author: 'A2', topic: 'AI' },
+          { articleId: 'a3', title: 'News 3', summary: 'S3', tags: ['ai'], author: 'A3', topic: 'AI' },
+        ];
+
+        const { newEmbeddings, skippedCount, addedCount } = incrementalCacheUpdate(
+          newArticles,
+          cache,
+          mockEncode
+        );
+
+        expect(skippedCount).toBe(1);
+        expect(addedCount).toBe(2);
+        expect(newEmbeddings).toHaveLength(2);
+        expect(cache.embeddings.size).toBe(3);
       });
     });
   });
