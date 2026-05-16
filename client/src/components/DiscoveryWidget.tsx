@@ -38,8 +38,10 @@ export function DiscoveryWidget({
   useEffect(() => {
     // Check if IntersectionObserver is available (not in test environment)
     if (typeof window === 'undefined' || !window.IntersectionObserver) {
-      setIsVisible(true);
-      trackImpression(articles.length);
+      Promise.resolve().then(() => {
+        setIsVisible(true);
+        trackImpression(articles.length);
+      });
       return;
     }
 

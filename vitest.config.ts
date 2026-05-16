@@ -1,6 +1,11 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import os from 'os';
+
+// Detect available CPU cores and limit workers to avoid machine overload
+const cpuCount = os.cpus().length;
+const maxWorkers = Math.max(1, Math.floor(cpuCount / 3));
 
 export default defineConfig({
   plugins: [react()],
@@ -8,6 +13,13 @@ export default defineConfig({
     // Use 'node' for server integration tests, 'jsdom' for client component tests
     environment: process.env.TEST_ENV === 'integration' ? 'node' : 'jsdom',
     globals: true,
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        maxThreads: maxWorkers,
+        minThreads: 1,
+      },
+    },
     setupFiles:
       process.env.TEST_ENV === 'integration'
         ? ['./server/__tests__/setup.ts']

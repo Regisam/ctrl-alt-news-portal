@@ -95,15 +95,11 @@ export function useDiscoveryWidget(
 
   // Load articles (from cache or API)
   const loadArticles = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
     try {
       // Try cache first
       const cached = getCachedArticles();
       if (cached) {
         setArticles(cached);
-        setIsLoading(false);
         return;
       }
 
@@ -121,6 +117,7 @@ export function useDiscoveryWidget(
       sessionStorage.setItem(cacheKey, JSON.stringify(cacheEntry));
 
       setArticles(fetched);
+      setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load articles';
       setError(message);
@@ -138,6 +135,7 @@ export function useDiscoveryWidget(
 
   // Load on mount
   useEffect(() => {
+    Promise.resolve().then(() => setIsLoading(true));
     loadArticles();
   }, [loadArticles, userId]);
 

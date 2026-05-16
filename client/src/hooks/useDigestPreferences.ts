@@ -61,7 +61,7 @@ function saveConfig(config: SmartDigestConfig): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
   } catch (error) {
     console.error('Failed to save digest preferences to localStorage:', error);
-    throw new Error('Failed to save preferences');
+    throw new Error('Failed to save preferences', { cause: error });
   }
 }
 

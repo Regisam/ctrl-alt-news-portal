@@ -22,21 +22,24 @@ export function useReactions() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setReactions(parsed);
+    const loadReactions = async () => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setReactions(parsed);
+          }
         }
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Failed to load reactions from storage'
+        );
       }
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to load reactions from storage'
-      );
-    }
+    };
+    loadReactions();
   }, []);
 
   const saveToStorage = useCallback((newReactions: Reaction[]) => {

@@ -36,7 +36,7 @@ export function ReactionButton({
   const [displayCount, setDisplayCount] = useState(count);
 
   useEffect(() => {
-    setDisplayCount(count);
+    Promise.resolve().then(() => setDisplayCount(count));
   }, [count]);
 
   const isReacted = getUserReaction(articleId, userId) === type;

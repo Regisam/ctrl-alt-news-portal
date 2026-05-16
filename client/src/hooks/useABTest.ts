@@ -42,8 +42,10 @@ export function useABTest(experiment: ABExperiment, userId: string = ''): string
       trackVariantAssignment(experiment.id, assignedVariant);
     }
 
-    setVariant(assignedVariant);
-    setIsLoading(false);
+    Promise.resolve().then(() => {
+      setVariant(assignedVariant);
+      setIsLoading(false);
+    });
   }, [experiment, userId]);
 
   return variant;
@@ -91,8 +93,10 @@ export function useABTests(
       }
     });
 
-    setVariants(result);
-    setIsLoading(false);
+    Promise.resolve().then(() => {
+      setVariants(result);
+      setIsLoading(false);
+    });
   }, [experiments, userId]);
 
   return variants;

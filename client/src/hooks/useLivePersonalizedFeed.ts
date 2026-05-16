@@ -174,6 +174,9 @@ export function useLivePersonalizedFeed(
     [applyDelta, retryDelay]
   );
 
+  // Store connect function in ref to avoid circular dependency
+  const connectRef = useRef<() => void>();
+
   // Connect to SSE
   const connect = useCallback(() => {
     if (!enabled || !userId) return;
@@ -204,7 +207,7 @@ export function useLivePersonalizedFeed(
           );
 
           reconnectTimeoutRef.current = setTimeout(() => {
-            connect();
+            connectRef.current?.();
           }, backoffRef.current);
         } else {
           setError(
@@ -222,6 +225,11 @@ export function useLivePersonalizedFeed(
       );
     }
   }, [enabled, userId, lastMessageId, maxRetries, handleMessage]);
+
+  // Update ref whenever connect changes
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   // Cleanup (AC8 - resource cleanup)
   const cleanup = useCallback(() => {
