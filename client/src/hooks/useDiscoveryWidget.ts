@@ -135,7 +135,6 @@ export function useDiscoveryWidget(
 
   // Load on mount
   useEffect(() => {
-    Promise.resolve().then(() => setIsLoading(true));
     loadArticles();
   }, [loadArticles, userId]);
 

@@ -110,7 +110,7 @@ export default function ArticleDetail() {
   }, [articleIdStr, getReactionsByArticle]);
 
   useEffect(() => {
-    updateReactionCounts();
+    Promise.resolve().then(() => updateReactionCounts());
   }, [reactions, updateReactionCounts]);
 
   function handleLangChange(newLang: "en" | "pt") {

@@ -248,7 +248,7 @@ export function useLivePersonalizedFeed(
 
   // Connect on mount, cleanup on unmount (AC4)
   useEffect(() => {
-    connect();
+    Promise.resolve().then(() => connect());
 
     return () => {
       cleanup();
