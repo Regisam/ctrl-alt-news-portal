@@ -158,7 +158,7 @@ export function useDigestAnalytics(userId: string, digestDate?: string) {
   useEffect(() => {
     if (digestDate) {
       const loaded = getDigestMetrics(digestDate);
-      setMetrics(loaded);
+      Promise.resolve().then(() => setMetrics(loaded));
     }
   }, [digestDate, getDigestMetrics]);
 

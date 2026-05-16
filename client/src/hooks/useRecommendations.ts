@@ -182,10 +182,10 @@ export function useRecommendations({
       engineRef.current.setArticles(
         articles.filter(a => a.id !== excludeArticleId)
       );
-      setError(null);
+      Promise.resolve().then(() => setError(null));
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to initialize rules engine";
-      setError(message);
+      Promise.resolve().then(() => setError(message));
       if (enableLogging) console.error("Rules engine init error:", message);
     }
   }, [articles, rules, excludeArticleId, enableLogging]);
@@ -193,15 +193,15 @@ export function useRecommendations({
   // Evaluate recommendations when context changes
   useEffect(() => {
     if (!engineRef.current) {
-      setError("Rules engine not initialized");
-      setRecommendations([]);
-      setIsLoading(false);
+      Promise.resolve().then(() => {
+        setError("Rules engine not initialized");
+        setRecommendations([]);
+        setIsLoading(false);
+      });
       return;
     }
 
     try {
-      setIsLoading(true);
-
       // Build reading history Article-like objects from ReadingHistoryItem
       // Use real articles from data if available, otherwise create minimal objects
       const readingHistoryArticles: Article[] = history.map((item) => ({
@@ -226,11 +226,14 @@ export function useRecommendations({
 
       const result = engineRef.current.evaluate(userContext);
 
-      setRecommendations(result.articles.slice(0, count));
-      setFiredRules(result.firedRules);
-      setExecutionTime(result.executionTime);
-      setCacheHit(result.cacheHit);
-      setError(null);
+      Promise.resolve().then(() => {
+        setIsLoading(true);
+        setRecommendations(result.articles.slice(0, count));
+        setFiredRules(result.firedRules);
+        setExecutionTime(result.executionTime);
+        setCacheHit(result.cacheHit);
+        setError(null);
+      });
 
       if (enableLogging) {
         console.log("Recommendations evaluated:", {
@@ -242,11 +245,12 @@ export function useRecommendations({
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to evaluate recommendations";
-      setError(message);
-      setRecommendations([]);
+      Promise.resolve().then(() => {
+        setError(message);
+        setRecommendations([]);
+        setIsLoading(false);
+      });
       if (enableLogging) console.error("Evaluation error:", message);
-    } finally {
-      setIsLoading(false);
     }
   }, [enrichedCategories, history, bookmarks, followedAuthors, trending, count, enableLogging]);
 
