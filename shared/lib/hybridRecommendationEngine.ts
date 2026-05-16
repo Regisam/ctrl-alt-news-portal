@@ -258,6 +258,258 @@ export const EXPERIMENT_VARIANTS = {
 export type ExperimentVariant = keyof typeof EXPERIMENT_VARIANTS;
 
 /**
+ * Task 3.1: A/B Testing & Integration
+ * Variant assignment, experiment orchestration, and analytics
+ */
+
+export interface ExperimentMetadata {
+  variantId: string;
+  variantName: string;
+  weights: EnsembleWeights;
+  description: string;
+  startDate: Date;
+  endDate?: Date;
+  expectedLift: number; // Expected improvement vs. control (e.g., 0.15 = 15% improvement)
+  minSampleSize: number; // Minimum users before declaring significance
+  successMetrics: string[]; // Metrics to track: CTR, engagement_time, feedback_score
+}
+
+export interface UserAssignment {
+  userId: string;
+  variantId: string;
+  variantName: string;
+  assignedAt: Date;
+  cohort: 'control' | 'treatment'; // Control vs. treatment group
+}
+
+export interface RecommendationEvent {
+  userId: string;
+  sessionId: string;
+  variantId: string;
+  articleId: string;
+  position: number; // Position in recommendation list (1-based)
+  finalScore: number;
+  timestamp: Date;
+  eventType: 'impression' | 'click' | 'dismiss' | 'feedback';
+  eventData?: {
+    feedbackScore?: number; // -1: dislike, 0: neutral, 1: like
+    engagementTimeMs?: number;
+    scrollDepth?: number; // 0-1
+  };
+}
+
+/**
+ * Consistent hash-based variant assignment
+ * Same user always gets same variant (deterministic)
+ * Uses simple modulo hashing on userId
+ */
+export function assignUserVariant(
+  userId: string,
+  variants: ExperimentVariant[] = ['control_rules_only', 'default_hybrid'],
+  seed: number = 0
+): ExperimentVariant {
+  // Simple deterministic hash: sum of char codes mod variant count
+  let hash = seed;
+  for (let i = 0; i < userId.length; i++) {
+    hash = (hash * 31 + userId.charCodeAt(i)) % 1000000;
+  }
+
+  const variantIndex = hash % variants.length;
+  return variants[variantIndex];
+}
+
+/**
+ * Create user assignment record
+ */
+export function createUserAssignment(
+  userId: string,
+  variant: ExperimentVariant = 'default_hybrid'
+): UserAssignment {
+  const cohort = variant === 'control_rules_only' ? 'control' : 'treatment';
+  const variantMeta = EXPERIMENT_VARIANTS[variant];
+
+  return {
+    userId,
+    variantId: variant,
+    variantName: variantMeta.name,
+    assignedAt: new Date(),
+    cohort,
+  };
+}
+
+/**
+ * Get variant configuration by ID
+ */
+export function getVariantConfig(variantId: ExperimentVariant): HybridEngineConfig {
+  const variant = EXPERIMENT_VARIANTS[variantId];
+  if (!variant) {
+    return getDefaultConfig(); // Fallback to default
+  }
+
+  return createConfig({
+    weights: variant.weights as EnsembleWeights,
+  });
+}
+
+/**
+ * Track recommendation event for analytics
+ * Events are collected for metrics computation
+ */
+export function createRecommendationEvent(
+  userId: string,
+  sessionId: string,
+  variantId: string,
+  articleId: string,
+  position: number,
+  finalScore: number,
+  eventType: 'impression' | 'click' | 'dismiss' | 'feedback' = 'impression',
+  eventData?: RecommendationEvent['eventData']
+): RecommendationEvent {
+  return {
+    userId,
+    sessionId,
+    variantId,
+    articleId,
+    position,
+    finalScore,
+    timestamp: new Date(),
+    eventType,
+    eventData,
+  };
+}
+
+/**
+ * Compute Click-Through Rate (CTR) from events
+ * CTR = clicks / impressions
+ */
+export function computeCTR(events: RecommendationEvent[]): {
+  totalImpressions: number;
+  totalClicks: number;
+  ctr: number;
+  confidence: number; // [0, 1] based on sample size
+} {
+  const impressions = events.filter((e) => e.eventType === 'impression').length;
+  const clicks = events.filter((e) => e.eventType === 'click').length;
+
+  const ctr = impressions > 0 ? clicks / impressions : 0;
+
+  // Confidence increases with sample size (Wilson score confidence interval proxy)
+  const confidence = Math.min(1, Math.sqrt(impressions / 1000));
+
+  return {
+    totalImpressions: impressions,
+    totalClicks: clicks,
+    ctr,
+    confidence,
+  };
+}
+
+/**
+ * Compute average engagement time from events
+ */
+export function computeAverageEngagementTime(events: RecommendationEvent[]): {
+  averageTimeMs: number;
+  sampleSize: number;
+  confidence: number;
+} {
+  const engagementEvents = events.filter((e) => e.eventData?.engagementTimeMs !== undefined);
+
+  const totalTime = engagementEvents.reduce((sum, e) => sum + (e.eventData?.engagementTimeMs || 0), 0);
+  const averageTimeMs = engagementEvents.length > 0 ? totalTime / engagementEvents.length : 0;
+
+  const confidence = Math.min(1, Math.sqrt(engagementEvents.length / 100));
+
+  return {
+    averageTimeMs,
+    sampleSize: engagementEvents.length,
+    confidence,
+  };
+}
+
+/**
+ * Compute satisfaction score from user feedback
+ * Scale: -1 (dislike), 0 (neutral), 1 (like)
+ */
+export function computeSatisfactionScore(events: RecommendationEvent[]): {
+  averageScore: number;
+  likeRatio: number; // % of positive feedback
+  sampleSize: number;
+  confidence: number;
+} {
+  const feedbackEvents = events.filter((e) => e.eventData?.feedbackScore !== undefined);
+
+  const totalScore = feedbackEvents.reduce((sum, e) => sum + (e.eventData?.feedbackScore || 0), 0);
+  const likes = feedbackEvents.filter((e) => (e.eventData?.feedbackScore || 0) > 0).length;
+
+  const averageScore = feedbackEvents.length > 0 ? totalScore / feedbackEvents.length : 0;
+  const likeRatio = feedbackEvents.length > 0 ? likes / feedbackEvents.length : 0;
+
+  const confidence = Math.min(1, Math.sqrt(feedbackEvents.length / 50));
+
+  return {
+    averageScore,
+    likeRatio,
+    sampleSize: feedbackEvents.length,
+    confidence,
+  };
+}
+
+/**
+ * Compute statistical significance using chi-square test
+ * Returns true if difference is significant at p < 0.05
+ */
+export function isSignificantDifference(
+  controlEvents: RecommendationEvent[],
+  treatmentEvents: RecommendationEvent[],
+  metricType: 'ctr' | 'engagement' | 'satisfaction' = 'ctr'
+): {
+  isSignificant: boolean;
+  pValue: number;
+  effectSize: number;
+} {
+  if (metricType === 'ctr') {
+    const controlCTR = computeCTR(controlEvents);
+    const treatmentCTR = computeCTR(treatmentEvents);
+
+    // Chi-square approximation for proportions
+    const pooled = (controlCTR.totalClicks + treatmentCTR.totalClicks) /
+      (controlCTR.totalImpressions + treatmentCTR.totalImpressions) || 0;
+
+    const se = Math.sqrt(pooled * (1 - pooled) * (1 / controlCTR.totalImpressions + 1 / treatmentCTR.totalImpressions));
+
+    const zScore = se > 0 ? (treatmentCTR.ctr - controlCTR.ctr) / se : 0;
+    const pValue = 2 * (1 - normalCDF(Math.abs(zScore)));
+
+    const effectSize = se > 0 ? zScore : 0;
+
+    return {
+      isSignificant: pValue < 0.05,
+      pValue,
+      effectSize,
+    };
+  }
+
+  // For other metrics, use placeholder
+  return {
+    isSignificant: false,
+    pValue: 1.0,
+    effectSize: 0,
+  };
+}
+
+/**
+ * Cumulative distribution function for standard normal distribution
+ * Approximation using error function
+ */
+function normalCDF(x: number): number {
+  const t = 1 / (1 + 0.2316419 * Math.abs(x));
+  const d = 0.3989423 * Math.exp(-x * x / 2);
+  const prob = d * t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+
+  return x >= 0 ? 1 - prob : prob;
+}
+
+/**
  * Task 2.2: Add explainability
  * Generate human-readable explanations for recommendations
  */

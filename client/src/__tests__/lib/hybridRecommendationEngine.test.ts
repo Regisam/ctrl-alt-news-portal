@@ -21,9 +21,18 @@ import {
   getSignalLabel,
   generateExplanation,
   addExplanability,
+  assignUserVariant,
+  createUserAssignment,
+  getVariantConfig,
+  createRecommendationEvent,
+  computeCTR,
+  computeAverageEngagementTime,
+  computeSatisfactionScore,
+  isSignificantDifference,
   EXPERIMENT_VARIANTS,
   type EnsembleWeights,
   type SignalEngines,
+  type RecommendationEvent,
 } from '@shared/lib/hybridRecommendationEngine';
 
 describe('hybridRecommendationEngine - Normalization', () => {
@@ -274,6 +283,175 @@ describe('hybridRecommendationEngine - Utility Functions', () => {
 
     const result = validateNormalizedScores(invalid);
     expect(result.valid).toBe(false);
+  });
+});
+
+describe('hybridRecommendationEngine - A/B Testing & Harness (Task 3.1)', () => {
+  it('should assign users consistently to variants', () => {
+    const userId = 'user123';
+    const variants = ['control_rules_only', 'default_hybrid'] as const;
+
+    const variant1 = assignUserVariant(userId, variants);
+    const variant2 = assignUserVariant(userId, variants);
+
+    // Same user should get same variant (deterministic)
+    expect(variant1).toBe(variant2);
+  });
+
+  it('should distribute users across variants', () => {
+    const variants = ['control_rules_only', 'default_hybrid'] as const;
+    const distribution = new Map<string, number>();
+
+    // Assign 100 users
+    for (let i = 0; i < 100; i++) {
+      const variant = assignUserVariant(`user${i}`, variants);
+      distribution.set(variant, (distribution.get(variant) || 0) + 1);
+    }
+
+    // Both variants should have users
+    expect(distribution.size).toBeGreaterThanOrEqual(1);
+    expect(distribution.get('control_rules_only')! + distribution.get('default_hybrid')!).toBe(100);
+  });
+
+  it('should create user assignment record', () => {
+    const assignment = createUserAssignment('user123', 'default_hybrid');
+
+    expect(assignment.userId).toBe('user123');
+    expect(assignment.variantId).toBe('default_hybrid');
+    expect(assignment.cohort).toBe('treatment');
+    expect(assignment.assignedAt).toBeInstanceOf(Date);
+  });
+
+  it('should mark control variant as control cohort', () => {
+    const assignment = createUserAssignment('user123', 'control_rules_only');
+
+    expect(assignment.cohort).toBe('control');
+  });
+
+  it('should get variant configuration', () => {
+    const config = getVariantConfig('default_hybrid');
+
+    expect(config.weights.rules).toBe(0.3);
+    expect(config.weights.content).toBe(0.4);
+    expect(config.weights.cf).toBe(0.3);
+  });
+
+  it('should create recommendation event', () => {
+    const event = createRecommendationEvent(
+      'user123',
+      'session456',
+      'default_hybrid',
+      'article789',
+      1,
+      0.85,
+      'impression'
+    );
+
+    expect(event.userId).toBe('user123');
+    expect(event.eventType).toBe('impression');
+    expect(event.timestamp).toBeInstanceOf(Date);
+  });
+
+  it('should compute CTR correctly', () => {
+    const events: RecommendationEvent[] = [
+      createRecommendationEvent('u1', 's1', 'var1', 'a1', 1, 0.8, 'impression'),
+      createRecommendationEvent('u1', 's1', 'var1', 'a1', 1, 0.8, 'click'),
+      createRecommendationEvent('u2', 's2', 'var1', 'a2', 1, 0.7, 'impression'),
+      createRecommendationEvent('u2', 's2', 'var1', 'a2', 1, 0.7, 'impression'),
+    ];
+
+    const ctr = computeCTR(events);
+
+    expect(ctr.totalImpressions).toBe(3);
+    expect(ctr.totalClicks).toBe(1);
+    expect(ctr.ctr).toBeCloseTo(1 / 3, 2);
+  });
+
+  it('should compute average engagement time', () => {
+    const events: RecommendationEvent[] = [
+      createRecommendationEvent('u1', 's1', 'var1', 'a1', 1, 0.8, 'impression', {
+        engagementTimeMs: 1000,
+      }),
+      createRecommendationEvent('u2', 's2', 'var1', 'a2', 1, 0.7, 'impression', {
+        engagementTimeMs: 3000,
+      }),
+    ];
+
+    const engagement = computeAverageEngagementTime(events);
+
+    expect(engagement.averageTimeMs).toBe(2000);
+    expect(engagement.sampleSize).toBe(2);
+  });
+
+  it('should compute satisfaction score', () => {
+    const events: RecommendationEvent[] = [
+      createRecommendationEvent('u1', 's1', 'var1', 'a1', 1, 0.8, 'feedback', {
+        feedbackScore: 1,
+      }),
+      createRecommendationEvent('u2', 's2', 'var1', 'a2', 1, 0.7, 'feedback', {
+        feedbackScore: -1,
+      }),
+      createRecommendationEvent('u3', 's3', 'var1', 'a3', 1, 0.6, 'feedback', {
+        feedbackScore: 1,
+      }),
+    ];
+
+    const satisfaction = computeSatisfactionScore(events);
+
+    expect(satisfaction.averageScore).toBeCloseTo(1 / 3, 2);
+    expect(satisfaction.likeRatio).toBeCloseTo(2 / 3, 2);
+    expect(satisfaction.sampleSize).toBe(3);
+  });
+
+  it('should detect no significant difference with small sample', () => {
+    const controlEvents: RecommendationEvent[] = [
+      createRecommendationEvent('u1', 's1', 'control', 'a1', 1, 0.8, 'impression'),
+      createRecommendationEvent('u2', 's2', 'control', 'a2', 1, 0.7, 'click'),
+    ];
+
+    const treatmentEvents: RecommendationEvent[] = [
+      createRecommendationEvent('u3', 's3', 'treat', 'a3', 1, 0.9, 'impression'),
+      createRecommendationEvent('u4', 's4', 'treat', 'a4', 1, 0.8, 'click'),
+    ];
+
+    const result = isSignificantDifference(controlEvents, treatmentEvents, 'ctr');
+
+    expect(result.isSignificant).toBe(false);
+  });
+
+  it('should return zero effect size for equal rates', () => {
+    const controlEvents: RecommendationEvent[] = Array(100)
+      .fill(null)
+      .map((_, i) => {
+        if (i < 20) {
+          return createRecommendationEvent(`u${i}`, `s${i}`, 'control', `a${i}`, 1, 0.8, 'click');
+        }
+        return createRecommendationEvent(`u${i}`, `s${i}`, 'control', `a${i}`, 1, 0.8, 'impression');
+      });
+
+    const treatmentEvents: RecommendationEvent[] = Array(100)
+      .fill(null)
+      .map((_, i) => {
+        if (i < 20) {
+          return createRecommendationEvent(`u${100 + i}`, `s${100 + i}`, 'treat', `a${100 + i}`, 1, 0.9, 'click');
+        }
+        return createRecommendationEvent(`u${100 + i}`, `s${100 + i}`, 'treat', `a${100 + i}`, 1, 0.9, 'impression');
+      });
+
+    const result = isSignificantDifference(controlEvents, treatmentEvents, 'ctr');
+
+    expect(result.effectSize).toBeCloseTo(0, 1);
+  });
+
+  it('should handle empty event arrays gracefully', () => {
+    const ctr = computeCTR([]);
+    expect(ctr.ctr).toBe(0);
+
+    const engagement = computeAverageEngagementTime([]);
+    expect(engagement.averageTimeMs).toBe(0);
+
+    const satisfaction = computeSatisfactionScore([]);
+    expect(satisfaction.averageScore).toBe(0);
   });
 });
 
