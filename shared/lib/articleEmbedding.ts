@@ -1240,3 +1240,231 @@ export function evaluateClusteringQuality(
     meanAverageDistance: calculateMeanAverageDistance(embeddings),
   };
 }
+
+// ============================================================================
+// Task 3.1.2: Visualization — t-SNE Algorithm
+// ============================================================================
+
+export interface TSNEPoint {
+  articleId: string;
+  x: number;
+  y: number;
+}
+
+export interface TSNEConfig {
+  iterations: number; // Default: 50
+  learningRate: number; // Default: 200
+  perplexity: number; // Default: 30, typical range [5, 50]
+  momentum: number; // Default: 0.8
+}
+
+/**
+ * Compute Gaussian kernel: exp(-||x_i - x_j||^2 / 2σ²)
+ * Perplexity controls the effective neighborhood size
+ */
+function computeGaussianKernel(
+  distances: number[],
+  perplexity: number
+): number[] {
+  // Binary search for σ that achieves target perplexity
+  let sigma = 1.0;
+  const targetPerplexity = Math.log(perplexity);
+  const tolerance = 1e-5;
+
+  for (let attempt = 0; attempt < 50; attempt++) {
+    // Compute similarities with current σ
+    const similarities = distances.map(d => Math.exp(-d * d / (2 * sigma * sigma)));
+    const sumSim = similarities.reduce((a, b) => a + b, 0);
+    const P = similarities.map(s => Math.max(s / sumSim, 1e-12));
+
+    // Compute entropy: -Σ P_i * log(P_i)
+    const entropy = -P.reduce((sum, p) => sum + p * Math.log(p), 0);
+
+    if (Math.abs(entropy - targetPerplexity) < tolerance) {
+      return P;
+    }
+
+    // Adjust σ
+    sigma *= entropy > targetPerplexity ? 1.1 : 0.9;
+  }
+
+  // Fallback: return normalized similarities
+  const similarities = distances.map(d => Math.exp(-d * d / (2 * sigma * sigma)));
+  const sumSim = similarities.reduce((a, b) => a + b, 0);
+  return similarities.map(s => Math.max(s / sumSim, 1e-12));
+}
+
+/**
+ * Compute high-dimensional pairwise similarities (Gaussian kernel)
+ */
+function computeHighDimSimilarities(
+  embeddings: number[][],
+  perplexity: number
+): number[][] {
+  const n = embeddings.length;
+  const P = Array(n)
+    .fill(null)
+    .map(() => Array(n).fill(0));
+
+  for (let i = 0; i < n; i++) {
+    // Compute distances from point i to all others
+    const distances = embeddings.map((emb, j) => {
+      if (i === j) return 0;
+      return euclideanDistance(embeddings[i], emb);
+    });
+
+    // Compute Gaussian kernel with perplexity-based σ
+    const row = computeGaussianKernel(distances, perplexity);
+    for (let j = 0; j < n; j++) {
+      P[i][j] = row[j];
+    }
+  }
+
+  // Symmetrize: P_ij = (P_ij + P_ji) / 2
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const sym = (P[i][j] + P[j][i]) / 2;
+      P[i][j] = sym;
+      P[j][i] = sym;
+    }
+  }
+
+  // Normalize: P = P / Σ P
+  const sumP = P.flat().reduce((a, b) => a + b, 0);
+  return P.map(row => row.map(p => p / sumP));
+}
+
+/**
+ * Compute low-dimensional similarities (t-distribution)
+ * Q_ij = (1 + ||y_i - y_j||²)^(-1) / Z
+ */
+function computeLowDimSimilarities(Y: number[][]): number[][] {
+  const n = Y.length;
+  const Q = Array(n)
+    .fill(null)
+    .map(() => Array(n).fill(0));
+  let sumQ = 0;
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      if (i === j) continue;
+      const dist = euclideanDistance(Y[i], Y[j]);
+      Q[i][j] = 1 / (1 + dist * dist);
+      sumQ += Q[i][j];
+    }
+  }
+
+  // Normalize
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      Q[i][j] = Math.max(Q[i][j] / sumQ, 1e-12);
+    }
+  }
+
+  return Q;
+}
+
+/**
+ * Compute KL divergence: Σ_ij P_ij * log(P_ij / Q_ij)
+ */
+function computeKLDivergence(P: number[][], Q: number[][]): number {
+  let kl = 0;
+  for (let i = 0; i < P.length; i++) {
+    for (let j = 0; j < P[i].length; j++) {
+      if (P[i][j] > 0 && Q[i][j] > 0) {
+        kl += P[i][j] * Math.log(P[i][j] / Q[i][j]);
+      }
+    }
+  }
+  return kl;
+}
+
+/**
+ * Compute gradient of KL divergence w.r.t. Y
+ */
+function computeGradient(P: number[][], Q: number[][], Y: number[][]): number[][] {
+  const n = Y.length;
+  const grad = Array(n)
+    .fill(null)
+    .map(() => [0, 0]);
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      if (i === j) continue;
+
+      const diff = [Y[i][0] - Y[j][0], Y[i][1] - Y[j][1]];
+      const distSq = diff[0] * diff[0] + diff[1] * diff[1];
+      const factor = 4 * (P[i][j] - Q[i][j]) / (1 + distSq);
+
+      grad[i][0] += factor * diff[0];
+      grad[i][1] += factor * diff[1];
+    }
+  }
+
+  return grad;
+}
+
+/**
+ * t-SNE: Convert high-dimensional embeddings to 2D for visualization
+ */
+export function visualizeWithTSNE(
+  embeddings: ArticleEmbedding[],
+  config: Partial<TSNEConfig> = {}
+): TSNEPoint[] {
+  const fullConfig: TSNEConfig = {
+    iterations: 50,
+    learningRate: 200,
+    perplexity: 30,
+    momentum: 0.8,
+    ...config,
+  };
+
+  const n = embeddings.length;
+  if (n === 0) return [];
+
+  // Extract vectors
+  const X = embeddings.map(e => e.embedding);
+
+  // Compute high-dimensional similarities
+  const P = computeHighDimSimilarities(X, fullConfig.perplexity);
+
+  // Random initialization for 2D points
+  const Y = Array(n)
+    .fill(null)
+    .map(() => [Math.random() - 0.5, Math.random() - 0.5]);
+
+  // Gradient descent with momentum
+  const velocity = Array(n)
+    .fill(null)
+    .map(() => [0, 0]);
+
+  for (let iter = 0; iter < fullConfig.iterations; iter++) {
+    // Compute low-dimensional similarities
+    const Q = computeLowDimSimilarities(Y);
+
+    // Compute gradient
+    const grad = computeGradient(P, Q, Y);
+
+    // Update with momentum
+    for (let i = 0; i < n; i++) {
+      velocity[i][0] =
+        fullConfig.momentum * velocity[i][0] -
+        (1 - fullConfig.momentum) * fullConfig.learningRate * grad[i][0];
+      velocity[i][1] =
+        fullConfig.momentum * velocity[i][1] -
+        (1 - fullConfig.momentum) * fullConfig.learningRate * grad[i][1];
+
+      Y[i][0] += velocity[i][0];
+      Y[i][1] += velocity[i][1];
+    }
+
+    // Optional: early stopping if converged (could add KL threshold check)
+  }
+
+  // Return 2D points
+  return embeddings.map((emb, i) => ({
+    articleId: emb.articleId,
+    x: Y[i][0],
+    y: Y[i][1],
+  }));
+}

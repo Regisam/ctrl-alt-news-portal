@@ -23,6 +23,7 @@ import {
   calculateSilhouetteScore,
   calculateDaviesBouldinIndex,
   evaluateClusteringQuality,
+  visualizeWithTSNE,
   type ArticleFeatures,
   type EmbeddingConfig,
   type EngagementRecord,
@@ -1231,6 +1232,136 @@ describe('articleEmbedding - Task 1.1: Design embedding architecture', () => {
 
         // Distance between [0,0] and [3,4] is 5.0 (3-4-5 triangle)
         expect(metrics.meanAverageDistance).toBeCloseTo(5.0, 1);
+      });
+    });
+  });
+
+  // ============================================================================
+  // Task 3.1.2: Visualization — t-SNE
+  // ============================================================================
+
+  describe('Subtask 3.1.2: t-SNE Visualization', () => {
+    describe('visualizeWithTSNE', () => {
+      it('should return 2D points with x, y coordinates', () => {
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.1, 0.2, 0.3], timestamp: new Date(), dimensionality: 3 },
+          { articleId: 'a2', embedding: [0.11, 0.21, 0.31], timestamp: new Date(), dimensionality: 3 },
+          { articleId: 'a3', embedding: [0.8, 0.9, 0.7], timestamp: new Date(), dimensionality: 3 },
+        ];
+
+        const points = visualizeWithTSNE(embeddings);
+
+        expect(points).toHaveLength(3);
+        expect(points[0]).toHaveProperty('articleId');
+        expect(points[0]).toHaveProperty('x');
+        expect(points[0]).toHaveProperty('y');
+      });
+
+      it('should preserve number of points', () => {
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.1, 0.2], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a2', embedding: [0.2, 0.3], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a3', embedding: [0.3, 0.4], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a4', embedding: [0.4, 0.5], timestamp: new Date(), dimensionality: 2 },
+        ];
+
+        const points = visualizeWithTSNE(embeddings);
+
+        expect(points).toHaveLength(4);
+        expect(new Set(points.map(p => p.articleId)).size).toBe(4);
+      });
+
+      it('should produce finite coordinates', () => {
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.0, 0.0, 0.0], timestamp: new Date(), dimensionality: 3 },
+          { articleId: 'a2', embedding: [0.01, 0.01, 0.01], timestamp: new Date(), dimensionality: 3 },
+          { articleId: 'a3', embedding: [1.0, 1.0, 1.0], timestamp: new Date(), dimensionality: 3 },
+        ];
+
+        const points = visualizeWithTSNE(embeddings);
+
+        for (const point of points) {
+          expect(isFinite(point.x)).toBe(true);
+          expect(isFinite(point.y)).toBe(true);
+        }
+      });
+
+      it('should separate well-separated clusters in 2D', () => {
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.0, 0.0, 0.0], timestamp: new Date(), dimensionality: 3 },
+          { articleId: 'a2', embedding: [0.01, 0.01, 0.01], timestamp: new Date(), dimensionality: 3 },
+          { articleId: 'a3', embedding: [2.0, 2.0, 2.0], timestamp: new Date(), dimensionality: 3 },
+          { articleId: 'a4', embedding: [2.01, 2.01, 2.01], timestamp: new Date(), dimensionality: 3 },
+        ];
+
+        const points = visualizeWithTSNE(embeddings);
+
+        // Distance between cluster 1 and cluster 2 in high-dim is large
+        // Should be preserved in 2D (cluster separation)
+        const dist01 = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+        const dist03 = Math.hypot(points[0].x - points[3].x, points[0].y - points[3].y);
+
+        expect(dist03).toBeGreaterThan(dist01 * 0.5);
+      });
+
+      it('should accept custom configuration', () => {
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.1, 0.2], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a2', embedding: [0.2, 0.3], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a3', embedding: [0.3, 0.4], timestamp: new Date(), dimensionality: 2 },
+        ];
+
+        const points = visualizeWithTSNE(embeddings, {
+          iterations: 20,
+          learningRate: 100,
+          perplexity: 10,
+          momentum: 0.5,
+        });
+
+        expect(points).toHaveLength(3);
+        for (const point of points) {
+          expect(isFinite(point.x)).toBe(true);
+          expect(isFinite(point.y)).toBe(true);
+        }
+      });
+
+      it('should handle empty embeddings gracefully', () => {
+        const points = visualizeWithTSNE([]);
+        expect(points).toEqual([]);
+      });
+
+      it('should handle single embedding', () => {
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.1, 0.2, 0.3], timestamp: new Date(), dimensionality: 3 },
+        ];
+
+        const points = visualizeWithTSNE(embeddings);
+
+        expect(points).toHaveLength(1);
+        expect(isFinite(points[0].x)).toBe(true);
+        expect(isFinite(points[0].y)).toBe(true);
+      });
+
+      it('should produce different results with different perplexities', () => {
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.1, 0.2, 0.3], timestamp: new Date(), dimensionality: 3 },
+          { articleId: 'a2', embedding: [0.11, 0.21, 0.31], timestamp: new Date(), dimensionality: 3 },
+          { articleId: 'a3', embedding: [0.8, 0.9, 0.7], timestamp: new Date(), dimensionality: 3 },
+        ];
+
+        const points1 = visualizeWithTSNE(embeddings, { perplexity: 10 });
+        const points2 = visualizeWithTSNE(embeddings, { perplexity: 50 });
+
+        // Configurations produce different results (due to randomization and different perplexities)
+        let differs = false;
+        for (let i = 0; i < points1.length; i++) {
+          if (Math.abs(points1[i].x - points2[i].x) > 0.01 || Math.abs(points1[i].y - points2[i].y) > 0.01) {
+            differs = true;
+            break;
+          }
+        }
+
+        expect(differs).toBe(true);
       });
     });
   });
