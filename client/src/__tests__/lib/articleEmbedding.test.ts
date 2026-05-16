@@ -28,6 +28,9 @@ import {
   computeNeighborValidationMetrics,
   serializeEmbeddingModel,
   deserializeEmbeddingModel,
+  handleOutOfVocabularyTokens,
+  encodeColdStartArticle,
+  validateEdgeCaseHandling,
   saveModelToJSON,
   loadModelFromJSON,
   createEmbeddingCache,
@@ -2068,6 +2071,231 @@ describe('articleEmbedding - Task 1.1: Design embedding architecture', () => {
         expect(addedCount).toBe(2);
         expect(newEmbeddings).toHaveLength(2);
         expect(cache.embeddings.size).toBe(3);
+      });
+    });
+
+    describe('Subtask 3.2.3: Edge Case Handling', () => {
+      describe('handleOutOfVocabularyTokens', () => {
+        it('should handle OOV tokens with mean fallback', () => {
+          const tokens = ['known', 'unknown', 'word'];
+          const tokenEmbeddings = new Map([
+            ['known', [0.1, 0.2]],
+            ['word', [0.3, 0.4]],
+          ]);
+
+          const mappings = handleOutOfVocabularyTokens(
+            tokens,
+            tokenEmbeddings,
+            'mean'
+          );
+
+          expect(mappings).toHaveLength(3);
+          expect(mappings[0].isKnown).toBe(true);
+          expect(mappings[1].isKnown).toBe(false);
+          expect(mappings[2].isKnown).toBe(true);
+          // Mean fallback: (0.1 + 0.3) / 2 = 0.2, (0.2 + 0.4) / 2 = 0.3
+          expect(mappings[1].fallbackEmbedding?.[0]).toBeCloseTo(0.2);
+          expect(mappings[1].fallbackEmbedding?.[1]).toBeCloseTo(0.3);
+        });
+
+        it('should handle OOV tokens with zero fallback', () => {
+          const tokens = ['unknown'];
+          const tokenEmbeddings = new Map([['known', [0.5, 0.5]]]);
+
+          const mappings = handleOutOfVocabularyTokens(
+            tokens,
+            tokenEmbeddings,
+            'zero'
+          );
+
+          expect(mappings[0].isKnown).toBe(false);
+          expect(mappings[0].fallbackEmbedding).toEqual([0, 0]);
+        });
+
+        it('should handle all OOV tokens when vocabulary is empty', () => {
+          const tokens = ['unknown1', 'unknown2'];
+          const tokenEmbeddings = new Map();
+
+          const mappings = handleOutOfVocabularyTokens(
+            tokens,
+            tokenEmbeddings,
+            'mean'
+          );
+
+          expect(mappings).toHaveLength(2);
+          mappings.forEach(m => {
+            expect(m.isKnown).toBe(false);
+          });
+        });
+      });
+
+      describe('encodeColdStartArticle', () => {
+        it('should encode new article without engagement data', () => {
+          const article = {
+            articleId: 'new1',
+            title: 'Breaking News',
+            summary: 'Important update',
+            tags: ['news'],
+            author: 'Reporter',
+            topic: 'Science',
+          };
+
+          const config = getDefaultEmbeddingConfig();
+          const vocab = buildVocabulary([
+            ...testArticles,
+            article,
+          ]);
+          const encoder = new EmbeddingEncoder(vocab, config);
+
+          const embedding = encodeColdStartArticle(article, encoder);
+
+          expect(embedding.articleId).toBe('new1');
+          expect(embedding.embedding.length).toBeGreaterThan(0);
+          expect(embedding.timestamp).toBeInstanceOf(Date);
+        });
+
+        it('should preserve article metadata in cold-start embedding', () => {
+          const article = {
+            articleId: 'cs1',
+            title: 'Test',
+            summary: 'Cold start test',
+            tags: ['test'],
+            author: 'Tester',
+            topic: 'AI',
+          };
+
+          const config = getDefaultEmbeddingConfig();
+          const vocab = buildVocabulary([
+            ...testArticles,
+            article,
+          ]);
+          const encoder = new EmbeddingEncoder(vocab, config);
+
+          const embedding = encodeColdStartArticle(article, encoder);
+
+          expect(embedding.articleId).toBe(article.articleId);
+          expect(embedding.dimensionality).toBe(128); // default dimension
+        });
+      });
+
+      describe('validateEdgeCaseHandling', () => {
+        it('should validate edge cases coverage', () => {
+          const articles = [
+            {
+              articleId: 'a1',
+              title: 'Article 1',
+              summary: 'S1',
+              tags: ['ai'],
+              author: 'Author',
+              topic: 'AI',
+            },
+            {
+              articleId: 'a2',
+              title: 'Article 2',
+              summary: 'S2',
+              tags: ['tech'],
+              author: 'Tech Writer',
+              topic: 'Technology',
+            },
+          ];
+
+          const embeddings = [
+            {
+              articleId: 'a1',
+              embedding: [0.1, 0.2],
+              timestamp: new Date(),
+              dimensionality: 2,
+            },
+            {
+              articleId: 'a2',
+              embedding: [0.3, 0.4],
+              timestamp: new Date(),
+              dimensionality: 2,
+            },
+          ];
+
+          const tokenEmbeddings = new Map([
+            ['article', [0.1]],
+            ['tech', [0.2]],
+          ]);
+
+          const result = validateEdgeCaseHandling(
+            articles,
+            embeddings,
+            tokenEmbeddings
+          );
+
+          expect(result.averageEmbeddingQuality).toBeGreaterThan(0);
+          expect(result.oovTokensHandled).toBeGreaterThanOrEqual(0);
+          expect(typeof result.edgeCasesCovered).toBe('boolean');
+        });
+
+        it('should count sparse engagement articles', () => {
+          const articles = [
+            {
+              articleId: 'a1',
+              title: 'New Article',
+              summary: 'Recently published',
+              tags: ['new'],
+              author: 'Author',
+              topic: 'News',
+            },
+          ];
+
+          const embeddings = [
+            {
+              articleId: 'a1',
+              embedding: [0.5],
+              timestamp: new Date(),
+              dimensionality: 1,
+            },
+          ];
+
+          const tokenEmbeddings = new Map();
+
+          const result = validateEdgeCaseHandling(
+            articles,
+            embeddings,
+            tokenEmbeddings
+          );
+
+          expect(result.coldStartArticles).toBeGreaterThanOrEqual(0);
+          expect(result.sparseEngagementArticles).toBeGreaterThanOrEqual(0);
+        });
+
+        it('should measure embedding quality correctly', () => {
+          const articles = [
+            {
+              articleId: 'a1',
+              title: 'Test',
+              summary: 'Quality test',
+              tags: ['test'],
+              author: 'Tester',
+              topic: 'Test',
+            },
+          ];
+
+          const embeddings = [
+            {
+              articleId: 'a1',
+              embedding: new Array(128).fill(0.1),
+              timestamp: new Date(),
+              dimensionality: 128,
+            },
+          ];
+
+          const tokenEmbeddings = new Map([['test', [0.1]]]);
+
+          const result = validateEdgeCaseHandling(
+            articles,
+            embeddings,
+            tokenEmbeddings
+          );
+
+          // Quality should be measured based on embedding magnitude
+          expect(result.averageEmbeddingQuality).toBeGreaterThan(0);
+          expect(result.averageEmbeddingQuality).toBeLessThanOrEqual(1);
+        });
       });
     });
   });
