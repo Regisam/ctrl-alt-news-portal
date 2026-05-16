@@ -823,3 +823,168 @@ export async function trainEmbeddingModel(
     validationHistory,
   };
 }
+
+// ============================================================================
+// Task 2.2: Dimensionality & Performance Tuning
+// ============================================================================
+
+/**
+ * Performance benchmark result for a specific dimensionality
+ */
+export interface DimensionalityBenchmark {
+  dimensionality: number;
+  avgInferenceTimeMs: number;
+  minInferenceTimeMs: number;
+  maxInferenceTimeMs: number;
+  p95InferenceTimeMs: number;
+  meetsLatencyTarget: boolean; // < 10ms
+  embeddingSize: number; // in bytes
+  modelSize: number; // approximate, in bytes
+}
+
+/**
+ * Subtask 2.2.1 & 2.2.2: Test multiple dimensions and profile inference latency
+ * Benchmark embedding inference speed for different dimensionalities
+ */
+export function benchmarkDimensionality(
+  encoder: EmbeddingEncoder,
+  articles: ArticleFeatures[],
+  dimensionality: number,
+  iterations: number = 100
+): DimensionalityBenchmark {
+  const inferenceTimes: number[] = [];
+
+  // Warmup: first encoding doesn't count
+  articles.forEach(article => encoder.encode(article));
+
+  // Benchmark iterations
+  for (let i = 0; i < iterations; i++) {
+    const article = articles[i % articles.length];
+
+    const startTime = performance.now();
+    encoder.encode(article);
+    const endTime = performance.now();
+
+    inferenceTimes.push(endTime - startTime);
+  }
+
+  // Calculate statistics
+  inferenceTimes.sort((a, b) => a - b);
+
+  const avgInferenceTimeMs = inferenceTimes.reduce((sum, t) => sum + t, 0) / inferenceTimes.length;
+  const minInferenceTimeMs = inferenceTimes[0];
+  const maxInferenceTimeMs = inferenceTimes[inferenceTimes.length - 1];
+  const p95Idx = Math.floor(inferenceTimes.length * 0.95);
+  const p95InferenceTimeMs = inferenceTimes[p95Idx];
+
+  const meetsLatencyTarget = p95InferenceTimeMs < 10.0;
+
+  // Calculate sizes
+  const embeddingSize = dimensionality * 8; // 8 bytes per float64
+  const modelSize = embeddingSize * 5000; // Approximate for 5000-word vocabulary
+
+  return {
+    dimensionality,
+    avgInferenceTimeMs,
+    minInferenceTimeMs,
+    maxInferenceTimeMs,
+    p95InferenceTimeMs,
+    meetsLatencyTarget,
+    embeddingSize,
+    modelSize,
+  };
+}
+
+/**
+ * Subtask 2.2.3: Test multiple dimensionalities and find optimal balance
+ * Compare inference speed and model size across different embedding dimensions
+ */
+export async function tuneEmbeddingDimensionality(
+  articles: ArticleFeatures[],
+  trainingSamples: TrainingSample[],
+  validationSamples: TrainingSample[],
+  dimensionsToTest: number[] = [64, 128, 256, 512],
+  config?: Partial<EmbeddingConfig>
+): Promise<DimensionalityBenchmark[]> {
+  const baseConfig = { ...getDefaultEmbeddingConfig(), ...config };
+  const benchmarks: DimensionalityBenchmark[] = [];
+
+  for (const dim of dimensionsToTest) {
+    const testConfig = { ...baseConfig, dimensionality: dim };
+
+    // Create and train encoder
+    const { encoder } = await createEmbeddingModel(testConfig, articles);
+
+    // Skip training for performance tuning (assume pre-trained or fixed initialization)
+    // In production, you'd train each dimension and compare loss convergence
+
+    // Benchmark inference latency
+    const benchmark = benchmarkDimensionality(encoder, articles, dim, 100);
+    benchmarks.push(benchmark);
+  }
+
+  return benchmarks;
+}
+
+/**
+ * Find optimal dimensionality that balances quality and latency
+ * Returns the largest dimension that still meets <10ms latency target
+ */
+export function findOptimalDimensionality(
+  benchmarks: DimensionalityBenchmark[],
+  latencyTargetMs: number = 10.0
+): { optimal: DimensionalityBenchmark; candidates: DimensionalityBenchmark[] } {
+  // Filter benchmarks that meet latency target
+  const candidates = benchmarks.filter(b => b.p95InferenceTimeMs < latencyTargetMs);
+
+  if (candidates.length === 0) {
+    // If no dimension meets target, return the fastest
+    const fastest = benchmarks.reduce((min, b) =>
+      b.p95InferenceTimeMs < min.p95InferenceTimeMs ? b : min
+    );
+    return { optimal: fastest, candidates: benchmarks };
+  }
+
+  // Return the highest dimensionality that meets target (best quality)
+  const optimal = candidates.reduce((max, b) =>
+    b.dimensionality > max.dimensionality ? b : max
+  );
+
+  return { optimal, candidates };
+}
+
+/**
+ * Generate dimensionality tuning report
+ */
+export interface DimensionalityTuningReport {
+  benchmarks: DimensionalityBenchmark[];
+  optimalDimensionality: number;
+  optimalBenchmark: DimensionalityBenchmark;
+  meetsLatencyTarget: boolean;
+  recommendation: string;
+}
+
+export function generateTuningReport(
+  benchmarks: DimensionalityBenchmark[],
+  latencyTargetMs: number = 10.0
+): DimensionalityTuningReport {
+  const { optimal, candidates } = findOptimalDimensionality(benchmarks, latencyTargetMs);
+
+  let recommendation = '';
+  if (optimal.meetsLatencyTarget) {
+    recommendation = `Optimal: ${optimal.dimensionality}D (${optimal.p95InferenceTimeMs.toFixed(2)}ms @ p95). ` +
+      `Quality: Higher dimension = richer embeddings. Speed: Meets <10ms target.`;
+  } else {
+    recommendation = `Warning: No dimension meets <10ms target. ` +
+      `Best achievable: ${optimal.dimensionality}D (${optimal.p95InferenceTimeMs.toFixed(2)}ms @ p95). ` +
+      `Recommendation: Optimize encoding pipeline or accept higher latency.`;
+  }
+
+  return {
+    benchmarks,
+    optimalDimensionality: optimal.dimensionality,
+    optimalBenchmark: optimal,
+    meetsLatencyTarget: optimal.meetsLatencyTarget,
+    recommendation,
+  };
+}

@@ -16,9 +16,14 @@ import {
   initializeAdamState,
   adamStep,
   trainEmbeddingModel,
+  benchmarkDimensionality,
+  tuneEmbeddingDimensionality,
+  findOptimalDimensionality,
+  generateTuningReport,
   type ArticleFeatures,
   type EmbeddingConfig,
   type EngagementRecord,
+  type DimensionalityBenchmark,
 } from '@shared/lib/articleEmbedding';
 
 describe('articleEmbedding - Task 1.1: Design embedding architecture', () => {
@@ -788,6 +793,247 @@ describe('articleEmbedding - Task 1.1: Design embedding architecture', () => {
         expect(result.trainHistory.length).toBeGreaterThan(0);
         expect(result.validationHistory.length).toBeGreaterThan(0);
         expect(result.trainHistory.every(l => l >= 0)).toBe(true);
+      });
+    });
+  });
+
+  describe('articleEmbedding - Task 2.2: Dimensionality & Performance Tuning', () => {
+    describe('Subtask 2.2.1 & 2.2.2: Benchmark dimensionality', () => {
+      it('should benchmark inference latency for a dimensionality', async () => {
+        const config = getDefaultEmbeddingConfig();
+        const articles = [
+          {
+            articleId: 'a1',
+            title: 'Test Article',
+            summary: 'Test summary',
+            tags: ['test'],
+            author: 'Test',
+            topic: 'Test',
+          },
+        ];
+
+        const { encoder } = await createEmbeddingModel(config, articles);
+        const benchmark = benchmarkDimensionality(encoder, articles, 128, 10);
+
+        expect(benchmark.dimensionality).toBe(128);
+        expect(benchmark.avgInferenceTimeMs).toBeGreaterThan(0);
+        expect(benchmark.minInferenceTimeMs).toBeGreaterThan(0);
+        expect(benchmark.maxInferenceTimeMs).toBeGreaterThanOrEqual(benchmark.avgInferenceTimeMs);
+        expect(benchmark.p95InferenceTimeMs).toBeGreaterThanOrEqual(benchmark.minInferenceTimeMs);
+      });
+
+      it('should calculate correct embedding size', async () => {
+        const articles: ArticleFeatures[] = [
+          {
+            articleId: 'a1',
+            title: 'Test',
+            summary: 'Summary',
+            tags: ['test'],
+            author: 'Test',
+            topic: 'Test',
+          },
+        ];
+        const config = { ...getDefaultEmbeddingConfig(), dimensionality: 256 };
+        const { encoder } = await createEmbeddingModel(config, articles);
+
+        const benchmark = benchmarkDimensionality(encoder, articles, 256, 5);
+
+        expect(benchmark.embeddingSize).toBe(256 * 8); // 256 dims * 8 bytes
+      });
+
+      it('should determine latency target compliance', async () => {
+        const articles: ArticleFeatures[] = [
+          {
+            articleId: 'a1',
+            title: 'Test',
+            summary: 'Summary',
+            tags: ['test'],
+            author: 'Test',
+            topic: 'Test',
+          },
+        ];
+        const config = { ...getDefaultEmbeddingConfig(), dimensionality: 64 };
+        const { encoder } = await createEmbeddingModel(config, articles);
+
+        const benchmark = benchmarkDimensionality(encoder, articles, 64, 5);
+
+        // Smaller dimensions should be faster
+        expect(benchmark.p95InferenceTimeMs).toBeLessThan(20); // Should be quite fast
+      });
+    });
+
+    describe('Subtask 2.2.3: Tune dimensionality', () => {
+      it('should test multiple dimensionalities', async () => {
+        const config = getDefaultEmbeddingConfig();
+        config.epochs = 1; // Fast test
+
+        const articles = [
+          {
+            articleId: 'a1',
+            title: 'Article 1',
+            summary: 'Summary 1',
+            tags: ['tag1'],
+            author: 'Author1',
+            topic: 'Tech',
+          },
+          {
+            articleId: 'a2',
+            title: 'Article 2',
+            summary: 'Summary 2',
+            tags: ['tag2'],
+            author: 'Author2',
+            topic: 'Tech',
+          },
+        ];
+
+        const trainingSamples = [
+          { articleId1: 'a1', articleId2: 'a2', label: 1 },
+        ];
+
+        const benchmarks = await tuneEmbeddingDimensionality(
+          articles,
+          trainingSamples,
+          trainingSamples,
+          [64, 128]
+        );
+
+        expect(benchmarks.length).toBe(2);
+        expect(benchmarks[0].dimensionality).toBe(64);
+        expect(benchmarks[1].dimensionality).toBe(128);
+      });
+
+      it('should show that larger dimensions are slower', async () => {
+        const articles: ArticleFeatures[] = [
+          {
+            articleId: 'a1',
+            title: 'Test Article',
+            summary: 'Test summary',
+            tags: ['test'],
+            author: 'Test',
+            topic: 'Test',
+          },
+        ];
+        const config = getDefaultEmbeddingConfig();
+
+        const { encoder: encoder64 } = await createEmbeddingModel(
+          { ...config, dimensionality: 64 },
+          articles
+        );
+        const benchmark64 = benchmarkDimensionality(encoder64, articles, 64, 10);
+
+        const { encoder: encoder256 } = await createEmbeddingModel(
+          { ...config, dimensionality: 256 },
+          articles
+        );
+        const benchmark256 = benchmarkDimensionality(encoder256, articles, 256, 10);
+
+        // Larger dimensions generally slower
+        expect(benchmark256.avgInferenceTimeMs).toBeGreaterThanOrEqual(benchmark64.avgInferenceTimeMs);
+      });
+    });
+
+    describe('Subtask 2.2.3: Find optimal dimensionality', () => {
+      it('should find optimal dimensionality within latency target', () => {
+        const benchmarks: DimensionalityBenchmark[] = [
+          {
+            dimensionality: 64,
+            avgInferenceTimeMs: 1.0,
+            minInferenceTimeMs: 0.9,
+            maxInferenceTimeMs: 1.2,
+            p95InferenceTimeMs: 1.1,
+            meetsLatencyTarget: true,
+            embeddingSize: 512,
+            modelSize: 512000,
+          },
+          {
+            dimensionality: 128,
+            avgInferenceTimeMs: 2.0,
+            minInferenceTimeMs: 1.8,
+            maxInferenceTimeMs: 2.5,
+            p95InferenceTimeMs: 2.2,
+            meetsLatencyTarget: true,
+            embeddingSize: 1024,
+            modelSize: 1024000,
+          },
+          {
+            dimensionality: 256,
+            avgInferenceTimeMs: 4.0,
+            minInferenceTimeMs: 3.8,
+            maxInferenceTimeMs: 4.5,
+            p95InferenceTimeMs: 4.2,
+            meetsLatencyTarget: true,
+            embeddingSize: 2048,
+            modelSize: 2048000,
+          },
+        ];
+
+        const { optimal, candidates } = findOptimalDimensionality(benchmarks, 10.0);
+
+        // Should return highest dimension that meets target
+        expect(optimal.dimensionality).toBe(256);
+        expect(candidates.length).toBe(3);
+      });
+
+      it('should handle case where no dimension meets latency target', () => {
+        const benchmarks: DimensionalityBenchmark[] = [
+          {
+            dimensionality: 512,
+            avgInferenceTimeMs: 15.0,
+            minInferenceTimeMs: 14.0,
+            maxInferenceTimeMs: 16.0,
+            p95InferenceTimeMs: 15.5,
+            meetsLatencyTarget: false,
+            embeddingSize: 4096,
+            modelSize: 4096000,
+          },
+        ];
+
+        const { optimal } = findOptimalDimensionality(benchmarks, 10.0);
+
+        // Should return the only option (even if it doesn't meet target)
+        expect(optimal.dimensionality).toBe(512);
+      });
+
+      it('should generate tuning report', () => {
+        const benchmarks: DimensionalityBenchmark[] = [
+          {
+            dimensionality: 128,
+            avgInferenceTimeMs: 2.0,
+            minInferenceTimeMs: 1.8,
+            maxInferenceTimeMs: 2.5,
+            p95InferenceTimeMs: 2.2,
+            meetsLatencyTarget: true,
+            embeddingSize: 1024,
+            modelSize: 1024000,
+          },
+        ];
+
+        const report = generateTuningReport(benchmarks, 10.0);
+
+        expect(report.optimalDimensionality).toBe(128);
+        expect(report.meetsLatencyTarget).toBe(true);
+        expect(report.recommendation).toContain('Optimal');
+        expect(report.benchmarks.length).toBe(1);
+      });
+
+      it('should include recommendation for failing latency target', () => {
+        const benchmarks: DimensionalityBenchmark[] = [
+          {
+            dimensionality: 512,
+            avgInferenceTimeMs: 15.0,
+            minInferenceTimeMs: 14.0,
+            maxInferenceTimeMs: 16.0,
+            p95InferenceTimeMs: 15.5,
+            meetsLatencyTarget: false,
+            embeddingSize: 4096,
+            modelSize: 4096000,
+          },
+        ];
+
+        const report = generateTuningReport(benchmarks, 10.0);
+
+        expect(report.meetsLatencyTarget).toBe(false);
+        expect(report.recommendation).toContain('Warning');
       });
     });
   });
