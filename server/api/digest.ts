@@ -1,7 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { digestScheduler } from '../services/DigestScheduler';
-import type { SmartDigestConfig } from '@shared/types';
 
 const router = Router();
 
@@ -17,12 +16,12 @@ router.get('/preview', (req: Request, res: Response): void => {
     const { userId } = userIdSchema.parse(req.query);
 
     // Get user's config or use defaults
-    const config = digestScheduler.getUserConfig(userId) || ({
+    const config = digestScheduler.getUserConfig(userId) || {
       enabled: true,
-      frequency: 'weekly',
+      frequency: 'weekly' as const,
       preferredTime: '08:00',
       topics: ['AI', 'Science'],
-    } as SmartDigestConfig);
+    };
 
     // Mock digest generation (in Phase 4, this would use real articles)
     const mockArticles = [

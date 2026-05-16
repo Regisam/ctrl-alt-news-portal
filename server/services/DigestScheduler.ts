@@ -1,5 +1,12 @@
 import { nanoid } from 'nanoid';
-import type { SmartDigestConfig } from '@shared/types';
+
+interface SmartDigestConfig {
+  enabled?: boolean;
+  frequency: 'daily' | 'weekly';
+  preferredTime: string;
+  lastDigestSent?: string;
+  topics?: string[];
+}
 
 interface TokenRecord {
   token: string;
@@ -116,7 +123,7 @@ export class DigestScheduler {
     console.log(`\n[DigestScheduler] 📧 SENDING DIGEST TO USER: ${userId}`);
     console.log(`   Frequency: ${config.frequency}`);
     console.log(`   Preferred time: ${config.preferredTime}`);
-    console.log(`   Topics: ${config.topics.join(', ')}`);
+    console.log(`   Topics: ${config.topics?.join(', ') || 'None'}`);
 
     // Generate tokens for this digest
     const unsubscribeToken = this.generateToken(userId, 'unsubscribe');
@@ -129,7 +136,7 @@ export class DigestScheduler {
     );
 
     // Update config to record when digest was sent
-    config.lastDigestSent = new Date();
+    config.lastDigestSent = new Date().toISOString();
     this.scheduledUsers.set(userId, { userId, config, addedAt: new Date() });
   }
 

@@ -175,7 +175,7 @@ export function useLivePersonalizedFeed(
   );
 
   // Store connect function in ref to avoid circular dependency
-  const connectRef = useRef<() => void>();
+  const connectRef = useRef<(() => void) | undefined>(undefined);
 
   // Connect to SSE
   const connect = useCallback(() => {
