@@ -24,6 +24,8 @@ import {
   calculateDaviesBouldinIndex,
   evaluateClusteringQuality,
   visualizeWithTSNE,
+  validateNearestNeighbors,
+  computeNeighborValidationMetrics,
   type ArticleFeatures,
   type EmbeddingConfig,
   type EngagementRecord,
@@ -1362,6 +1364,215 @@ describe('articleEmbedding - Task 1.1: Design embedding architecture', () => {
         }
 
         expect(differs).toBe(true);
+      });
+    });
+  });
+
+  // ============================================================================
+  // Task 3.1.3: Validation — Nearest Neighbors Quality
+  // ============================================================================
+
+  describe('Subtask 3.1.3: Nearest Neighbors Validation', () => {
+    describe('validateNearestNeighbors', () => {
+      it('should validate nearest neighbors for all articles', () => {
+        const articles = [
+          { articleId: 'a1', title: 'AI News 1', summary: 'Summary 1', tags: ['ai'], author: 'Author 1', topic: 'AI' },
+          { articleId: 'a2', title: 'AI News 2', summary: 'Summary 2', tags: ['ai'], author: 'Author 2', topic: 'AI' },
+          { articleId: 'a3', title: 'Science News 1', summary: 'Summary 3', tags: ['science'], author: 'Author 3', topic: 'Science' },
+        ];
+
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.0, 0.0], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a2', embedding: [0.01, 0.01], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a3', embedding: [1.0, 1.0], timestamp: new Date(), dimensionality: 2 },
+        ];
+
+        const results = validateNearestNeighbors(embeddings, articles, 2);
+
+        expect(results).toHaveLength(3);
+        expect(results[0]).toHaveProperty('articleId');
+        expect(results[0]).toHaveProperty('topic');
+        expect(results[0]).toHaveProperty('neighbors');
+        expect(results[0]).toHaveProperty('accuracy');
+      });
+
+      it('should mark neighbors as correct if they match topic', () => {
+        const articles = [
+          { articleId: 'a1', title: 'AI News 1', summary: 'Summary 1', tags: ['ai'], author: 'Author 1', topic: 'AI' },
+          { articleId: 'a2', title: 'AI News 2', summary: 'Summary 2', tags: ['ai'], author: 'Author 2', topic: 'AI' },
+          { articleId: 'a3', title: 'Science News 1', summary: 'Summary 3', tags: ['science'], author: 'Author 3', topic: 'Science' },
+        ];
+
+        // a1 and a2 are close (both AI), a3 is far (Science)
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.0, 0.0], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a2', embedding: [0.01, 0.01], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a3', embedding: [2.0, 2.0], timestamp: new Date(), dimensionality: 2 },
+        ];
+
+        const results = validateNearestNeighbors(embeddings, articles, 2);
+
+        // a1's nearest neighbor should be a2 (same topic)
+        const a1Result = results.find(r => r.articleId === 'a1');
+        expect(a1Result?.neighbors[0].isCorrect).toBe(true);
+      });
+
+      it('should compute accuracy correctly', () => {
+        const articles = [
+          { articleId: 'a1', title: 'AI 1', summary: 'S1', tags: ['ai'], author: 'A1', topic: 'AI' },
+          { articleId: 'a2', title: 'AI 2', summary: 'S2', tags: ['ai'], author: 'A2', topic: 'AI' },
+          { articleId: 'a3', title: 'Science 1', summary: 'S3', tags: ['science'], author: 'A3', topic: 'Science' },
+        ];
+
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.0, 0.0], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a2', embedding: [0.01, 0.01], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a3', embedding: [2.0, 2.0], timestamp: new Date(), dimensionality: 2 },
+        ];
+
+        const results = validateNearestNeighbors(embeddings, articles, 2);
+
+        // All results should have accuracy between 0 and 1
+        for (const result of results) {
+          expect(result.accuracy).toBeGreaterThanOrEqual(0);
+          expect(result.accuracy).toBeLessThanOrEqual(1);
+        }
+      });
+
+      it('should handle different k values', () => {
+        const articles = [
+          { articleId: 'a1', title: 'AI 1', summary: 'S1', tags: ['ai'], author: 'A1', topic: 'AI' },
+          { articleId: 'a2', title: 'AI 2', summary: 'S2', tags: ['ai'], author: 'A2', topic: 'AI' },
+          { articleId: 'a3', title: 'AI 3', summary: 'S3', tags: ['ai'], author: 'A3', topic: 'AI' },
+        ];
+
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.0, 0.0], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a2', embedding: [0.01, 0.01], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a3', embedding: [0.02, 0.02], timestamp: new Date(), dimensionality: 2 },
+        ];
+
+        const resultsK1 = validateNearestNeighbors(embeddings, articles, 1);
+        const resultsK2 = validateNearestNeighbors(embeddings, articles, 2);
+
+        expect(resultsK1[0].neighbors).toHaveLength(1);
+        expect(resultsK2[0].neighbors).toHaveLength(2);
+      });
+    });
+
+    describe('computeNeighborValidationMetrics', () => {
+      it('should compute overall validation metrics', () => {
+        const validationResults = [
+          {
+            articleId: 'a1',
+            topic: 'AI',
+            neighbors: [
+              { articleId: 'a2', topic: 'AI', distance: 0.01, isCorrect: true },
+              { articleId: 'a3', topic: 'AI', distance: 0.02, isCorrect: true },
+            ],
+            correctCount: 2,
+            accuracy: 1.0,
+          },
+          {
+            articleId: 'a2',
+            topic: 'AI',
+            neighbors: [
+              { articleId: 'a1', topic: 'AI', distance: 0.01, isCorrect: true },
+              { articleId: 'a3', topic: 'Science', distance: 1.5, isCorrect: false },
+            ],
+            correctCount: 1,
+            accuracy: 0.5,
+          },
+        ];
+
+        const metrics = computeNeighborValidationMetrics(validationResults);
+
+        expect(metrics.totalArticles).toBe(2);
+        expect(metrics.averageAccuracy).toBe(0.75);
+        expect(metrics.articlesAboveThreshold).toBe(2);
+        expect(metrics.minAccuracy).toBe(0.5);
+        expect(metrics.maxAccuracy).toBe(1.0);
+      });
+
+      it('should classify validation as EXCELLENT when accuracy >= 0.8', () => {
+        const results = [
+          {
+            articleId: 'a1',
+            topic: 'AI',
+            neighbors: [
+              { articleId: 'a2', topic: 'AI', distance: 0.01, isCorrect: true },
+              { articleId: 'a3', topic: 'AI', distance: 0.02, isCorrect: true },
+            ],
+            correctCount: 2,
+            accuracy: 0.9,
+          },
+        ];
+
+        const metrics = computeNeighborValidationMetrics(results);
+        expect(metrics.overallValidation).toBe('EXCELLENT');
+      });
+
+      it('should classify validation as GOOD when accuracy [0.6, 0.8)', () => {
+        const results = [
+          {
+            articleId: 'a1',
+            topic: 'AI',
+            neighbors: [
+              { articleId: 'a2', topic: 'AI', distance: 0.01, isCorrect: true },
+              { articleId: 'a3', topic: 'Science', distance: 1.0, isCorrect: false },
+            ],
+            correctCount: 1,
+            accuracy: 0.7,
+          },
+        ];
+
+        const metrics = computeNeighborValidationMetrics(results);
+        expect(metrics.overallValidation).toBe('GOOD');
+      });
+
+      it('should classify validation as FAIR when accuracy [0.4, 0.6)', () => {
+        const results = [
+          {
+            articleId: 'a1',
+            topic: 'AI',
+            neighbors: [
+              { articleId: 'a2', topic: 'AI', distance: 0.01, isCorrect: true },
+              { articleId: 'a3', topic: 'AI', distance: 1.0, isCorrect: true },
+              { articleId: 'a4', topic: 'Science', distance: 1.5, isCorrect: false },
+            ],
+            correctCount: 2,
+            accuracy: 0.5,
+          },
+        ];
+
+        const metrics = computeNeighborValidationMetrics(results);
+        expect(metrics.overallValidation).toBe('FAIR');
+      });
+
+      it('should classify validation as POOR when accuracy < 0.4', () => {
+        const results = [
+          {
+            articleId: 'a1',
+            topic: 'AI',
+            neighbors: [
+              { articleId: 'a2', topic: 'Science', distance: 1.0, isCorrect: false },
+              { articleId: 'a3', topic: 'Science', distance: 1.5, isCorrect: false },
+            ],
+            correctCount: 0,
+            accuracy: 0.0,
+          },
+        ];
+
+        const metrics = computeNeighborValidationMetrics(results);
+        expect(metrics.overallValidation).toBe('POOR');
+      });
+
+      it('should handle empty results gracefully', () => {
+        const metrics = computeNeighborValidationMetrics([]);
+
+        expect(metrics.totalArticles).toBe(0);
+        expect(metrics.averageAccuracy).toBe(0);
+        expect(metrics.overallValidation).toBe('POOR');
       });
     });
   });

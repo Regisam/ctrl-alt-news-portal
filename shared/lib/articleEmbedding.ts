@@ -1404,6 +1404,122 @@ function computeGradient(P: number[][], Q: number[][], Y: number[][]): number[][
   return grad;
 }
 
+export interface NearestNeighborValidationResult {
+  articleId: string;
+  topic: string;
+  neighbors: {
+    articleId: string;
+    topic: string;
+    distance: number;
+    isCorrect: boolean; // true if neighbor has same topic
+  }[];
+  correctCount: number;
+  accuracy: number; // [0, 1] - percentage of correct neighbors
+}
+
+export interface NearestNeighborValidationMetrics {
+  totalArticles: number;
+  averageAccuracy: number;
+  articlesAboveThreshold: number; // Articles with accuracy >= 0.5
+  minAccuracy: number;
+  maxAccuracy: number;
+  overallValidation: 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR';
+}
+
+/**
+ * Validate nearest neighbors: check if k-NN belong to same topic (semantic clustering)
+ */
+export function validateNearestNeighbors(
+  embeddings: ArticleEmbedding[],
+  articles: ArticleFeatures[],
+  k: number = 5
+): NearestNeighborValidationResult[] {
+  const results: NearestNeighborValidationResult[] = [];
+
+  // Create map for quick lookup
+  const articleMap = new Map(articles.map(a => [a.articleId, a]));
+
+  for (const embedding of embeddings) {
+    const article = articleMap.get(embedding.articleId);
+    if (!article) continue;
+
+    // Find k nearest neighbors (exclude self by filtering)
+    const allNeighbors = findNearestNeighbors(embedding.embedding, embeddings, k + 1);
+    const neighbors = allNeighbors.filter(n => n.articleId !== embedding.articleId).slice(0, k);
+
+    // Validate each neighbor
+    const validatedNeighbors = neighbors.map(neighbor => {
+      const neighborArticle = articleMap.get(neighbor.articleId);
+      const isCorrect = neighborArticle?.topic === article.topic;
+
+      return {
+        articleId: neighbor.articleId,
+        topic: neighborArticle?.topic || 'unknown',
+        distance: neighbor.similarity,
+        isCorrect,
+      };
+    });
+
+    const correctCount = validatedNeighbors.filter(n => n.isCorrect).length;
+    const accuracy = k > 0 ? correctCount / k : 0;
+
+    results.push({
+      articleId: embedding.articleId,
+      topic: article.topic,
+      neighbors: validatedNeighbors,
+      correctCount,
+      accuracy,
+    });
+  }
+
+  return results;
+}
+
+/**
+ * Compute overall nearest neighbor validation metrics
+ */
+export function computeNeighborValidationMetrics(
+  validationResults: NearestNeighborValidationResult[],
+  accuracyThreshold: number = 0.5
+): NearestNeighborValidationMetrics {
+  if (validationResults.length === 0) {
+    return {
+      totalArticles: 0,
+      averageAccuracy: 0,
+      articlesAboveThreshold: 0,
+      minAccuracy: 0,
+      maxAccuracy: 0,
+      overallValidation: 'POOR',
+    };
+  }
+
+  const accuracies = validationResults.map(r => r.accuracy);
+  const averageAccuracy = accuracies.reduce((a, b) => a + b, 0) / accuracies.length;
+  const articlesAboveThreshold = validationResults.filter(r => r.accuracy >= accuracyThreshold).length;
+  const minAccuracy = Math.min(...accuracies);
+  const maxAccuracy = Math.max(...accuracies);
+
+  let overallValidation: 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR';
+  if (averageAccuracy >= 0.8) {
+    overallValidation = 'EXCELLENT';
+  } else if (averageAccuracy >= 0.6) {
+    overallValidation = 'GOOD';
+  } else if (averageAccuracy >= 0.4) {
+    overallValidation = 'FAIR';
+  } else {
+    overallValidation = 'POOR';
+  }
+
+  return {
+    totalArticles: validationResults.length,
+    averageAccuracy,
+    articlesAboveThreshold,
+    minAccuracy,
+    maxAccuracy,
+    overallValidation,
+  };
+}
+
 /**
  * t-SNE: Convert high-dimensional embeddings to 2D for visualization
  */
