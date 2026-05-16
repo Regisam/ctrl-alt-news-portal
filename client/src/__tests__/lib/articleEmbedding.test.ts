@@ -5,6 +5,11 @@ import {
   EmbeddingEncoder,
   createEmbeddingModel,
   getDefaultEmbeddingConfig,
+  preprocessText,
+  encodeArticle,
+  cosineSimilarity,
+  batchEncodeArticles,
+  findNearestNeighbors,
   type ArticleFeatures,
   type EmbeddingConfig,
 } from '@shared/lib/articleEmbedding';
@@ -281,6 +286,199 @@ describe('articleEmbedding - Task 1.1: Design embedding architecture', () => {
     });
   });
 
+  describe('Task 1.2: Implement encoding pipeline', () => {
+    describe('Subtask 1.2.1: Text preprocessing', () => {
+      it('should tokenize and normalize text', () => {
+        const text = 'Hello World! Machine Learning.';
+        const tokens = preprocessText(text);
+
+        expect(tokens).toContain('hello');
+        expect(tokens).toContain('world');
+        expect(tokens).not.toContain('!');
+        expect(tokens).not.toContain('.');
+      });
+
+      it('should handle empty strings', () => {
+        const tokens = preprocessText('');
+        expect(tokens).toEqual([]);
+      });
+
+      it('should handle multiple spaces', () => {
+        const text = 'hello    world';
+        const tokens = preprocessText(text);
+        expect(tokens).toEqual(['hello', 'world']);
+      });
+
+      it('should normalize to lowercase', () => {
+        const text = 'HELLO World';
+        const tokens = preprocessText(text);
+        expect(tokens).toEqual(['hello', 'world']);
+      });
+    });
+
+    describe('Subtask 1.2.2: Feature vectorization', () => {
+      it('should encode article to embedding', async () => {
+        const config = getDefaultEmbeddingConfig();
+        const vocab = buildVocabulary(testArticles);
+        const encoder = new EmbeddingEncoder(vocab, config);
+
+        const embedding = await encodeArticle(testArticles[0], encoder);
+
+        expect(embedding.articleId).toBe('art1');
+        expect(embedding.embedding.length).toBe(128);
+        expect(embedding.dimensionality).toBe(128);
+        expect(embedding.timestamp).toBeInstanceOf(Date);
+      });
+
+      it('should preserve article ID in encoded result', async () => {
+        const config = getDefaultEmbeddingConfig();
+        const vocab = buildVocabulary(testArticles);
+        const encoder = new EmbeddingEncoder(vocab, config);
+
+        const emb1 = await encodeArticle(testArticles[0], encoder);
+        const emb2 = await encodeArticle(testArticles[1], encoder);
+
+        expect(emb1.articleId).toBe('art1');
+        expect(emb2.articleId).toBe('art2');
+      });
+    });
+
+    describe('Subtask 1.2.3: Cosine similarity', () => {
+      it('should compute cosine similarity between normalized vectors', () => {
+        const vec1 = [1, 0, 0];
+        const vec2 = [1, 0, 0];
+
+        const similarity = cosineSimilarity(vec1, vec2);
+
+        expect(similarity).toBeCloseTo(1.0, 5); // Identical vectors
+      });
+
+      it('should return 0 for orthogonal vectors', () => {
+        const vec1 = [1, 0, 0];
+        const vec2 = [0, 1, 0];
+
+        const similarity = cosineSimilarity(vec1, vec2);
+
+        expect(similarity).toBeCloseTo(0, 5);
+      });
+
+      it('should return negative value for opposite vectors', () => {
+        const vec1 = [1, 0, 0];
+        const vec2 = [-1, 0, 0];
+
+        const similarity = cosineSimilarity(vec1, vec2);
+
+        expect(similarity).toBeCloseTo(-1.0, 5);
+      });
+
+      it('should be in range [-1, 1]', () => {
+        const vec1 = [0.6, 0.8];
+        const vec2 = [0.8, 0.6];
+
+        const similarity = cosineSimilarity(vec1, vec2);
+
+        expect(similarity).toBeGreaterThanOrEqual(-1);
+        expect(similarity).toBeLessThanOrEqual(1);
+      });
+
+      it('should throw on dimension mismatch', () => {
+        const vec1 = [1, 0, 0];
+        const vec2 = [1, 0];
+
+        expect(() => cosineSimilarity(vec1, vec2)).toThrow();
+      });
+
+      it('should handle normalized embeddings', async () => {
+        const config = getDefaultEmbeddingConfig();
+        const vocab = buildVocabulary(testArticles);
+        const encoder = new EmbeddingEncoder(vocab, config);
+
+        const emb1 = await encodeArticle(testArticles[0], encoder);
+        const emb2 = await encodeArticle(testArticles[1], encoder);
+
+        const similarity = cosineSimilarity(emb1.embedding, emb2.embedding);
+
+        expect(similarity).toBeGreaterThanOrEqual(-1);
+        expect(similarity).toBeLessThanOrEqual(1);
+      });
+    });
+
+    describe('Subtask 1.2.3: Batch encoding', () => {
+      it('should batch encode multiple articles', async () => {
+        const config = getDefaultEmbeddingConfig();
+        const vocab = buildVocabulary(testArticles);
+        const encoder = new EmbeddingEncoder(vocab, config);
+
+        const embeddings = await batchEncodeArticles(testArticles, encoder);
+
+        expect(embeddings).toHaveLength(3);
+        embeddings.forEach((emb, idx) => {
+          expect(emb.articleId).toBe(testArticles[idx].articleId);
+          expect(emb.embedding.length).toBe(128);
+        });
+      });
+
+      it('should maintain order in batch encoding', async () => {
+        const config = getDefaultEmbeddingConfig();
+        const vocab = buildVocabulary(testArticles);
+        const encoder = new EmbeddingEncoder(vocab, config);
+
+        const embeddings = await batchEncodeArticles(testArticles, encoder);
+
+        expect(embeddings[0].articleId).toBe('art1');
+        expect(embeddings[1].articleId).toBe('art2');
+        expect(embeddings[2].articleId).toBe('art3');
+      });
+    });
+
+    describe('Subtask 1.2.3: Nearest neighbors search', () => {
+      it('should find nearest neighbors by cosine similarity', async () => {
+        const config = getDefaultEmbeddingConfig();
+        const vocab = buildVocabulary(testArticles);
+        const encoder = new EmbeddingEncoder(vocab, config);
+
+        const embeddings = await batchEncodeArticles(testArticles, encoder);
+        const queryEmbedding = embeddings[0].embedding;
+
+        const neighbors = findNearestNeighbors(queryEmbedding, embeddings, 2);
+
+        expect(neighbors).toHaveLength(2);
+        expect(neighbors[0].articleId).toBe('art1'); // Closest to itself
+        expect(neighbors[0].similarity).toBeCloseTo(1.0, 1);
+        expect(neighbors[0].rank).toBe(1);
+      });
+
+      it('should return top-K neighbors', async () => {
+        const config = getDefaultEmbeddingConfig();
+        const vocab = buildVocabulary(testArticles);
+        const encoder = new EmbeddingEncoder(vocab, config);
+
+        const embeddings = await batchEncodeArticles(testArticles, encoder);
+        const queryEmbedding = embeddings[0].embedding;
+
+        const neighbors = findNearestNeighbors(queryEmbedding, embeddings, 2);
+
+        expect(neighbors.length).toBeLessThanOrEqual(2);
+        expect(neighbors[0].rank).toBeLessThanOrEqual(neighbors[1].rank);
+      });
+
+      it('should rank neighbors by similarity descending', async () => {
+        const config = getDefaultEmbeddingConfig();
+        const vocab = buildVocabulary(testArticles);
+        const encoder = new EmbeddingEncoder(vocab, config);
+
+        const embeddings = await batchEncodeArticles(testArticles, encoder);
+        const queryEmbedding = embeddings[0].embedding;
+
+        const neighbors = findNearestNeighbors(queryEmbedding, embeddings, 3);
+
+        for (let i = 0; i < neighbors.length - 1; i++) {
+          expect(neighbors[i].similarity).toBeGreaterThanOrEqual(neighbors[i + 1].similarity);
+        }
+      });
+    });
+  });
+
   describe('Task 1.1: Integration Tests', () => {
     it('should complete full encoding pipeline for Task 1.1', async () => {
       // 1. Create config
@@ -295,7 +493,7 @@ describe('articleEmbedding - Task 1.1: Design embedding architecture', () => {
       // 4. Verify results
       expect(embeddings.length).toBe(testArticles.length);
 
-      embeddings.forEach((emb, idx) => {
+      embeddings.forEach((emb, _idx) => {
         // Should have correct dimensionality
         expect(emb.length).toBe(128);
 

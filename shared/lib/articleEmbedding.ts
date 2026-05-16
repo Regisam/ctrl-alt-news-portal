@@ -395,8 +395,134 @@ export class EmbeddingEncoder {
 }
 
 // ============================================================================
-// Task 1.1 Complete: Interfaces, Feature Encoding, Architecture Design
+// Task 1.2: Implement encoding pipeline
 // ============================================================================
+
+/**
+ * Subtask 1.2.1: Text preprocessing (tokenization, normalization)
+ */
+export function preprocessText(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s]/g, '') // Remove punctuation
+    .split(/\s+/)
+    .filter(word => word.length > 0);
+}
+
+/**
+ * Subtask 1.2.2: Feature vectorization
+ * Converts article features to dense embedding
+ */
+export interface EncodedArticle {
+  articleId: string;
+  embedding: number[];
+  metadata: {
+    textLength: number;
+    tagCount: number;
+  };
+}
+
+/**
+ * Subtask 1.2.3: Embedding layer forward pass
+ * Main function to encode article to embedding
+ */
+export async function encodeArticle(
+  article: ArticleFeatures,
+  encoder: EmbeddingEncoder
+): Promise<ArticleEmbedding> {
+  const embedding = encoder.encode(article);
+
+  return {
+    articleId: article.articleId,
+    embedding,
+    timestamp: new Date(),
+    dimensionality: embedding.length,
+    model: {
+      version: '1.0.0',
+    },
+  };
+}
+
+/**
+ * Cosine similarity between two embeddings
+ * Subtask 1.2.3: Compute similarity
+ */
+export function cosineSimilarity(embedding1: number[], embedding2: number[]): number {
+  if (embedding1.length !== embedding2.length) {
+    throw new Error('Embeddings must have same dimensionality');
+  }
+
+  // Calculate dot product
+  let dotProduct = 0;
+  for (let i = 0; i < embedding1.length; i++) {
+    dotProduct += embedding1[i] * embedding2[i];
+  }
+
+  // L2 norms (should be 1.0 if normalized, but calculate anyway)
+  let norm1 = 0;
+  let norm2 = 0;
+  for (let i = 0; i < embedding1.length; i++) {
+    norm1 += embedding1[i] * embedding1[i];
+    norm2 += embedding2[i] * embedding2[i];
+  }
+
+  norm1 = Math.sqrt(norm1);
+  norm2 = Math.sqrt(norm2);
+
+  if (norm1 === 0 || norm2 === 0) {
+    return 0;
+  }
+
+  // Cosine similarity = dot_product / (norm1 * norm2)
+  return dotProduct / (norm1 * norm2);
+}
+
+/**
+ * Batch encode multiple articles
+ * Subtask 1.2.3: Batch forward pass
+ */
+export async function batchEncodeArticles(
+  articles: ArticleFeatures[],
+  encoder: EmbeddingEncoder
+): Promise<ArticleEmbedding[]> {
+  const embeddings: ArticleEmbedding[] = [];
+
+  for (const article of articles) {
+    const embedding = await encodeArticle(article, encoder);
+    embeddings.push(embedding);
+  }
+
+  return embeddings;
+}
+
+/**
+ * Find nearest neighbors for an article embedding
+ * Uses cosine similarity
+ */
+export function findNearestNeighbors(
+  queryEmbedding: number[],
+  candidateEmbeddings: ArticleEmbedding[],
+  topK: number = 5
+): Array<{ articleId: string; similarity: number; rank: number }> {
+  const similarities = candidateEmbeddings.map(candidate => ({
+    articleId: candidate.articleId,
+    similarity: cosineSimilarity(queryEmbedding, candidate.embedding),
+  }));
+
+  // Sort by similarity descending
+  similarities.sort((a, b) => b.similarity - a.similarity);
+
+  // Return top-K with rank
+  return similarities.slice(0, topK).map((item, idx) => ({
+    ...item,
+    rank: idx + 1,
+  }));
+}
+
+/**
+ * Task 1.1 Complete: Interfaces, Feature Encoding, Architecture Design
+ * Task 1.2 Complete: Encoding pipeline, forward pass, similarity
+ */
 
 /**
  * Create embedding encoder from config
