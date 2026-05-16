@@ -1,0 +1,296 @@
+# Hybrid Recommendation Engine Configuration
+# Story 13.3: Production settings for ensemble ranking with A/B testing
+
+# Default configuration for production
+default:
+  weights:
+    rules: 0.30        # Rules-based signal weight (trending, user rules)
+    content: 0.40      # Content similarity weight (similar to read history)
+    cf: 0.30           # Collaborative filtering weight (users like you)
+    popularity: 0.00   # Popularity signal weight (most read globally)
+
+  diversityPenalty: 0.15
+  minTopicDiversity: 0.60      # At least 60% unique topics in top-K
+  topK: 10                      # Return top 10 recommendations
+  minArticleScore: 0.20         # Minimum score to include article
+
+  performanceBudgets:
+    rules: 5          # ms - rules engine max latency
+    content: 15       # ms - content similarity max latency
+    cf: 20            # ms - collaborative filtering max latency
+    blend: 10         # ms - blending and ranking max latency
+    total: 50         # ms - total recommendation latency budget
+
+# A/B Test Variants
+# Each variant tests different weight combinations to find optimal ensemble
+
+experiments:
+  # CONTROL: Rules-only baseline (EPIC-12 validated)
+  control_rules_only:
+    name: "Rules Only (EPIC-12 baseline)"
+    description: "Single signal baseline - uses only rules-based recommendations"
+    weights:
+      rules: 1.00
+      content: 0.00
+      cf: 0.00
+      popularity: 0.00
+
+    diversityPenalty: 0.10
+    minTopicDiversity: 0.50
+    topK: 10
+
+    startDate: 2026-05-16
+    expectedLift: 0.00        # Baseline - no expected improvement
+    minSampleSize: 1000
+    successMetrics:
+      - ctr
+      - engagement_time
+      - user_satisfaction
+
+  # DEFAULT: Balanced hybrid (Phase 1 result)
+  default_hybrid:
+    name: "Hybrid Default (30/40/30)"
+    description: "Balanced ensemble: rules (30%) + content (40%) + CF (30%)"
+    weights:
+      rules: 0.30
+      content: 0.40
+      cf: 0.30
+      popularity: 0.00
+
+    diversityPenalty: 0.15
+    minTopicDiversity: 0.60
+    topK: 10
+
+    startDate: 2026-05-16
+    expectedLift: 0.12        # Expected 12% improvement vs control
+    minSampleSize: 1000
+    successMetrics:
+      - ctr
+      - engagement_time
+      - user_satisfaction
+
+  # COLLABORATIVE FILTERING HEAVY
+  cf_heavy:
+    name: "CF-Heavy (20/30/50)"
+    description: "Emphasizes collaborative filtering (50%) for personalization"
+    weights:
+      rules: 0.20
+      content: 0.30
+      cf: 0.50
+      popularity: 0.00
+
+    diversityPenalty: 0.20
+    minTopicDiversity: 0.70
+    topK: 10
+
+    startDate: 2026-05-16
+    expectedLift: 0.15        # Expected 15% improvement (higher personalization)
+    minSampleSize: 1000
+    successMetrics:
+      - ctr
+      - engagement_time
+      - user_satisfaction
+
+  # CONTENT SIMILARITY HEAVY
+  content_heavy:
+    name: "Content-Heavy (20/60/20)"
+    description: "Emphasizes content similarity (60%) for topic coherence"
+    weights:
+      rules: 0.20
+      content: 0.60
+      cf: 0.20
+      popularity: 0.00
+
+    diversityPenalty: 0.10
+    minTopicDiversity: 0.50
+    topK: 10
+
+    startDate: 2026-05-16
+    expectedLift: 0.10        # Expected 10% improvement (higher coherence)
+    minSampleSize: 1000
+    successMetrics:
+      - ctr
+      - engagement_time
+      - user_satisfaction
+
+  # POPULARITY BOOST
+  with_popularity:
+    name: "Popularity Boost (25/35/25/15)"
+    description: "Adds popularity signal (15%) to amplify trending articles"
+    weights:
+      rules: 0.25
+      content: 0.35
+      cf: 0.25
+      popularity: 0.15
+
+    diversityPenalty: 0.12
+    minTopicDiversity: 0.55
+    topK: 10
+
+    startDate: 2026-05-16
+    expectedLift: 0.08        # Expected 8% improvement (trending boost)
+    minSampleSize: 1000
+    successMetrics:
+      - ctr
+      - engagement_time
+      - user_satisfaction
+
+# Experiment Assignment Rules
+assignment:
+  # Split users 50/50 between control and treatment
+  controlRatio: 0.50            # 50% control_rules_only, 50% treatment variants
+
+  # Treatment variant selection (when not control)
+  treatmentVariant: "default_hybrid"  # Primary treatment variant
+
+  # Optional: Round-robin other variants for broader testing
+  alternateVariants:
+    - cf_heavy
+    - content_heavy
+    - with_popularity
+
+  # Minimum required sample size before statistical significance
+  minSampleSizeForSignificance: 5000
+
+  # Minimum required power level (0.80 = 80% statistical power)
+  minStatisticalPower: 0.80
+
+# Analytics Event Configuration
+analytics:
+  # Events to track
+  trackingEvents:
+    - event: "impression"
+      description: "Article shown in recommendations list"
+      required: true
+
+    - event: "click"
+      description: "User clicked on recommended article"
+      required: true
+
+    - event: "dismiss"
+      description: "User dismissed/skipped recommended article"
+      required: false
+
+    - event: "feedback"
+      description: "User provided explicit feedback (like/dislike)"
+      required: false
+
+  # Event data to collect
+  collectEventData:
+    engagementTimeMs: true        # How long user spent on article
+    scrollDepth: true              # How far user scrolled (0-1)
+    feedbackScore: true            # User feedback: -1/0/1
+    referrerContext: true          # Where recommendation came from
+
+  # Metrics to compute
+  metricsToCompute:
+    - ctr                         # Click-through rate
+    - engagement_time             # Average time on article
+    - user_satisfaction           # Feedback score average
+    - diversity_ratio             # Topic diversity achieved
+    - performance_latency         # Recommendation latency
+
+# Feature Flags
+features:
+  enableHybridRecommendations: true
+  enableDiversityConstraints: true
+  enableExplainability: true
+  enableABTesting: true
+
+  # Fallback strategies
+  fallbackToRulesOnError: true    # If hybrid fails, use rules-only
+  fallbackToPopularArticles: true # If all else fails, use popular articles
+
+# Monitoring & Alerting
+monitoring:
+  # Performance thresholds
+  latencyThresholds:
+    warning: 40    # ms - warn if approaching budget
+    critical: 50   # ms - error if exceeding budget
+
+  # Quality thresholds
+  qualityThresholds:
+    minCTR: 0.05               # Warn if CTR drops below 5%
+    minEngagementTime: 30000   # ms - warn if < 30s average
+    minDiversity: 0.50         # Warn if diversity < 50%
+
+  # Metrics to log
+  logMetricsFrequency: "hourly"
+
+  # Alert channels
+  alertChannels:
+    - slack
+    - email
+    - dashboard
+
+# Environment-specific Overrides
+environments:
+  development:
+    overrides:
+      default:
+        topK: 5                # Smaller K for faster testing
+    experiments:
+      # Only test default variant in development
+      enabled:
+        - default_hybrid
+        - control_rules_only
+
+  staging:
+    overrides:
+      default:
+        topK: 10
+    experiments:
+      # Test all variants in staging
+      enabled:
+        - control_rules_only
+        - default_hybrid
+        - cf_heavy
+        - content_heavy
+        - with_popularity
+
+  production:
+    overrides:
+      # No overrides - use primary config
+    experiments:
+      # Production runs control vs default_hybrid
+      enabled:
+        - control_rules_only
+        - default_hybrid
+
+      # Can gradually roll out other variants
+      gradual_rollout:
+        - name: cf_heavy
+          targetDate: 2026-06-01
+          targetPercentage: 0.10
+        - name: content_heavy
+          targetDate: 2026-06-15
+          targetPercentage: 0.10
+
+# Version & Metadata
+metadata:
+  version: "1.0.0"
+  createdAt: "2026-05-16"
+  updatedAt: "2026-05-16"
+  author: "Dex (Dev Agent)"
+  story: "Story 13.3 - Hybrid Recommendation Engine"
+  phase: "Phase 1-3 Complete"
+
+  # Description of what this config enables
+  description: |
+    Hybrid Recommendation Engine production configuration.
+
+    Ensemble ranking combines 4 signals (rules, content, CF, popularity)
+    with learned weights to deliver accurate, diverse recommendations.
+
+    A/B testing framework compares control (rules-only) vs treatment
+    (hybrid variants) to measure improvement across key metrics.
+
+    Supports 5 experiment variants for comprehensive testing:
+    - control_rules_only: EPIC-12 baseline
+    - default_hybrid: Balanced ensemble (Phase 1 result)
+    - cf_heavy: Personalization optimized
+    - content_heavy: Topic coherence optimized
+    - with_popularity: Trending articles optimized
+
+    Production ready with fallback strategies, performance budgets,
+    and comprehensive monitoring/alerting.
