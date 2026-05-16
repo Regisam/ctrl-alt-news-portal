@@ -105,7 +105,7 @@ describe('DigestScheduler', () => {
 
     const updatedConfig = scheduler.getUserConfig('user456');
     expect(updatedConfig?.lastDigestSent).toBeDefined();
-    expect(updatedConfig!.lastDigestSent!.getTime()).toBeGreaterThanOrEqual(beforeSend.getTime());
+    expect(new Date(updatedConfig!.lastDigestSent!).getTime()).toBeGreaterThanOrEqual(beforeSend.getTime());
   });
 
   it('should calculate daily schedule correctly', () => {
@@ -136,7 +136,7 @@ describe('DigestScheduler', () => {
 
     // Send digest first time
     scheduler.sendDigest('user456', config);
-    const firstSendTime = config.lastDigestSent!.getTime();
+    const firstSendTime = new Date(config.lastDigestSent!).getTime();
 
     // Try to send again immediately
     // In real scenario, processSchedule would check this with 55 minute debounce
