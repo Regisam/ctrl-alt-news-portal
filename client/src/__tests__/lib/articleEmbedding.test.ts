@@ -10,8 +10,15 @@ import {
   cosineSimilarity,
   batchEncodeArticles,
   findNearestNeighbors,
+  createTrainingSamples,
+  splitTrainingSamples,
+  contrastiveLoss,
+  initializeAdamState,
+  adamStep,
+  trainEmbeddingModel,
   type ArticleFeatures,
   type EmbeddingConfig,
+  type EngagementRecord,
 } from '@shared/lib/articleEmbedding';
 
 describe('articleEmbedding - Task 1.1: Design embedding architecture', () => {
@@ -506,6 +513,281 @@ describe('articleEmbedding - Task 1.1: Design embedding architecture', () => {
           expect(typeof value).toBe('number');
           expect(isFinite(value)).toBe(true);
         });
+      });
+    });
+  });
+
+  describe('articleEmbedding - Task 2.1: Implement training pipeline', () => {
+    describe('Subtask 2.1.1: Data preparation', () => {
+      it('should create positive training samples from engagement records', () => {
+        const engagementRecords: EngagementRecord[] = [
+          { articleId1: 'a1', articleId2: 'a2', coEngagementStrength: 0.8 },
+          { articleId1: 'a3', articleId2: 'a4', coEngagementStrength: 0.6 },
+        ];
+
+        const samples = createTrainingSamples(engagementRecords, 0.5);
+
+        const positiveSamples = samples.filter(s => s.label === 1);
+        expect(positiveSamples.length).toBe(2);
+        expect(positiveSamples[0]).toEqual({
+          articleId1: 'a1',
+          articleId2: 'a2',
+          label: 1,
+        });
+      });
+
+      it('should create negative training samples (random pairs)', () => {
+        const engagementRecords = [
+          { articleId1: 'a1', articleId2: 'a2', coEngagementStrength: 0.8 },
+          { articleId1: 'a3', articleId2: 'a4', coEngagementStrength: 0.7 },
+        ];
+
+        const samples = createTrainingSamples(engagementRecords, 0.5);
+
+        const negativeSamples = samples.filter(s => s.label === 0);
+        expect(negativeSamples.length).toBeGreaterThan(0);
+        expect(negativeSamples.every(s => s.label === 0)).toBe(true);
+      });
+
+      it('should split training and validation samples correctly', () => {
+        const samples = Array.from({ length: 100 }, (_, i) => ({
+          articleId1: `a${i}`,
+          articleId2: `a${i + 1}`,
+          label: i % 2,
+        }));
+
+        const { train, validation } = splitTrainingSamples(samples, 0.2);
+
+        expect(train.length).toBe(80);
+        expect(validation.length).toBe(20);
+        expect(train.length + validation.length).toBe(100);
+      });
+
+      it('should handle validation split edge cases', () => {
+        const samples = Array.from({ length: 10 }, (_, i) => ({
+          articleId1: `a${i}`,
+          articleId2: `a${i + 1}`,
+          label: i % 2,
+        }));
+
+        const { train, validation } = splitTrainingSamples(samples, 0.3);
+
+        expect(train.length + validation.length).toBe(10);
+        expect(validation.length).toBeLessThanOrEqual(3);
+      });
+    });
+
+    describe('Subtask 2.1.2: Loss function (contrastive loss)', () => {
+      it('should compute loss for similar pairs (label=1)', () => {
+        // For similar pairs: loss = similarity²
+        const similarity = 0.8;
+        const loss = contrastiveLoss(similarity, 1);
+
+        expect(loss).toBeCloseTo(0.64, 5); // 0.8²
+      });
+
+      it('should compute loss for dissimilar pairs (label=0)', () => {
+        // For dissimilar pairs with margin=1: loss = max(0, 1 - similarity)²
+        const similarity = 0.3;
+        const loss = contrastiveLoss(similarity, 0, 1.0);
+
+        expect(loss).toBeCloseTo(0.49, 5); // (1 - 0.3)² = 0.7²
+      });
+
+      it('should return 0 loss when dissimilar pairs exceed margin', () => {
+        // When similarity >= margin, loss should be 0
+        const similarity = 1.0;
+        const loss = contrastiveLoss(similarity, 0, 1.0);
+
+        expect(loss).toBeCloseTo(0, 5);
+      });
+
+      it('should respect custom margin parameter', () => {
+        const similarity = 0.5;
+        const margin = 2.0;
+        const loss = contrastiveLoss(similarity, 0, margin);
+
+        expect(loss).toBeCloseTo(2.25, 5); // (2.0 - 0.5)² = 1.5²
+      });
+
+      it('should handle perfect similarity (1.0)', () => {
+        const loss = contrastiveLoss(1.0, 1);
+        expect(loss).toBeCloseTo(1.0, 5);
+      });
+
+      it('should handle perfect dissimilarity (-1.0)', () => {
+        const loss = contrastiveLoss(-1.0, 0, 1.0);
+        expect(loss).toBeCloseTo(4.0, 5); // (1 - (-1))² = 2² = 4
+      });
+    });
+
+    describe('Subtask 2.1.3: Adam optimizer', () => {
+      it('should initialize Adam state correctly', () => {
+        const weights = [
+          [1, 2],
+          [3, 4],
+        ];
+
+        const state = initializeAdamState(weights);
+
+        expect(state.m).toEqual([[0, 0], [0, 0]]);
+        expect(state.v).toEqual([[0, 0], [0, 0]]);
+        expect(state.t).toBe(0);
+      });
+
+      it('should update weights with Adam step', () => {
+        const weights = [[1.0, 2.0]];
+        const gradients = [[0.1, 0.2]];
+        const state = initializeAdamState(weights);
+
+        adamStep(weights, gradients, state, 0.001);
+
+        expect(weights[0][0]).toBeLessThan(1.0);
+        expect(weights[0][1]).toBeLessThan(2.0);
+        expect(state.t).toBe(1);
+      });
+
+      it('should accumulate moments correctly over multiple steps', () => {
+        const weights = [[1.0]];
+        const gradients = [[0.5]];
+        const state = initializeAdamState(weights);
+
+        adamStep(weights, gradients, state, 0.01);
+        const weight1 = weights[0][0];
+
+        adamStep(weights, gradients, state, 0.01);
+        const weight2 = weights[0][0];
+
+        expect(state.t).toBe(2);
+        expect(weight2).toBeLessThan(weight1);
+      });
+    });
+
+    describe('Subtask 2.1.3: Training pipeline', () => {
+      it('should train embedding model on samples', async () => {
+        const config = getDefaultEmbeddingConfig();
+        config.epochs = 2;
+
+        const articles = [
+          {
+            articleId: 'a1',
+            title: 'Article 1',
+            summary: 'Summary 1',
+            tags: ['tag1'],
+            author: 'Author1',
+            topic: 'Tech',
+          },
+          {
+            articleId: 'a2',
+            title: 'Article 2',
+            summary: 'Summary 2',
+            tags: ['tag2'],
+            author: 'Author2',
+            topic: 'Tech',
+          },
+        ];
+
+        const { encoder } = await createEmbeddingModel(config, articles);
+
+        const trainingSamples = [
+          { articleId1: 'a1', articleId2: 'a2', label: 1 },
+        ];
+
+        const result = await trainEmbeddingModel(
+          encoder,
+          articles,
+          trainingSamples,
+          trainingSamples,
+          config
+        );
+
+        expect(result.metrics.epochsTrained).toBeGreaterThan(0);
+        expect(result.metrics.finalLoss).toBeGreaterThanOrEqual(0);
+        expect(result.trainHistory.length).toBeGreaterThan(0);
+      });
+
+      it('should produce valid training metrics', async () => {
+        const config = getDefaultEmbeddingConfig();
+        config.epochs = 2;
+
+        const articles = [
+          {
+            articleId: 'a1',
+            title: 'Article 1',
+            summary: 'Summary 1',
+            tags: ['tag1'],
+            author: 'Author1',
+            topic: 'Tech',
+          },
+          {
+            articleId: 'a2',
+            title: 'Article 2',
+            summary: 'Summary 2',
+            tags: ['tag2'],
+            author: 'Author2',
+            topic: 'Tech',
+          },
+        ];
+
+        const { encoder } = await createEmbeddingModel(config, articles);
+
+        const trainingSamples = [
+          { articleId1: 'a1', articleId2: 'a2', label: 1 },
+        ];
+
+        const result = await trainEmbeddingModel(
+          encoder,
+          articles,
+          trainingSamples,
+          trainingSamples,
+          config
+        );
+
+        expect(result.metrics.samplesProcessed).toBe(1);
+        expect(result.metrics.trainingTimeMs).toBeGreaterThan(0);
+        expect(result.bestEpoch).toBeGreaterThanOrEqual(0);
+      });
+
+      it('should track loss history during training', async () => {
+        const config = getDefaultEmbeddingConfig();
+        config.epochs = 3;
+
+        const articles = [
+          {
+            articleId: 'a1',
+            title: 'Article 1',
+            summary: 'Summary 1',
+            tags: ['tag1'],
+            author: 'Author1',
+            topic: 'Tech',
+          },
+          {
+            articleId: 'a2',
+            title: 'Article 2',
+            summary: 'Summary 2',
+            tags: ['tag2'],
+            author: 'Author2',
+            topic: 'Tech',
+          },
+        ];
+
+        const { encoder } = await createEmbeddingModel(config, articles);
+
+        const trainingSamples = [
+          { articleId1: 'a1', articleId2: 'a2', label: 1 },
+        ];
+
+        const result = await trainEmbeddingModel(
+          encoder,
+          articles,
+          trainingSamples,
+          trainingSamples,
+          config
+        );
+
+        expect(result.trainHistory.length).toBeGreaterThan(0);
+        expect(result.validationHistory.length).toBeGreaterThan(0);
+        expect(result.trainHistory.every(l => l >= 0)).toBe(true);
       });
     });
   });
