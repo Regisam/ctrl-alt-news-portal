@@ -988,3 +988,255 @@ export function generateTuningReport(
     recommendation,
   };
 }
+
+// ============================================================================
+// Task 3.1.1: Quality Analysis — Clustering Metrics
+// ============================================================================
+
+/**
+ * Calculate Euclidean distance between two vectors
+ */
+function euclideanDistance(a: number[], b: number[]): number {
+  let sum = 0;
+  for (let i = 0; i < a.length; i++) {
+    const diff = a[i] - b[i];
+    sum += diff * diff;
+  }
+  return Math.sqrt(sum);
+}
+
+/**
+ * Assign embeddings to clusters based on topic (simple k-means proxy)
+ * Groups articles by topic as a simple clustering approach
+ */
+function clusterEmbeddingsByTopic(
+  embeddings: ArticleEmbedding[],
+  articles: ArticleFeatures[]
+): Map<string, ArticleEmbedding[]> {
+  const clusters = new Map<string, ArticleEmbedding[]>();
+
+  for (let i = 0; i < embeddings.length; i++) {
+    const topic = articles[i].topic;
+    if (!clusters.has(topic)) {
+      clusters.set(topic, []);
+    }
+    clusters.get(topic)!.push(embeddings[i]);
+  }
+
+  return clusters;
+}
+
+/**
+ * Calculate intra-cluster distance (average distance within cluster)
+ */
+function intraClusterDistance(clusterEmbeddings: ArticleEmbedding[]): number {
+  if (clusterEmbeddings.length <= 1) return 0;
+
+  let totalDistance = 0;
+  let count = 0;
+
+  for (let i = 0; i < clusterEmbeddings.length; i++) {
+    for (let j = i + 1; j < clusterEmbeddings.length; j++) {
+      totalDistance += euclideanDistance(
+        clusterEmbeddings[i].embedding,
+        clusterEmbeddings[j].embedding
+      );
+      count++;
+    }
+  }
+
+  return count > 0 ? totalDistance / count : 0;
+}
+
+/**
+ * Calculate cluster center (centroid)
+ */
+function computeClusterCentroid(embeddings: number[][]): number[] {
+  if (embeddings.length === 0) return [];
+
+  const dim = embeddings[0].length;
+  const centroid = new Array(dim).fill(0);
+
+  for (const emb of embeddings) {
+    for (let i = 0; i < dim; i++) {
+      centroid[i] += emb[i];
+    }
+  }
+
+  for (let i = 0; i < dim; i++) {
+    centroid[i] /= embeddings.length;
+  }
+
+  return centroid;
+}
+
+/**
+ * Calculate silhouette score: [-1, 1] where 1 = well-clustered, -1 = misclassified
+ * silhouette(i) = (b(i) - a(i)) / max(a(i), b(i))
+ * where a(i) = avg distance to points in same cluster
+ * and b(i) = min avg distance to points in other clusters
+ */
+export function calculateSilhouetteScore(
+  embeddings: ArticleEmbedding[],
+  articles: ArticleFeatures[]
+): number {
+  const clusters = clusterEmbeddingsByTopic(embeddings, articles);
+
+  if (clusters.size === 0) return 0;
+
+  let totalSilhouette = 0;
+  let pointCount = 0;
+
+  for (const [topic, clusterEmbeddings] of clusters) {
+    for (const embedding of clusterEmbeddings) {
+      // a(i): avg distance within cluster
+      const intraDistances = clusterEmbeddings
+        .filter(e => e.articleId !== embedding.articleId)
+        .map(e => euclideanDistance(embedding.embedding, e.embedding));
+
+      const a = intraDistances.length > 0
+        ? intraDistances.reduce((sum, d) => sum + d, 0) / intraDistances.length
+        : 0;
+
+      // b(i): min avg distance to other clusters
+      let b = Infinity;
+      for (const [otherTopic, otherCluster] of clusters) {
+        if (otherTopic === topic) continue;
+
+        const interDistances = otherCluster.map(e =>
+          euclideanDistance(embedding.embedding, e.embedding)
+        );
+        const avgInterDist = interDistances.reduce((sum, d) => sum + d, 0) / interDistances.length;
+        b = Math.min(b, avgInterDist);
+      }
+
+      // Handle edge case: single cluster
+      if (b === Infinity) b = a;
+
+      // Silhouette coefficient for this point
+      const s = Math.max(a, b) > 0
+        ? (b - a) / Math.max(a, b)
+        : 0;
+
+      totalSilhouette += s;
+      pointCount++;
+    }
+  }
+
+  return pointCount > 0 ? totalSilhouette / pointCount : 0;
+}
+
+/**
+ * Calculate Davies-Bouldin Index: [0, ∞) where lower is better (< 1 is excellent)
+ * DB = (1/k) * Σ max(R_ij) for all i ≠ j
+ * where R_ij = (S_i + S_j) / d_ij
+ * S_i = avg distance from cluster i points to centroid
+ * d_ij = distance between centroids i and j
+ */
+export function calculateDaviesBouldinIndex(
+  embeddings: ArticleEmbedding[],
+  articles: ArticleFeatures[]
+): number {
+  const clusters = clusterEmbeddingsByTopic(embeddings, articles);
+
+  if (clusters.size <= 1) return 0;
+
+  const clusterInfo = Array.from(clusters.entries()).map(([topic, clusterEmbeddings]) => {
+    const centroid = computeClusterCentroid(
+      clusterEmbeddings.map(e => e.embedding)
+    );
+    const avgDistance = clusterEmbeddings.length > 1
+      ? clusterEmbeddings
+          .map(e => euclideanDistance(e.embedding, centroid))
+          .reduce((sum, d) => sum + d, 0) / clusterEmbeddings.length
+      : 0;
+
+    return { topic, centroid, avgDistance };
+  });
+
+  let totalRatio = 0;
+
+  for (let i = 0; i < clusterInfo.length; i++) {
+    let maxRatio = 0;
+
+    for (let j = 0; j < clusterInfo.length; j++) {
+      if (i === j) continue;
+
+      const centroidDistance = euclideanDistance(
+        clusterInfo[i].centroid,
+        clusterInfo[j].centroid
+      );
+
+      if (centroidDistance > 0) {
+        const ratio = (clusterInfo[i].avgDistance + clusterInfo[j].avgDistance) / centroidDistance;
+        maxRatio = Math.max(maxRatio, ratio);
+      }
+    }
+
+    totalRatio += maxRatio;
+  }
+
+  return clusterInfo.length > 0 ? totalRatio / clusterInfo.length : 0;
+}
+
+/**
+ * Calculate mean average pairwise distance
+ */
+function calculateMeanAverageDistance(embeddings: ArticleEmbedding[]): number {
+  if (embeddings.length <= 1) return 0;
+
+  let totalDistance = 0;
+  let count = 0;
+
+  for (let i = 0; i < embeddings.length; i++) {
+    for (let j = i + 1; j < embeddings.length; j++) {
+      totalDistance += euclideanDistance(
+        embeddings[i].embedding,
+        embeddings[j].embedding
+      );
+      count++;
+    }
+  }
+
+  return count > 0 ? totalDistance / count : 0;
+}
+
+/**
+ * Calculate inertia: sum of squared distances from points to cluster centers
+ */
+function calculateInertia(
+  embeddings: ArticleEmbedding[],
+  articles: ArticleFeatures[]
+): number {
+  const clusters = clusterEmbeddingsByTopic(embeddings, articles);
+
+  let inertia = 0;
+
+  for (const clusterEmbeddings of clusters.values()) {
+    const centroid = computeClusterCentroid(
+      clusterEmbeddings.map(e => e.embedding)
+    );
+
+    for (const embedding of clusterEmbeddings) {
+      const dist = euclideanDistance(embedding.embedding, centroid);
+      inertia += dist * dist;
+    }
+  }
+
+  return inertia;
+}
+
+/**
+ * Compute all clustering quality metrics
+ */
+export function evaluateClusteringQuality(
+  embeddings: ArticleEmbedding[],
+  articles: ArticleFeatures[]
+): EmbeddingQualityMetrics {
+  return {
+    silhouetteScore: calculateSilhouetteScore(embeddings, articles),
+    daviesBouldinIndex: calculateDaviesBouldinIndex(embeddings, articles),
+    inertia: calculateInertia(embeddings, articles),
+    meanAverageDistance: calculateMeanAverageDistance(embeddings),
+  };
+}

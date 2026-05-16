@@ -20,6 +20,9 @@ import {
   tuneEmbeddingDimensionality,
   findOptimalDimensionality,
   generateTuningReport,
+  calculateSilhouetteScore,
+  calculateDaviesBouldinIndex,
+  evaluateClusteringQuality,
   type ArticleFeatures,
   type EmbeddingConfig,
   type EngagementRecord,
@@ -1034,6 +1037,200 @@ describe('articleEmbedding - Task 1.1: Design embedding architecture', () => {
 
         expect(report.meetsLatencyTarget).toBe(false);
         expect(report.recommendation).toContain('Warning');
+      });
+    });
+  });
+
+  // ============================================================================
+  // Task 3.1.1: Quality Analysis — Clustering Metrics
+  // ============================================================================
+
+  describe('Subtask 3.1.1: Clustering Metrics', () => {
+    describe('calculateSilhouetteScore', () => {
+      it('should calculate silhouette score between -1 and 1', () => {
+        const articles = [
+          {
+            articleId: 'a1',
+            title: 'AI News 1',
+            summary: 'Summary 1',
+            tags: ['ai'],
+            author: 'Author 1',
+            topic: 'AI',
+          },
+          {
+            articleId: 'a2',
+            title: 'AI News 2',
+            summary: 'Summary 2',
+            tags: ['ai'],
+            author: 'Author 2',
+            topic: 'AI',
+          },
+          {
+            articleId: 'a3',
+            title: 'Science News 1',
+            summary: 'Summary 3',
+            tags: ['science'],
+            author: 'Author 3',
+            topic: 'Science',
+          },
+        ];
+
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.1, 0.2, 0.3], timestamp: new Date(), dimensionality: 3 },
+          { articleId: 'a2', embedding: [0.11, 0.21, 0.31], timestamp: new Date(), dimensionality: 3 },
+          { articleId: 'a3', embedding: [0.8, 0.9, 0.7], timestamp: new Date(), dimensionality: 3 },
+        ];
+
+        const score = calculateSilhouetteScore(embeddings, articles);
+
+        expect(score).toBeGreaterThanOrEqual(-1);
+        expect(score).toBeLessThanOrEqual(1);
+      });
+
+      it('should return higher score for well-separated clusters', () => {
+        const articles = [
+          { articleId: 'a1', title: 'AI News 1', summary: 'Summary 1', tags: ['ai'], author: 'Author 1', topic: 'AI' },
+          { articleId: 'a2', title: 'AI News 2', summary: 'Summary 2', tags: ['ai'], author: 'Author 2', topic: 'AI' },
+          { articleId: 'a3', title: 'Science News 1', summary: 'Summary 3', tags: ['science'], author: 'Author 3', topic: 'Science' },
+          { articleId: 'a4', title: 'Science News 2', summary: 'Summary 4', tags: ['science'], author: 'Author 4', topic: 'Science' },
+        ];
+
+        // Well-separated clusters
+        const wellSeparated = [
+          { articleId: 'a1', embedding: [0.0, 0.0, 0.0], timestamp: new Date(), dimensionality: 3 },
+          { articleId: 'a2', embedding: [0.01, 0.01, 0.01], timestamp: new Date(), dimensionality: 3 },
+          { articleId: 'a3', embedding: [1.0, 1.0, 1.0], timestamp: new Date(), dimensionality: 3 },
+          { articleId: 'a4', embedding: [1.01, 1.01, 1.01], timestamp: new Date(), dimensionality: 3 },
+        ];
+
+        const score = calculateSilhouetteScore(wellSeparated, articles);
+        expect(score).toBeGreaterThan(0.5);
+      });
+
+      it('should handle single cluster gracefully', () => {
+        const articles = [
+          { articleId: 'a1', title: 'AI News 1', summary: 'Summary 1', tags: ['ai'], author: 'Author 1', topic: 'AI' },
+          { articleId: 'a2', title: 'AI News 2', summary: 'Summary 2', tags: ['ai'], author: 'Author 2', topic: 'AI' },
+        ];
+
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.1, 0.2], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a2', embedding: [0.11, 0.21], timestamp: new Date(), dimensionality: 2 },
+        ];
+
+        const score = calculateSilhouetteScore(embeddings, articles);
+        expect(typeof score).toBe('number');
+      });
+    });
+
+    describe('calculateDaviesBouldinIndex', () => {
+      it('should return DB index >= 0', () => {
+        const articles = [
+          { articleId: 'a1', title: 'AI News 1', summary: 'Summary 1', tags: ['ai'], author: 'Author 1', topic: 'AI' },
+          { articleId: 'a2', title: 'AI News 2', summary: 'Summary 2', tags: ['ai'], author: 'Author 2', topic: 'AI' },
+          { articleId: 'a3', title: 'Science News 1', summary: 'Summary 3', tags: ['science'], author: 'Author 3', topic: 'Science' },
+          { articleId: 'a4', title: 'Science News 2', summary: 'Summary 4', tags: ['science'], author: 'Author 4', topic: 'Science' },
+        ];
+
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.0, 0.0], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a2', embedding: [0.01, 0.01], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a3', embedding: [1.0, 1.0], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a4', embedding: [1.01, 1.01], timestamp: new Date(), dimensionality: 2 },
+        ];
+
+        const index = calculateDaviesBouldinIndex(embeddings, articles);
+
+        expect(index).toBeGreaterThanOrEqual(0);
+      });
+
+      it('should return lower DB index for well-separated clusters', () => {
+        const articles = [
+          { articleId: 'a1', title: 'AI News 1', summary: 'Summary 1', tags: ['ai'], author: 'Author 1', topic: 'AI' },
+          { articleId: 'a2', title: 'AI News 2', summary: 'Summary 2', tags: ['ai'], author: 'Author 2', topic: 'AI' },
+          { articleId: 'a3', title: 'Science News 1', summary: 'Summary 3', tags: ['science'], author: 'Author 3', topic: 'Science' },
+          { articleId: 'a4', title: 'Science News 2', summary: 'Summary 4', tags: ['science'], author: 'Author 4', topic: 'Science' },
+        ];
+
+        const wellSeparated = [
+          { articleId: 'a1', embedding: [0.0, 0.0], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a2', embedding: [0.01, 0.01], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a3', embedding: [2.0, 2.0], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a4', embedding: [2.01, 2.01], timestamp: new Date(), dimensionality: 2 },
+        ];
+
+        const index = calculateDaviesBouldinIndex(wellSeparated, articles);
+        expect(index).toBeLessThan(1.0);
+      });
+
+      it('should handle single cluster gracefully', () => {
+        const articles = [
+          { articleId: 'a1', title: 'AI News 1', summary: 'Summary 1', tags: ['ai'], author: 'Author 1', topic: 'AI' },
+        ];
+
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.1, 0.2], timestamp: new Date(), dimensionality: 2 },
+        ];
+
+        const index = calculateDaviesBouldinIndex(embeddings, articles);
+        expect(index).toBe(0);
+      });
+    });
+
+    describe('evaluateClusteringQuality', () => {
+      it('should return all quality metrics', () => {
+        const articles = [
+          { articleId: 'a1', title: 'AI News 1', summary: 'Summary 1', tags: ['ai'], author: 'Author 1', topic: 'AI' },
+          { articleId: 'a2', title: 'AI News 2', summary: 'Summary 2', tags: ['ai'], author: 'Author 2', topic: 'AI' },
+          { articleId: 'a3', title: 'Science News 1', summary: 'Summary 3', tags: ['science'], author: 'Author 3', topic: 'Science' },
+        ];
+
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.1, 0.2, 0.3], timestamp: new Date(), dimensionality: 3 },
+          { articleId: 'a2', embedding: [0.11, 0.21, 0.31], timestamp: new Date(), dimensionality: 3 },
+          { articleId: 'a3', embedding: [0.8, 0.9, 0.7], timestamp: new Date(), dimensionality: 3 },
+        ];
+
+        const metrics = evaluateClusteringQuality(embeddings, articles);
+
+        expect(metrics.silhouetteScore).toBeDefined();
+        expect(metrics.daviesBouldinIndex).toBeDefined();
+        expect(metrics.inertia).toBeDefined();
+        expect(metrics.meanAverageDistance).toBeDefined();
+      });
+
+      it('should compute positive inertia for multi-point clusters', () => {
+        const articles = [
+          { articleId: 'a1', title: 'AI News 1', summary: 'Summary 1', tags: ['ai'], author: 'Author 1', topic: 'AI' },
+          { articleId: 'a2', title: 'AI News 2', summary: 'Summary 2', tags: ['ai'], author: 'Author 2', topic: 'AI' },
+        ];
+
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.0, 0.0], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a2', embedding: [1.0, 1.0], timestamp: new Date(), dimensionality: 2 },
+        ];
+
+        const metrics = evaluateClusteringQuality(embeddings, articles);
+
+        expect(metrics.inertia).toBeGreaterThanOrEqual(0);
+        expect(metrics.meanAverageDistance).toBeGreaterThan(0);
+      });
+
+      it('should compute mean average distance correctly', () => {
+        const articles = [
+          { articleId: 'a1', title: 'News 1', summary: 'Summary 1', tags: ['ai'], author: 'Author 1', topic: 'AI' },
+          { articleId: 'a2', title: 'News 2', summary: 'Summary 2', tags: ['ai'], author: 'Author 2', topic: 'AI' },
+        ];
+
+        const embeddings = [
+          { articleId: 'a1', embedding: [0.0, 0.0], timestamp: new Date(), dimensionality: 2 },
+          { articleId: 'a2', embedding: [3.0, 4.0], timestamp: new Date(), dimensionality: 2 },
+        ];
+
+        const metrics = evaluateClusteringQuality(embeddings, articles);
+
+        // Distance between [0,0] and [3,4] is 5.0 (3-4-5 triangle)
+        expect(metrics.meanAverageDistance).toBeCloseTo(5.0, 1);
       });
     });
   });
