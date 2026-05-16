@@ -14,9 +14,10 @@ import {
   getDefaultWeights,
   getDefaultConfig,
   createConfig,
+  integrateAllSignals,
   EXPERIMENT_VARIANTS,
   type EnsembleWeights,
-  type HybridEngineConfig,
+  type SignalEngines,
 } from '@shared/lib/hybridRecommendationEngine';
 
 describe('hybridRecommendationEngine - Normalization', () => {
@@ -267,5 +268,189 @@ describe('hybridRecommendationEngine - Utility Functions', () => {
 
     const result = validateNormalizedScores(invalid);
     expect(result.valid).toBe(false);
+  });
+});
+
+describe('hybridRecommendationEngine - Signal Integration (Task 1.2)', () => {
+  it('should integrate all signals and return blended recommendations', async () => {
+    const mockEngines: SignalEngines = {
+      rules: {
+        getRecommendations: async () => [
+          { articleId: 'a1', score: 100 },
+          { articleId: 'a2', score: 80 },
+        ],
+      },
+      content: {
+        getRecommendations: async () => [
+          { articleId: 'a1', score: 50 },
+          { articleId: 'a3', score: 70 },
+        ],
+      },
+      collaborativeFiltering: {
+        getRecommendations: async () => [
+          { articleId: 'a2', score: 60 },
+          { articleId: 'a3', score: 90 },
+        ],
+      },
+      popularity: {
+        getRecommendations: async () => [{ articleId: 'a1', score: 30 }],
+      },
+    };
+
+    const config = createConfig();
+    const result = await integrateAllSignals('user1', mockEngines, config);
+
+    expect(result.length).toBeGreaterThan(0);
+    expect(result[0].articleId).toBeDefined();
+    expect(result[0].finalScore).toBeGreaterThan(0);
+    expect(result[0].finalScore).toBeLessThanOrEqual(1);
+    expect(result[0].signals.length).toBeGreaterThan(0);
+  });
+
+  it('should normalize different signal score ranges independently', async () => {
+    const mockEngines = {
+      rules: {
+        getRecommendations: async () => [
+          { articleId: 'a1', score: 1000 }, // Large scale
+          { articleId: 'a2', score: 500 },
+        ],
+      },
+      content: {
+        getRecommendations: async () => [
+          { articleId: 'a1', score: 0.9 }, // Small scale
+          { articleId: 'a2', score: 0.1 },
+        ],
+      },
+      collaborativeFiltering: {
+        getRecommendations: async () => [],
+      },
+      popularity: {
+        getRecommendations: async () => [],
+      },
+    };
+
+    const config = createConfig();
+    const result = await integrateAllSignals('user1', mockEngines as SignalEngines, config);
+
+    // All final scores should be in [0, 1]
+    for (const rec of result) {
+      expect(rec.finalScore).toBeGreaterThanOrEqual(0);
+      expect(rec.finalScore).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('should handle missing signal engines gracefully', async () => {
+    const mockEngines = {
+      rules: {
+        getRecommendations: async () => [
+          { articleId: 'a1', score: 100 },
+          { articleId: 'a2', score: 80 },
+        ],
+      },
+      // content and CF not provided
+    };
+
+    const config = createConfig({ minArticleScore: 0.1 });
+    const result = await integrateAllSignals('user1', mockEngines as any, config);
+
+    expect(result.length).toBeGreaterThan(0);
+    expect(result[0].articleId).toBe('a1');
+    expect(result[0].signals.length).toBe(1);
+    expect(result[0].signals[0].source).toBe('rules');
+  });
+
+  it('should respect topK parameter in final results', async () => {
+    const mockEngines = {
+      rules: {
+        getRecommendations: async () =>
+          Array.from({ length: 20 }, (_, i) => ({
+            articleId: `a${i}`,
+            score: 100 - i,
+          })),
+      },
+    };
+
+    const config = createConfig({ topK: 5 });
+    const result = await integrateAllSignals('user1', mockEngines as any, config);
+
+    expect(result.length).toBeLessThanOrEqual(5);
+  });
+
+  it('should filter articles below minArticleScore threshold', async () => {
+    const mockEngines = {
+      rules: {
+        getRecommendations: async () => [
+          { articleId: 'a1', score: 100 },
+          { articleId: 'a2', score: 1 }, // Will have very low blended score
+        ],
+      },
+    };
+
+    const config = createConfig({ minArticleScore: 0.3 });
+    const result = await integrateAllSignals('user1', mockEngines as any, config);
+
+    // Low-scoring article may be filtered out
+    for (const rec of result) {
+      expect(rec.finalScore).toBeGreaterThanOrEqual(config.minArticleScore);
+    }
+  });
+
+  it('should rank articles by blended score descending', async () => {
+    const mockEngines = {
+      rules: {
+        getRecommendations: async () => [
+          { articleId: 'a1', score: 100 },
+          { articleId: 'a2', score: 50 },
+          { articleId: 'a3', score: 75 },
+        ],
+      },
+    };
+
+    const config = createConfig();
+    const result = await integrateAllSignals('user1', mockEngines as SignalEngines, config);
+
+    // Results should be sorted by finalScore descending
+    for (let i = 1; i < result.length; i++) {
+      expect(result[i - 1].finalScore).toBeGreaterThanOrEqual(result[i].finalScore);
+    }
+  });
+
+  it('should include signal breakdowns in results', async () => {
+    const mockEngines = {
+      rules: {
+        getRecommendations: async () => [{ articleId: 'a1', score: 80 }],
+      },
+      content: {
+        getRecommendations: async () => [{ articleId: 'a1', score: 60 }],
+      },
+      collaborativeFiltering: {
+        getRecommendations: async () => [{ articleId: 'a1', score: 70 }],
+      },
+    };
+
+    const config = createConfig();
+    const result = await integrateAllSignals('user1', mockEngines as SignalEngines, config);
+
+    expect(result[0].signals.length).toBe(3);
+    expect(result[0].signals.map((s) => s.source)).toContain('rules');
+    expect(result[0].signals.map((s) => s.source)).toContain('content');
+    expect(result[0].signals.map((s) => s.source)).toContain('cf');
+  });
+
+  it('should generate readable reason strings', async () => {
+    const mockEngines = {
+      rules: {
+        getRecommendations: async () => [{ articleId: 'a1', score: 80 }],
+      },
+      content: {
+        getRecommendations: async () => [{ articleId: 'a1', score: 60 }],
+      },
+    };
+
+    const config = createConfig();
+    const result = await integrateAllSignals('user1', mockEngines as SignalEngines, config);
+
+    expect(result[0].reason).toContain(':');
+    expect(result[0].reason).toContain('%');
   });
 });

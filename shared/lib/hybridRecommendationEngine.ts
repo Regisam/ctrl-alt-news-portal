@@ -256,3 +256,165 @@ export const EXPERIMENT_VARIANTS = {
 } as const;
 
 export type ExperimentVariant = keyof typeof EXPERIMENT_VARIANTS;
+
+/**
+ * Integration interfaces for signal engines
+ * These define the contract for each signal source
+ */
+export interface SignalEngineRequest {
+  userId: string;
+  topK: number;
+}
+
+export interface SignalEngineResponse {
+  articleId: string;
+  score: number; // Raw score from engine, will be normalized to [0, 1]
+}
+
+/**
+ * Integrated signal engines collection
+ */
+export interface SignalEngines {
+  rules?: {
+    getRecommendations: (req: SignalEngineRequest) => Promise<SignalEngineResponse[]>;
+  };
+  content?: {
+    getRecommendations: (req: SignalEngineRequest) => Promise<SignalEngineResponse[]>;
+  };
+  collaborativeFiltering?: {
+    getRecommendations: (req: SignalEngineRequest) => Promise<SignalEngineResponse[]>;
+  };
+  popularity?: {
+    getRecommendations: (req: SignalEngineRequest) => Promise<SignalEngineResponse[]>;
+  };
+}
+
+/**
+ * Integrate all signals: call each engine, collect scores, normalize, blend
+ * Task 1.2 implementation
+ */
+export async function integrateAllSignals(
+  userId: string,
+  engines: SignalEngines,
+  config: HybridEngineConfig
+): Promise<HybridRecommendation[]> {
+  const topKPerSignal = config.topK * 2; // Fetch 2x to allow filtering
+  const startTime = performance.now();
+
+  // Step 1: Call all available signal engines in parallel
+  const signalPromises: Promise<[string, SignalEngineResponse[]]>[] = [];
+
+  if (engines.rules) {
+    signalPromises.push(
+      engines.rules
+        .getRecommendations({ userId, topK: topKPerSignal })
+        .then((results) => ['rules', results])
+    );
+  }
+
+  if (engines.content) {
+    signalPromises.push(
+      engines.content
+        .getRecommendations({ userId, topK: topKPerSignal })
+        .then((results) => ['content', results])
+    );
+  }
+
+  if (engines.collaborativeFiltering) {
+    signalPromises.push(
+      engines.collaborativeFiltering
+        .getRecommendations({ userId, topK: topKPerSignal })
+        .then((results) => ['cf', results])
+    );
+  }
+
+  if (engines.popularity) {
+    signalPromises.push(
+      engines.popularity
+        .getRecommendations({ userId, topK: topKPerSignal })
+        .then((results) => ['popularity', results])
+    );
+  }
+
+  // Execute all engine calls in parallel
+  const signalResults = await Promise.all(signalPromises);
+
+  // Step 2: Convert engine responses to our scoring format
+  const rulesScores = new Map<string, number>();
+  const contentScores = new Map<string, number>();
+  const cfScores = new Map<string, number>();
+  const popularityScores = new Map<string, number>();
+
+  for (const [source, results] of signalResults) {
+    const targetMap =
+      source === 'rules'
+        ? rulesScores
+        : source === 'content'
+          ? contentScores
+          : source === 'cf'
+            ? cfScores
+            : popularityScores;
+
+    for (const result of results) {
+      targetMap.set(result.articleId, result.score);
+    }
+  }
+
+  // Step 3: Normalize each signal independently to [0, 1]
+  const normalized = normalizeAllSignals(rulesScores, contentScores, cfScores, popularityScores);
+
+  // Step 4: Collect all articles and validate
+  const allArticles = getAllArticles(rulesScores, contentScores, cfScores, popularityScores);
+
+  // Step 5: Validate normalized scores
+  const scoreValidation = validateNormalizedScores(normalized);
+  if (!scoreValidation.valid) {
+    throw new Error(`Signal normalization failed: ${scoreValidation.reason}`);
+  }
+
+  // Step 6: Blend signals using configured weights
+  const blended = blendSignalScores(allArticles, normalized, config.weights);
+
+  // Step 7: Sort by blended score and select top-K
+  const ranked = Array.from(blended.entries())
+    .map(([articleId, { blendedScore, signals }]) => ({
+      articleId,
+      blendedScore,
+      signals,
+    }))
+    .sort((a, b) => b.blendedScore - a.blendedScore)
+    .slice(0, config.topK);
+
+  // Step 8: Build final recommendations with explainability
+  const recommendations: HybridRecommendation[] = ranked
+    .filter((rec) => rec.blendedScore >= config.minArticleScore)
+    .map((rec) => {
+      const topSignal = rec.signals.reduce((prev, curr) =>
+        curr.score > prev.score ? curr : prev
+      )?.source;
+
+      const reason = rec.signals
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3)
+        .map((s) => `${s.source}: ${(s.score * 100).toFixed(0)}%`)
+        .join(' + ');
+
+      return {
+        articleId: rec.articleId,
+        finalScore: rec.blendedScore,
+        signals: rec.signals,
+        reason,
+        topSignal: (topSignal as RecommendationSignal['source']) || 'rules',
+      };
+    });
+
+  // Log performance
+  const computationTimeMs = performance.now() - startTime;
+  if (computationTimeMs > 50) {
+    console.warn(
+      `⚠️ Hybrid recommendation latency exceeded budget: ${computationTimeMs.toFixed(2)}ms > 50ms`
+    );
+  }
+
+  return recommendations;
+}
