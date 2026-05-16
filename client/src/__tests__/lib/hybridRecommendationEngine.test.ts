@@ -15,6 +15,9 @@ import {
   getDefaultConfig,
   createConfig,
   integrateAllSignals,
+  calculateRecencyScore,
+  applyDiversityConstraints,
+  enforceTopicDiversity,
   EXPERIMENT_VARIANTS,
   type EnsembleWeights,
   type SignalEngines,
@@ -268,6 +271,139 @@ describe('hybridRecommendationEngine - Utility Functions', () => {
 
     const result = validateNormalizedScores(invalid);
     expect(result.valid).toBe(false);
+  });
+});
+
+describe('hybridRecommendationEngine - Diversity Constraints (Task 2.1)', () => {
+  it('should calculate recency score correctly', () => {
+    const today = new Date();
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+    const oneYearAgo = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
+
+    const recentScore = calculateRecencyScore(yesterday.toISOString(), today);
+    const oldScore = calculateRecencyScore(oneYearAgo.toISOString(), today);
+
+    expect(recentScore).toBeGreaterThan(oldScore);
+    expect(recentScore).toBeGreaterThan(0.9);
+    expect(oldScore).toBeLessThan(0.1);
+  });
+
+  it('should apply topic diversity penalties', () => {
+    const recommendations = [
+      { articleId: 'a1', score: 0.9 },
+      { articleId: 'a2', score: 0.8 },
+      { articleId: 'a3', score: 0.7 },
+    ];
+
+    const articles = new Map([
+      ['a1', { id: 'a1', category: 'AI', author: 'Alice' }],
+      ['a2', { id: 'a2', category: 'AI', author: 'Bob' }], // Duplicate category
+      ['a3', { id: 'a3', category: 'SCIENCE', author: 'Charlie' }],
+    ]);
+
+    const diversityConfig = { topicPenalty: 0.3, authorPenalty: 0, recencyBias: 0 };
+    const result = applyDiversityConstraints(recommendations, articles as any, diversityConfig);
+
+    // a2 should have lower score due to duplicate AI topic
+    expect(result[1].score).toBeLessThan(recommendations[1].score);
+    expect(result[2].score).toBeCloseTo(recommendations[2].score, 2);
+  });
+
+  it('should apply author diversity penalties', () => {
+    const recommendations = [
+      { articleId: 'a1', score: 0.9 },
+      { articleId: 'a2', score: 0.8 },
+    ];
+
+    const articles = new Map([
+      ['a1', { id: 'a1', category: 'AI', author: 'Alice' }],
+      ['a2', { id: 'a2', category: 'SCIENCE', author: 'Alice' }], // Duplicate author
+    ]);
+
+    const diversityConfig = { topicPenalty: 0, authorPenalty: 0.2, recencyBias: 0 };
+    const result = applyDiversityConstraints(recommendations, articles as any, diversityConfig);
+
+    // a2 should have lower score due to duplicate Alice author
+    expect(result[1].score).toBeLessThan(recommendations[1].score);
+  });
+
+  it('should apply recency boost', () => {
+    const today = new Date();
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+    const oldDate = new Date(today.getTime() - 200 * 24 * 60 * 60 * 1000);
+
+    const recommendations = [
+      { articleId: 'a1', score: 0.5 },
+      { articleId: 'a2', score: 0.5 },
+    ];
+
+    const articles = new Map([
+      ['a1', { id: 'a1', category: 'AI', author: 'Alice', date: yesterday.toISOString() }],
+      ['a2', { id: 'a2', category: 'AI', author: 'Bob', date: oldDate.toISOString() }],
+    ]);
+
+    const diversityConfig = { topicPenalty: 0, authorPenalty: 0, recencyBias: 0.3 };
+    const result = applyDiversityConstraints(recommendations, articles as any, diversityConfig);
+
+    // Newer article should have higher score
+    expect(result[0].score).toBeGreaterThan(result[1].score);
+  });
+
+  it('should enforce minimum topic diversity', () => {
+    const recommendations = [
+      { articleId: 'a1', score: 0.9 },
+      { articleId: 'a2', score: 0.85 },
+      { articleId: 'a3', score: 0.8 },
+      { articleId: 'a4', score: 0.75 },
+    ];
+
+    const articles = new Map([
+      ['a1', { id: 'a1', category: 'AI' }],
+      ['a2', { id: 'a2', category: 'AI' }],
+      ['a3', { id: 'a3', category: 'SCIENCE' }],
+      ['a4', { id: 'a4', category: 'ROBOTICS' }],
+    ]);
+
+    const result = enforceTopicDiversity(recommendations, articles as any, 0.5, 4);
+
+    // Result should have diverse topics
+    const topics = result.map((r) => articles.get(r.articleId.toString())?.category);
+    const uniqueTopics = new Set(topics);
+
+    expect(uniqueTopics.size).toBeGreaterThanOrEqual(2);
+  });
+
+  it('should respect topK limit with diversity', () => {
+    const recommendations = Array.from({ length: 20 }, (_, i) => ({
+      articleId: `a${i}`,
+      score: 1 - i / 20,
+    }));
+
+    const articles = new Map(
+      recommendations.map((r, i) => [
+        r.articleId,
+        { id: r.articleId, category: ['AI', 'SCIENCE', 'ROBOTICS'][i % 3] },
+      ])
+    );
+
+    const result = enforceTopicDiversity(recommendations, articles as any, 0.4, 5);
+
+    expect(result.length).toBeLessThanOrEqual(5);
+  });
+
+  it('should handle articles without metadata gracefully', () => {
+    const recommendations = [
+      { articleId: 'a1', score: 0.9 },
+      { articleId: 'unknown', score: 0.8 },
+    ];
+
+    const articles = new Map([['a1', { id: 'a1', category: 'AI' }]]);
+
+    const diversityConfig = { topicPenalty: 0.3, authorPenalty: 0.2, recencyBias: 0 };
+    const result = applyDiversityConstraints(recommendations, articles as any, diversityConfig);
+
+    expect(result.length).toBe(2);
+    expect(result[1].diversityAdjustment).toBe(1.0); // No penalty applied
   });
 });
 

@@ -293,6 +293,184 @@ export interface SignalEngines {
  * Integrate all signals: call each engine, collect scores, normalize, blend
  * Task 1.2 implementation
  */
+/**
+ * Task 2.1: Enforce diversity constraints
+ * Apply topic, author, and recency diversity penalties to rankings
+ */
+
+export interface ArticleMetadata {
+  id: string | number;
+  category?: string;
+  author?: string;
+  date?: string;
+}
+
+export interface DiversityConfig {
+  topicPenalty: number; // [0, 1] reduce score for duplicate topics
+  authorPenalty: number; // [0, 1] reduce score for duplicate authors
+  recencyBias: number; // [0, 1] boost newer articles
+}
+
+/**
+ * Calculate recency score based on article date
+ * Newer articles get higher scores, older articles get lower
+ * Assumes date is ISO format (YYYY-MM-DD or full ISO string)
+ */
+export function calculateRecencyScore(articleDate: string, currentDate?: Date): number {
+  try {
+    const refDate = currentDate || new Date();
+    const parsed = new Date(articleDate);
+
+    if (isNaN(parsed.getTime())) {
+      return 0.5; // Default score for unparseable dates
+    }
+
+    const ageMs = refDate.getTime() - parsed.getTime();
+    const ageDays = ageMs / (1000 * 60 * 60 * 24);
+
+    // Linear decay: fresh articles (0 days) = 1.0, old articles (365 days) = 0.0
+    const recencyScore = Math.max(0, Math.min(1, 1 - ageDays / 365));
+    return recencyScore;
+  } catch {
+    return 0.5;
+  }
+}
+
+/**
+ * Apply diversity constraints to ranked recommendations
+ * Reduces scores for articles with duplicate topics/authors
+ * Boosts scores for newer articles
+ */
+export function applyDiversityConstraints(
+  recommendations: Array<{ articleId: string; score: number }>,
+  articles: Map<string, ArticleMetadata>,
+  diversityConfig: DiversityConfig,
+  currentDate?: Date
+): Array<{ articleId: string; score: number; diversityAdjustment: number }> {
+  const selectedTopics = new Set<string>();
+  const selectedAuthors = new Set<string>();
+  const refDate = currentDate || new Date();
+
+  return recommendations.map((rec, index) => {
+    const article = articles.get(rec.articleId.toString());
+    let adjustedScore = rec.score;
+    let totalAdjustment = 1.0;
+
+    if (!article) {
+      return { ...rec, diversityAdjustment: 1.0 };
+    }
+
+    // Topic diversity penalty
+    if (article.category) {
+      if (selectedTopics.has(article.category)) {
+        const topicPenalty = 1 - diversityConfig.topicPenalty;
+        adjustedScore *= topicPenalty;
+        totalAdjustment *= topicPenalty;
+      } else {
+        selectedTopics.add(article.category);
+      }
+    }
+
+    // Author diversity penalty
+    if (article.author) {
+      if (selectedAuthors.has(article.author)) {
+        const authorPenalty = 1 - diversityConfig.authorPenalty;
+        adjustedScore *= authorPenalty;
+        totalAdjustment *= authorPenalty;
+      } else {
+        selectedAuthors.add(article.author);
+      }
+    }
+
+    // Recency boost
+    if (article.date && diversityConfig.recencyBias > 0) {
+      const recency = calculateRecencyScore(article.date, refDate);
+      const recencyBoost = 1 + diversityConfig.recencyBias * (recency - 0.5);
+      adjustedScore *= recencyBoost;
+      totalAdjustment *= recencyBoost;
+    }
+
+    return {
+      articleId: rec.articleId,
+      score: adjustedScore,
+      diversityAdjustment: totalAdjustment,
+    };
+  });
+}
+
+/**
+ * Enforce minimum topic diversity in top-K recommendations
+ * Ensures at least minDiversity % of topics are unique
+ * Returns reranked recommendations that satisfy constraint
+ */
+export function enforceTopicDiversity(
+  recommendations: Array<{ articleId: string; score: number }>,
+  articles: Map<string, ArticleMetadata>,
+  minDiversity: number, // [0, 1] minimum unique topic percentage
+  topK: number
+): Array<{ articleId: string; score: number }> {
+  if (recommendations.length === 0 || minDiversity <= 0) {
+    return recommendations.slice(0, topK);
+  }
+
+  const result: Array<{ articleId: string; score: number }> = [];
+  const topicCounts = new Map<string, number>();
+  let totalTopics = 0;
+
+  // Pass 1: Greedily select articles by score while tracking topics
+  for (const rec of recommendations) {
+    if (result.length >= topK) break;
+
+    const article = articles.get(rec.articleId.toString());
+    const topic = article?.category || 'unknown';
+
+    const currentCount = topicCounts.get(topic) ?? 0;
+    topicCounts.set(topic, currentCount + 1);
+
+    if (topic !== 'unknown') {
+      totalTopics = Math.max(totalTopics, topicCounts.size);
+    }
+
+    result.push(rec);
+  }
+
+  // Pass 2: Check if minimum diversity is met
+  const uniqueTopics = topicCounts.size;
+  const maxUniqueTopics = Math.ceil(result.length / 2); // At most 2 articles per topic ideally
+  const diversityRatio = uniqueTopics / Math.max(1, maxUniqueTopics);
+
+  if (diversityRatio >= minDiversity) {
+    return result;
+  }
+
+  // Pass 3: Re-rank to improve diversity if needed
+  const reranked: Array<{ articleId: string; score: number }> = [];
+  const usedTopics = new Set<string>();
+
+  // First pass: one article per topic
+  for (const rec of recommendations) {
+    if (reranked.length >= topK) break;
+
+    const article = articles.get(rec.articleId.toString());
+    const topic = article?.category || 'unknown';
+
+    if (!usedTopics.has(topic)) {
+      reranked.push(rec);
+      usedTopics.add(topic);
+    }
+  }
+
+  // Second pass: fill remaining slots with highest scores
+  for (const rec of recommendations) {
+    if (reranked.length >= topK) break;
+    if (!reranked.some((r) => r.articleId === rec.articleId)) {
+      reranked.push(rec);
+    }
+  }
+
+  return reranked;
+}
+
 export async function integrateAllSignals(
   userId: string,
   engines: SignalEngines,
