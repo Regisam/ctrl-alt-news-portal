@@ -1520,6 +1520,115 @@ export function computeNeighborValidationMetrics(
   };
 }
 
+// ============================================================================
+// Task 3.2.1: Persistence — Model Save/Load with Versioning
+// ============================================================================
+
+export interface SerializedEmbeddingModel {
+  version: string;
+  createdAt: string;
+  config: EmbeddingConfig;
+  weights?: {
+    encoder: number[][];
+    embeddings: number[];
+  };
+  trainingStats?: {
+    finalLoss: number;
+    finalValidationLoss: number;
+    epochsTrained: number;
+  };
+  checksum: string; // SHA-256 hash for integrity verification
+}
+
+/**
+ * Compute SHA-256 checksum (simplified: use JSON hash)
+ * In production, use crypto library
+ */
+function computeChecksum(data: Record<string, unknown>): string {
+  const json = JSON.stringify(data);
+  let hash = 0;
+  for (let i = 0; i < json.length; i++) {
+    const char = json.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash).toString(16).padStart(8, '0');
+}
+
+/**
+ * Verify model checksum
+ */
+function verifyChecksum(model: SerializedEmbeddingModel): boolean {
+  const { checksum: providedChecksum, ...dataWithoutChecksum } = model;
+  const computedChecksum = computeChecksum(dataWithoutChecksum);
+  return providedChecksum === computedChecksum;
+}
+
+/**
+ * Save embedding model to JSON with versioning and checksum
+ */
+export function serializeEmbeddingModel(model: EmbeddingModel): SerializedEmbeddingModel {
+  const serialized: SerializedEmbeddingModel = {
+    version: model.metadata.version,
+    createdAt: model.metadata.createdAt.toISOString(),
+    config: model.config,
+    weights: model.weights,
+    trainingStats: model.metadata.trainingStats,
+    checksum: '', // Placeholder
+  };
+
+  // Compute checksum
+  serialized.checksum = computeChecksum({
+    version: serialized.version,
+    createdAt: serialized.createdAt,
+    config: serialized.config,
+    weights: serialized.weights,
+    trainingStats: serialized.trainingStats,
+  });
+
+  return serialized;
+}
+
+/**
+ * Deserialize embedding model from JSON with integrity check
+ */
+export function deserializeEmbeddingModel(data: SerializedEmbeddingModel): EmbeddingModel {
+  // Verify checksum
+  if (!verifyChecksum(data)) {
+    throw new Error('Model checksum verification failed - model may be corrupted');
+  }
+
+  return {
+    config: data.config,
+    weights: data.weights,
+    metadata: {
+      version: data.version,
+      createdAt: new Date(data.createdAt),
+      trainingStats: data.trainingStats,
+    },
+  };
+}
+
+/**
+ * Save model to file (returns JSON string for storage)
+ */
+export function saveModelToJSON(model: EmbeddingModel): string {
+  const serialized = serializeEmbeddingModel(model);
+  return JSON.stringify(serialized, null, 2);
+}
+
+/**
+ * Load model from JSON string with validation
+ */
+export function loadModelFromJSON(jsonString: string): EmbeddingModel {
+  try {
+    const parsed = JSON.parse(jsonString) as SerializedEmbeddingModel;
+    return deserializeEmbeddingModel(parsed);
+  } catch (error) {
+    throw new Error(`Failed to load model from JSON: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
 /**
  * t-SNE: Convert high-dimensional embeddings to 2D for visualization
  */

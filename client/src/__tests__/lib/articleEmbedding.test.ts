@@ -26,6 +26,10 @@ import {
   visualizeWithTSNE,
   validateNearestNeighbors,
   computeNeighborValidationMetrics,
+  serializeEmbeddingModel,
+  deserializeEmbeddingModel,
+  saveModelToJSON,
+  loadModelFromJSON,
   type ArticleFeatures,
   type EmbeddingConfig,
   type EngagementRecord,
@@ -1573,6 +1577,235 @@ describe('articleEmbedding - Task 1.1: Design embedding architecture', () => {
         expect(metrics.totalArticles).toBe(0);
         expect(metrics.averageAccuracy).toBe(0);
         expect(metrics.overallValidation).toBe('POOR');
+      });
+    });
+  });
+
+  // ============================================================================
+  // Task 3.2.1: Persistence — Model Save/Load
+  // ============================================================================
+
+  describe('Subtask 3.2.1: Model Serialization & Persistence', () => {
+    describe('serializeEmbeddingModel', () => {
+      it('should serialize model with version and checksum', () => {
+        const model = {
+          config: getDefaultEmbeddingConfig(),
+          weights: {
+            encoder: [[0.1, 0.2], [0.3, 0.4]],
+            embeddings: [0.5, 0.6],
+          },
+          metadata: {
+            version: '1.0.0',
+            createdAt: new Date('2026-05-17'),
+            trainingStats: {
+              finalLoss: 0.5,
+              finalValidationLoss: 0.6,
+              epochsTrained: 10,
+            },
+          },
+        };
+
+        const serialized = serializeEmbeddingModel(model);
+
+        expect(serialized.version).toBe('1.0.0');
+        expect(serialized.checksum).toBeDefined();
+        expect(serialized.checksum.length).toBeGreaterThan(0);
+        expect(serialized.createdAt).toBe('2026-05-17T00:00:00.000Z');
+      });
+
+      it('should include config, weights, and training stats', () => {
+        const model = {
+          config: { ...getDefaultEmbeddingConfig(), dimensionality: 256 },
+          weights: {
+            encoder: [[0.1]],
+            embeddings: [0.2],
+          },
+          metadata: {
+            version: '1.0.0',
+            createdAt: new Date(),
+            trainingStats: {
+              finalLoss: 0.1,
+              finalValidationLoss: 0.15,
+              epochsTrained: 5,
+            },
+          },
+        };
+
+        const serialized = serializeEmbeddingModel(model);
+
+        expect(serialized.config.dimensionality).toBe(256);
+        expect(serialized.weights?.encoder).toEqual([[0.1]]);
+        expect(serialized.trainingStats?.epochsTrained).toBe(5);
+      });
+    });
+
+    describe('deserializeEmbeddingModel', () => {
+      it('should deserialize model with checksum verification', () => {
+        const model = {
+          config: getDefaultEmbeddingConfig(),
+          weights: {
+            encoder: [[0.1, 0.2]],
+            embeddings: [0.3],
+          },
+          metadata: {
+            version: '1.0.0',
+            createdAt: new Date('2026-05-17'),
+            trainingStats: {
+              finalLoss: 0.5,
+              finalValidationLoss: 0.6,
+              epochsTrained: 10,
+            },
+          },
+        };
+
+        const serialized = serializeEmbeddingModel(model);
+        const deserialized = deserializeEmbeddingModel(serialized);
+
+        expect(deserialized.config.dimensionality).toBe(serialized.config.dimensionality);
+        expect(deserialized.weights?.encoder).toEqual(serialized.weights?.encoder);
+      });
+
+      it('should throw error on corrupted checksum', () => {
+        const model = {
+          config: getDefaultEmbeddingConfig(),
+          weights: {
+            encoder: [[0.1]],
+            embeddings: [0.2],
+          },
+          metadata: {
+            version: '1.0.0',
+            createdAt: new Date(),
+            trainingStats: {
+              finalLoss: 0.5,
+              finalValidationLoss: 0.6,
+              epochsTrained: 10,
+            },
+          },
+        };
+
+        const serialized = serializeEmbeddingModel(model);
+        serialized.checksum = 'invalid_checksum';
+
+        expect(() => deserializeEmbeddingModel(serialized)).toThrow('checksum verification failed');
+      });
+
+      it('should parse createdAt as Date object', () => {
+        const model = {
+          config: getDefaultEmbeddingConfig(),
+          weights: undefined,
+          metadata: {
+            version: '1.0.0',
+            createdAt: new Date('2026-05-17T12:00:00Z'),
+          },
+        };
+
+        const serialized = serializeEmbeddingModel(model);
+        const deserialized = deserializeEmbeddingModel(serialized);
+
+        expect(deserialized.metadata.createdAt).toBeInstanceOf(Date);
+        expect(deserialized.metadata.createdAt.getTime()).toBe(
+          new Date('2026-05-17T12:00:00Z').getTime()
+        );
+      });
+    });
+
+    describe('saveModelToJSON & loadModelFromJSON', () => {
+      it('should save model to valid JSON string', () => {
+        const model = {
+          config: getDefaultEmbeddingConfig(),
+          weights: {
+            encoder: [[0.1, 0.2], [0.3, 0.4]],
+            embeddings: [0.5, 0.6, 0.7],
+          },
+          metadata: {
+            version: '1.0.0',
+            createdAt: new Date('2026-05-17'),
+            trainingStats: {
+              finalLoss: 0.5,
+              finalValidationLoss: 0.6,
+              epochsTrained: 10,
+            },
+          },
+        };
+
+        const json = saveModelToJSON(model);
+
+        expect(typeof json).toBe('string');
+        expect(json.length).toBeGreaterThan(0);
+        expect(json).toContain('"version"');
+        expect(json).toContain('"checksum"');
+      });
+
+      it('should round-trip: save then load preserves model', () => {
+        const originalModel = {
+          config: { ...getDefaultEmbeddingConfig(), dimensionality: 128, learningRate: 0.01 },
+          weights: {
+            encoder: [[0.1, 0.2], [0.3, 0.4]],
+            embeddings: [0.5, 0.6],
+          },
+          metadata: {
+            version: '1.0.0',
+            createdAt: new Date('2026-05-17T10:00:00Z'),
+            trainingStats: {
+              finalLoss: 0.25,
+              finalValidationLoss: 0.3,
+              epochsTrained: 20,
+            },
+          },
+        };
+
+        const json = saveModelToJSON(originalModel);
+        const loadedModel = loadModelFromJSON(json);
+
+        expect(loadedModel.config.dimensionality).toBe(128);
+        expect(loadedModel.config.learningRate).toBe(0.01);
+        expect(loadedModel.weights?.encoder).toEqual([[0.1, 0.2], [0.3, 0.4]]);
+        expect(loadedModel.metadata.version).toBe('1.0.0');
+        expect(loadedModel.metadata.trainingStats?.epochsTrained).toBe(20);
+      });
+
+      it('should throw error on invalid JSON', () => {
+        const invalidJson = 'not valid json {]';
+
+        expect(() => loadModelFromJSON(invalidJson)).toThrow('Failed to load model from JSON');
+      });
+
+      it('should throw error on corrupted model in JSON', () => {
+        const model = {
+          config: getDefaultEmbeddingConfig(),
+          weights: {
+            encoder: [[0.1]],
+            embeddings: [0.2],
+          },
+          metadata: {
+            version: '1.0.0',
+            createdAt: new Date(),
+          },
+        };
+
+        const json = saveModelToJSON(model);
+        const parsed = JSON.parse(json);
+        parsed.checksum = 'invalid_checksum';
+        const corruptedJson = JSON.stringify(parsed);
+
+        expect(() => loadModelFromJSON(corruptedJson)).toThrow('checksum verification failed');
+      });
+
+      it('should handle models without training stats', () => {
+        const model = {
+          config: getDefaultEmbeddingConfig(),
+          weights: undefined,
+          metadata: {
+            version: '1.0.0',
+            createdAt: new Date(),
+          },
+        };
+
+        const json = saveModelToJSON(model);
+        const loaded = loadModelFromJSON(json);
+
+        expect(loaded.metadata.version).toBe('1.0.0');
+        expect(loaded.metadata.trainingStats).toBeUndefined();
       });
     });
   });
