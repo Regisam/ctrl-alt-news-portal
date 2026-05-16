@@ -18,6 +18,9 @@ import {
   calculateRecencyScore,
   applyDiversityConstraints,
   enforceTopicDiversity,
+  getSignalLabel,
+  generateExplanation,
+  addExplanability,
   EXPERIMENT_VARIANTS,
   type EnsembleWeights,
   type SignalEngines,
@@ -271,6 +274,198 @@ describe('hybridRecommendationEngine - Utility Functions', () => {
 
     const result = validateNormalizedScores(invalid);
     expect(result.valid).toBe(false);
+  });
+});
+
+describe('hybridRecommendationEngine - Explainability (Task 2.2)', () => {
+  it('should get signal labels in English', () => {
+    expect(getSignalLabel('rules', 'en')).toBe('Trending');
+    expect(getSignalLabel('content', 'en')).toBe('Similar to your interests');
+    expect(getSignalLabel('cf', 'en')).toBe('Popular with readers like you');
+    expect(getSignalLabel('popularity', 'en')).toBe('Widely read');
+  });
+
+  it('should get signal labels in Portuguese', () => {
+    expect(getSignalLabel('rules', 'pt')).toBe('Tendência');
+    expect(getSignalLabel('content', 'pt')).toBe('Similar aos seus interesses');
+    expect(getSignalLabel('cf', 'pt')).toBe('Popular entre leitores como você');
+    expect(getSignalLabel('popularity', 'pt')).toBe('Amplamente lido');
+  });
+
+  it('should generate explanation with default config', () => {
+    const recommendation: typeof integrateAllSignals extends (
+      ...args: unknown[]
+    ) => Promise<infer T>
+      ? T extends Array<infer U>
+        ? U
+        : never
+      : never = {
+      articleId: 'a1',
+      finalScore: 0.75,
+      signals: [
+        { articleId: 'a1', score: 0.9, source: 'rules' },
+        { articleId: 'a1', score: 0.7, source: 'content' },
+      ],
+      reason: 'test',
+      topSignal: 'rules',
+    };
+
+    const explanation = generateExplanation(recommendation);
+
+    expect(explanation.reason).toContain('Recommended because');
+    expect(explanation.reason).toContain('Trending');
+    expect(explanation.signalBreakdown.length).toBeGreaterThan(0);
+    expect(explanation.topSignal.source).toBe('rules');
+    expect(explanation.confidence).toBeGreaterThan(0);
+    expect(explanation.confidence).toBeLessThanOrEqual(1);
+  });
+
+  it('should generate explanation in Portuguese', () => {
+    const recommendation: any = {
+      articleId: 'a1',
+      finalScore: 0.75,
+      signals: [{ articleId: 'a1', score: 0.9, source: 'rules' }],
+      reason: 'test',
+      topSignal: 'rules',
+    };
+
+    const explanation = generateExplanation(recommendation, { locale: 'pt' });
+
+    expect(explanation.reason).toContain('Recomendado porque');
+  });
+
+  it('should include percentages in reason when configured', () => {
+    const recommendation: any = {
+      articleId: 'a1',
+      finalScore: 0.75,
+      signals: [{ articleId: 'a1', score: 0.8, source: 'rules' }],
+      reason: 'test',
+      topSignal: 'rules',
+    };
+
+    const explanation = generateExplanation(recommendation, {
+      includeScorePercentages: true,
+    });
+
+    expect(explanation.reason).toContain('%');
+  });
+
+  it('should exclude percentages when configured', () => {
+    const recommendation: any = {
+      articleId: 'a1',
+      finalScore: 0.75,
+      signals: [{ articleId: 'a1', score: 0.8, source: 'rules' }],
+      reason: 'test',
+      topSignal: 'rules',
+    };
+
+    const explanation = generateExplanation(recommendation, {
+      includeScorePercentages: false,
+    });
+
+    expect(explanation.reason).not.toContain('%');
+  });
+
+  it('should respect maxSignalsToShow limit', () => {
+    const recommendation: any = {
+      articleId: 'a1',
+      finalScore: 0.75,
+      signals: [
+        { articleId: 'a1', score: 0.9, source: 'rules' },
+        { articleId: 'a1', score: 0.8, source: 'content' },
+        { articleId: 'a1', score: 0.7, source: 'cf' },
+        { articleId: 'a1', score: 0.6, source: 'popularity' },
+      ],
+      reason: 'test',
+      topSignal: 'rules',
+    };
+
+    const explanation = generateExplanation(recommendation, {
+      maxSignalsToShow: 2,
+    });
+
+    expect(explanation.signalBreakdown.length).toBeLessThanOrEqual(2);
+  });
+
+  it('should mark top signal in breakdown', () => {
+    const recommendation: any = {
+      articleId: 'a1',
+      finalScore: 0.75,
+      signals: [
+        { articleId: 'a1', score: 0.9, source: 'rules' },
+        { articleId: 'a1', score: 0.8, source: 'content' },
+      ],
+      reason: 'test',
+      topSignal: 'rules',
+    };
+
+    const explanation = generateExplanation(recommendation);
+
+    expect(explanation.signalBreakdown[0].isTopSignal).toBe(true);
+    expect(explanation.signalBreakdown[1].isTopSignal).toBe(false);
+  });
+
+  it('should add explainability to batch recommendations', () => {
+    const recommendations: any[] = [
+      {
+        articleId: 'a1',
+        finalScore: 0.75,
+        signals: [{ articleId: 'a1', score: 0.9, source: 'rules' }],
+        reason: 'test',
+        topSignal: 'rules',
+      },
+      {
+        articleId: 'a2',
+        finalScore: 0.65,
+        signals: [{ articleId: 'a2', score: 0.8, source: 'content' }],
+        reason: 'test',
+        topSignal: 'content',
+      },
+    ];
+
+    const result = addExplanability(recommendations);
+
+    expect(result.length).toBe(2);
+    expect(result[0].explanation).toBeDefined();
+    expect(result[1].explanation).toBeDefined();
+    expect(result[0].explanation.reason).toContain('Recommended');
+    expect(result[1].explanation.reason).toContain('Recommended');
+  });
+
+  it('should calculate confidence score', () => {
+    const recommendation: any = {
+      articleId: 'a1',
+      finalScore: 0.5,
+      signals: [{ articleId: 'a1', score: 0.5, source: 'rules' }],
+      reason: 'test',
+      topSignal: 'rules',
+    };
+
+    const explanation = generateExplanation(recommendation);
+
+    expect(explanation.confidence).toBeGreaterThan(0);
+    expect(explanation.confidence).toBeLessThanOrEqual(1);
+  });
+
+  it('should include multiple signals in reason', () => {
+    const recommendation: any = {
+      articleId: 'a1',
+      finalScore: 0.75,
+      signals: [
+        { articleId: 'a1', score: 0.9, source: 'rules' },
+        { articleId: 'a1', score: 0.8, source: 'content' },
+        { articleId: 'a1', score: 0.7, source: 'cf' },
+      ],
+      reason: 'test',
+      topSignal: 'rules',
+    };
+
+    const explanation = generateExplanation(recommendation, {
+      maxSignalsToShow: 3,
+    });
+
+    expect(explanation.reason).toContain('Trending');
+    expect(explanation.reason).toContain('+');
   });
 });
 

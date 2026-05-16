@@ -258,6 +258,155 @@ export const EXPERIMENT_VARIANTS = {
 export type ExperimentVariant = keyof typeof EXPERIMENT_VARIANTS;
 
 /**
+ * Task 2.2: Add explainability
+ * Generate human-readable explanations for recommendations
+ */
+
+export interface ExplainabilityConfig {
+  includeSourceLabels: boolean; // Show user-friendly source names
+  includeScorePercentages: boolean; // Show signal strength percentages
+  includeTopSignal: boolean; // Highlight strongest signal
+  maxSignalsToShow: number; // Maximum signals in reason string
+  locale: 'en' | 'pt'; // Language for explanations
+}
+
+/**
+ * Human-readable labels for signal sources
+ */
+const SIGNAL_LABELS = {
+  en: {
+    rules: 'Trending',
+    content: 'Similar to your interests',
+    cf: 'Popular with readers like you',
+    popularity: 'Widely read',
+  },
+  pt: {
+    rules: 'Tendência',
+    content: 'Similar aos seus interesses',
+    cf: 'Popular entre leitores como você',
+    popularity: 'Amplamente lido',
+  },
+};
+
+/**
+ * Get human-readable label for signal source
+ */
+export function getSignalLabel(
+  source: 'rules' | 'content' | 'cf' | 'popularity',
+  locale: 'en' | 'pt' = 'en'
+): string {
+  return SIGNAL_LABELS[locale][source] || source;
+}
+
+/**
+ * Generate explainability data for a recommendation
+ * Returns reason string and detailed signal breakdown
+ */
+export function generateExplanation(
+  recommendation: HybridRecommendation,
+  partialConfig?: Partial<ExplainabilityConfig>
+): {
+  reason: string;
+  signalBreakdown: Array<{
+    source: string;
+    label: string;
+    score: number;
+    percentage: string;
+    isTopSignal: boolean;
+  }>;
+  topSignal: { source: string; label: string };
+  confidence: number; // [0, 1] how confident is the recommendation
+} {
+  // Merge with defaults
+  const config: ExplainabilityConfig = {
+    includeSourceLabels: true,
+    includeScorePercentages: true,
+    includeTopSignal: true,
+    maxSignalsToShow: 3,
+    locale: 'en',
+    ...partialConfig,
+  };
+
+  // Sort signals by score descending
+  const sortedSignals = [...recommendation.signals].sort((a, b) => b.score - a.score);
+  const topSignal = sortedSignals[0];
+
+  // Build signal breakdown
+  const breakdown = sortedSignals
+    .slice(0, config.maxSignalsToShow)
+    .map((signal, index) => ({
+      source: signal.source,
+      label: getSignalLabel(signal.source as any, config.locale),
+      score: signal.score,
+      percentage: `${(signal.score * 100).toFixed(0)}%`,
+      isTopSignal: index === 0,
+    }));
+
+  // Generate reason string
+  let reasonParts: string[] = [];
+
+  if (config.includeTopSignal && topSignal) {
+    const topLabel = getSignalLabel(topSignal.source as any, config.locale);
+    const scoreStr = config.includeScorePercentages
+      ? ` (${(topSignal.score * 100).toFixed(0)}%)`
+      : '';
+    reasonParts.push(`${topLabel}${scoreStr}`);
+  }
+
+  // Add additional signals
+  if (breakdown.length > 1) {
+    const additionalSignals = breakdown
+      .slice(1)
+      .map((sig) => {
+        const scoreStr = config.includeScorePercentages ? ` ${sig.percentage}` : '';
+        return `${sig.label}${scoreStr}`;
+      })
+      .join(', ');
+
+    if (config.locale === 'pt') {
+      reasonParts.push(`+ ${additionalSignals}`);
+    } else {
+      reasonParts.push(`+ ${additionalSignals}`);
+    }
+  }
+
+  const reason =
+    config.locale === 'pt'
+      ? `Recomendado porque: ${reasonParts.join(' ')}`
+      : `Recommended because: ${reasonParts.join(' ')}`;
+
+  // Calculate confidence (use final score as proxy)
+  const confidence = Math.min(recommendation.finalScore * 1.2, 1.0); // Scale by 1.2 for visibility
+
+  return {
+    reason,
+    signalBreakdown: breakdown,
+    topSignal: {
+      source: topSignal.source,
+      label: getSignalLabel(topSignal.source as any, config.locale),
+    },
+    confidence,
+  };
+}
+
+/**
+ * Add explanability to batch of recommendations
+ */
+export function addExplanability(
+  recommendations: HybridRecommendation[],
+  config?: ExplainabilityConfig
+): Array<
+  HybridRecommendation & {
+    explanation: ReturnType<typeof generateExplanation>;
+  }
+> {
+  return recommendations.map((rec) => ({
+    ...rec,
+    explanation: generateExplanation(rec, config),
+  }));
+}
+
+/**
  * Integration interfaces for signal engines
  * These define the contract for each signal source
  */
