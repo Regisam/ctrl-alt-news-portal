@@ -3,6 +3,13 @@
  * Manages variant assignment and analytics tracking for Story 13.7
  */
 
+declare global {
+  interface Window {
+    gtag?: (command: string, eventName: string, config?: Record<string, unknown>) => void;
+    dataLayer?: unknown[];
+  }
+}
+
 export type TopicRecommendationVariant = 'control' | 'treatment_v1' | 'treatment_v2';
 
 export interface TopicRecommendationABTest {
@@ -192,8 +199,8 @@ export class TopicRecommendationAnalytics {
   private trackEvent(event: TopicRecommendationAnalyticsEvent): void {
     try {
       // Send to Google Analytics if available
-      if (typeof window !== 'undefined' && (window as any).gtag) {
-        (window as any).gtag('event', event.eventName, {
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', event.eventName, {
           user_id: event.userId,
           variant: event.variant,
           topic_id: event.topicId,
@@ -205,6 +212,7 @@ export class TopicRecommendationAnalytics {
 
       // Log to console in development
       if (process.env.NODE_ENV === 'development') {
+        // eslint-disable-next-line no-console
         console.log('[TopicRecABTest]', event.eventName, {
           userId: event.userId,
           variant: event.variant,
@@ -212,6 +220,7 @@ export class TopicRecommendationAnalytics {
         });
       }
     } catch (error) {
+      // Error logging is intentional for debugging
       console.error('Failed to track topic recommendation event:', error);
     }
   }
