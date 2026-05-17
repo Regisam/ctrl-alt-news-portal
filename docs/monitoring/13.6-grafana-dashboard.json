@@ -1,0 +1,459 @@
+{
+  "dashboard": {
+    "title": "Serendipity Engine - Canary Launch",
+    "description": "Story 13.6 - Real-time monitoring for serendipity recommendations canary deployment",
+    "tags": [
+      "story-13.6",
+      "serendipity",
+      "canary",
+      "ml-recommendations"
+    ],
+    "timezone": "UTC",
+    "panels": [
+      {
+        "title": "CTR Comparison (Control vs Treatment)",
+        "id": 1,
+        "type": "timeseries",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "sql",
+            "datasource": "PostgreSQL",
+            "sql": "SELECT timestamp, variant, AVG(click_through_rate) as ctr FROM analytics_events WHERE event_type = 'recommendation_shown' AND timestamp > NOW() - INTERVAL '24 HOURS' GROUP BY timestamp, variant ORDER BY timestamp DESC",
+            "legendDisplayMode": "table",
+            "legendPlacement": "bottom"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "lineWidth": 2
+            },
+            "unit": "percent",
+            "min": 0,
+            "max": 15
+          }
+        },
+        "options": {
+          "legend": {
+            "displayMode": "table",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "red",
+              "value": null
+            },
+            {
+              "color": "yellow",
+              "value": 6
+            },
+            {
+              "color": "green",
+              "value": 8
+            }
+          ]
+        }
+      },
+      {
+        "title": "Discovery Rate (Cross-Topic Recommendations)",
+        "id": 2,
+        "type": "timeseries",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "sql",
+            "datasource": "PostgreSQL",
+            "sql": "SELECT timestamp, variant, COUNT(CASE WHEN topic_distance > 0.6 THEN 1 END)::float / COUNT(*) * 100 as discovery_rate FROM analytics_events WHERE event_type = 'recommendation_shown' AND timestamp > NOW() - INTERVAL '24 HOURS' GROUP BY timestamp, variant ORDER BY timestamp DESC"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100
+          }
+        },
+        "options": {
+          "legend": {
+            "displayMode": "table",
+            "placement": "bottom"
+          }
+        }
+      },
+      {
+        "title": "Ranking Latency - p50",
+        "id": 3,
+        "type": "timeseries",
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 8
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "sql",
+            "datasource": "PostgreSQL",
+            "sql": "SELECT timestamp, PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY latency_ms) as p50 FROM ranking_metrics WHERE timestamp > NOW() - INTERVAL '24 HOURS' GROUP BY timestamp ORDER BY timestamp DESC"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ms",
+            "max": 100
+          }
+        },
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          }
+        },
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {
+                "params": [50],
+                "type": "gt"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "title": "Ranking Latency - p99",
+        "id": 4,
+        "type": "timeseries",
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 8
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "sql",
+            "datasource": "PostgreSQL",
+            "sql": "SELECT timestamp, PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY latency_ms) as p99 FROM ranking_metrics WHERE timestamp > NOW() - INTERVAL '24 HOURS' GROUP BY timestamp ORDER BY timestamp DESC"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ms",
+            "max": 200
+          }
+        },
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          }
+        },
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {
+                "params": [150],
+                "type": "gt"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "title": "User Distribution by Variant",
+        "id": 5,
+        "type": "piechart",
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 8
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "sql",
+            "datasource": "PostgreSQL",
+            "sql": "SELECT variant, COUNT(DISTINCT user_id) as user_count FROM analytics_events WHERE timestamp > NOW() - INTERVAL '1 HOUR' GROUP BY variant"
+          }
+        ],
+        "options": {
+          "legend": {
+            "displayMode": "table",
+            "placement": "right"
+          },
+          "reduceOptions": {
+            "values": false,
+            "fields": "",
+            "calcs": ["lastNotNull"]
+          }
+        }
+      },
+      {
+        "title": "Engagement Metrics - Time on Article",
+        "id": 6,
+        "type": "timeseries",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "sql",
+            "datasource": "PostgreSQL",
+            "sql": "SELECT timestamp, variant, AVG(time_on_article_seconds) as avg_time FROM engagement_metrics WHERE timestamp > NOW() - INTERVAL '24 HOURS' GROUP BY timestamp, variant ORDER BY timestamp DESC"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        },
+        "options": {
+          "legend": {
+            "displayMode": "table",
+            "placement": "bottom"
+          }
+        }
+      },
+      {
+        "title": "Bookmark Rate by Variant",
+        "id": 7,
+        "type": "timeseries",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "sql",
+            "datasource": "PostgreSQL",
+            "sql": "SELECT timestamp, variant, COUNT(CASE WHEN action = 'bookmark' THEN 1 END)::float / COUNT(*) * 100 as bookmark_rate FROM user_actions WHERE timestamp > NOW() - INTERVAL '24 HOURS' GROUP BY timestamp, variant ORDER BY timestamp DESC"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent"
+          }
+        },
+        "options": {
+          "legend": {
+            "displayMode": "table",
+            "placement": "bottom"
+          }
+        }
+      },
+      {
+        "title": "Error Rate",
+        "id": 8,
+        "type": "stat",
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 24
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "sql",
+            "datasource": "PostgreSQL",
+            "sql": "SELECT COUNT(CASE WHEN error = true THEN 1 END)::float / COUNT(*) * 100 as error_rate FROM ranking_events WHERE timestamp > NOW() - INTERVAL '5 MINUTES'"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 0.5
+                },
+                {
+                  "color": "red",
+                  "value": 1
+                }
+              ]
+            }
+          }
+        },
+        "options": {
+          "textMode": "auto",
+          "graphMode": "none",
+          "orientation": "auto",
+          "colorMode": "background"
+        }
+      },
+      {
+        "title": "Cache Hit Rate",
+        "id": 9,
+        "type": "stat",
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 24
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "sql",
+            "datasource": "PostgreSQL",
+            "sql": "SELECT COUNT(CASE WHEN cache_hit = true THEN 1 END)::float / COUNT(*) * 100 as hit_rate FROM cache_metrics WHERE timestamp > NOW() - INTERVAL '5 MINUTES'"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "red",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 60
+                },
+                {
+                  "color": "green",
+                  "value": 80
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "title": "Embedding Staleness",
+        "id": 10,
+        "type": "stat",
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 12,
+          "y": 24
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "sql",
+            "datasource": "PostgreSQL",
+            "sql": "SELECT EXTRACT(EPOCH FROM (NOW() - MAX(updated_at)))/86400 as days_stale FROM article_embeddings"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "d",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 5
+                },
+                {
+                  "color": "red",
+                  "value": 8
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "title": "Alerts Status",
+        "id": 11,
+        "type": "table",
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 28
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "sql",
+            "datasource": "PostgreSQL",
+            "sql": "SELECT alert_name, status, last_triggered, severity FROM alerts WHERE story_id = '13.6' ORDER BY last_triggered DESC"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {},
+              "indexByName": {
+                "alert_name": 0,
+                "status": 1,
+                "severity": 2,
+                "last_triggered": 3
+              },
+              "renameByName": {
+                "alert_name": "Alert",
+                "status": "Status",
+                "severity": "Severity",
+                "last_triggered": "Last Triggered"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "TimeRange",
+          "type": "interval",
+          "options": {
+            "interval": "auto"
+          }
+        }
+      ]
+    },
+    "refresh": "5m",
+    "schemaVersion": 27,
+    "style": "dark",
+    "uid": "serendipity-canary-13.6"
+  }
+}
