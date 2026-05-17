@@ -87,3 +87,15 @@ export {
   SerendipityAnalytics,
   serendipityAnalytics,
 } from './featureFlags';
+
+// ============================================================================
+// Topic Recommendations (Story 13.7)
+// ============================================================================
+export {
+  TopicEngagementVector,
+  TopicAffinityInput,
+  RecommendedTopic,
+  TopicRecommender,
+  getTopicRecommendations,
+  handleColdStartTopics,
+} from './topicRecommendations';
