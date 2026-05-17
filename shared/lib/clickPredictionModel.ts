@@ -186,8 +186,6 @@ class LSTMCell {
     prevHidden: number[],
     prevCell: number[]
   ): { hidden: number[]; cell: number[] } {
-    const combined = [...input, ...prevHidden];
-
     // Combined input transformation
     const rawGates = this.matVecMul(this.weights.input, input)
       .map((x, i) => x + this.matVecMul(this.weights.hidden, prevHidden)[i] + this.weights.bias[i]);
@@ -455,7 +453,7 @@ export class ClickPredictionModel {
 
       // Validation phase
       let valLoss = 0;
-      let predictions: { pred: number; actual: number }[] = [];
+      const predictions: { pred: number; actual: number }[] = [];
 
       for (const example of validationData) {
         const prediction = this.predict(example.userHistory, example.articleEmbedding, example.topic);
@@ -513,7 +511,6 @@ export class ClickPredictionModel {
 
     let tp = 0;
     let fp = 0;
-    let prevThreshold = -1;
     let auc = 0;
 
     for (const pred of sorted) {
@@ -664,9 +661,7 @@ export async function batchPredictWithCaching(
       const cacheKey = cache.getCacheKey(userHistory.userId, article.articleId);
       let prediction = cache.get(cacheKey);
 
-      if (prediction) {
-        cacheHits++;
-      } else {
+      if (!prediction) {
         prediction = model.predict(userHistory, article.embedding, article.topic);
         prediction.articleId = article.articleId;
         cache.set(cacheKey, prediction);

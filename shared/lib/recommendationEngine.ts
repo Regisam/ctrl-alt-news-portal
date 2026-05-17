@@ -9,7 +9,6 @@ import {
   UserEngagementHistory,
   ClickPrediction,
 } from './clickPredictionModel';
-import { HybridRecommendation } from './hybridRecommendationEngine';
 
 /**
  * Article features for ranking
