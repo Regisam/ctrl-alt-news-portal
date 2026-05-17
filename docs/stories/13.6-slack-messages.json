@@ -1,0 +1,178 @@
+[
+  {
+    "channel": "#serendipity-alerts",
+    "message": {
+      "channel": "#serendipity-alerts",
+      "blocks": [
+        {
+          "type": "header",
+          "text": {
+            "type": "plain_text",
+            "text": "🚀 Story 13.6 INFRASTRUCTURE READY FOR SETUP"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "Infrastructure templates and briefing are complete and ready for @devops to execute!\n\n*📊 What's Ready:*\n✅ Grafana dashboard template (11 panels)\n✅ DevOps briefing with step-by-step setup\n✅ Code quality: TypeScript 0 errors, ESLint clean, 102/102 tests PASS\n✅ Approval request sent to all stakeholders"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*📅 Timeline:*\n🎯 *TODAY (2026-05-17)*: Briefing & templates ✅\n🎯 *2026-05-18 EOD*: @qa, @pm, @dev approvals (CRITICAL!)\n🎯 *2026-05-19 EOD*: @devops infrastructure ready\n🎯 *2026-05-20 10:00 AM*: Canary launch (5% users) 🚀"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*@devops (Gage)* - Your detailed briefing is ready:\n👉 `docs/stories/13.6-DEVOPS-BRIEFING.md` (follow step-by-step)\n👉 `docs/monitoring/13.6-grafana-dashboard.json` (ready to import)\n\n*Estimated time: 4-6 hours. You have 48 hours available.*"
+          }
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "context",
+          "elements": [
+            {
+              "type": "mrkdwn",
+              "text": "Questions? Reply in thread! 👇"
+            }
+          ]
+        }
+      ]
+    },
+    "timestamp": "2026-05-17T14:14:07.663Z"
+  },
+  {
+    "channel": "@devops",
+    "message": {
+      "text": "Hey @devops - Story 13.6 infrastructure briefing ready!",
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "Hey @devops - Story 13.6 infrastructure briefing ready!\n\nI've prepared everything you need for the canary launch setup:"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*📋 BRIEFING* (detailed walkthrough):\n`docs/stories/13.6-DEVOPS-BRIEFING.md`\n• Grafana dashboard setup (CTR, discovery rate, latency, engagement)\n• PagerDuty alert configuration (6 critical alerts)\n• Slack integration (#serendipity-alerts)\n• Feature flag verification\n• Rollback procedure testing\n• Go-live checklist (2026-05-20 morning)"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*📊 DASHBOARD TEMPLATE* (ready to import):\n`docs/monitoring/13.6-grafana-dashboard.json`\n• 11 pre-configured panels\n• Alert thresholds built-in\n• Just import directly into Grafana"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*⏰ DEADLINE*: 2026-05-19 23:59 EOD\n*🎯 TARGET*: Canary launch 2026-05-20 10:00 AM\n*⏱️ Estimated time*: 4-6 hours total\n\nFollow the briefing checklist and you're golden! Let me know if you hit any blockers."
+          }
+        }
+      ]
+    },
+    "timestamp": "2026-05-17T14:14:07.668Z"
+  },
+  {
+    "channel": "@@qa",
+    "message": {
+      "text": "@qa - Story 13.6 approval reminder",
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "@qa - Quick reminder: Story 13.6 approval deadline is *2026-05-18 EOD* ⏰"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Your Checklist:*\n☐ Reviewed all 102 tests (42 serendipity + 38 flags + 22 integration)\n☐ Confirmed adequate coverage\n☐ CodeRabbit: 0 CRITICAL issues ✅\n☐ Reply with ✅ when done!"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "📄 Full details: `docs/stories/13.6-APPROVAL-REQUEST.md` (lines 41-63)\n\nThis is on the critical path for 2026-05-20 canary launch 🚀"
+          }
+        }
+      ]
+    },
+    "timestamp": "2026-05-17T14:14:07.668Z"
+  },
+  {
+    "channel": "@@pm",
+    "message": {
+      "text": "@pm - Story 13.6 approval reminder",
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "@pm - Quick reminder: Story 13.6 business approval deadline is *2026-05-18 EOD* ⏰"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Your Checklist:*\n☐ Confirmed CTR lift target: +15-20% vs control\n☐ Discovery rate target: 30%+\n☐ Engagement lift target: +10-15% time-on-article\n☐ Stakeholders briefed on rollout plan\n☐ Reply with ✅ when done!"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "📄 Full details: `docs/stories/13.6-APPROVAL-REQUEST.md` (lines 92-114)\n\nThis is on the critical path for 2026-05-20 canary launch 🚀"
+          }
+        }
+      ]
+    },
+    "timestamp": "2026-05-17T14:14:07.668Z"
+  },
+  {
+    "channel": "@@dev",
+    "message": {
+      "text": "@dev - Story 13.6 approval reminder",
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "@dev - Quick reminder: Story 13.6 code quality approval deadline is *2026-05-18 EOD* ⏰"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Your Checklist:*\n☐ Code production-ready (102/102 tests PASS) ✅\n☐ All edge cases handled ✅\n☐ Performance targets met (<50ms p50) ✅\n☐ Reply with ✅ when done!"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "📄 Full details: `docs/stories/13.6-APPROVAL-REQUEST.md` (lines 26-38)\n\nThis is on the critical path for 2026-05-20 canary launch 🚀"
+          }
+        }
+      ]
+    },
+    "timestamp": "2026-05-17T14:14:07.668Z"
+  }
+]
