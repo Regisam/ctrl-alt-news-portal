@@ -16,7 +16,7 @@ interface TopicArticle {
 interface TopicData {
   topicId: string;
   topicName: string;
-  description: string;
+  description: string | Record<'en' | 'pt', string>;
   adoptionProbability: number;
   similarUserCount: number;
   articles: TopicArticle[];
@@ -29,7 +29,7 @@ const mockTopicsData: Record<string, TopicData> = {
     description: {
       en: 'Exploring quantum computing breakthroughs, quantum algorithms, and practical quantum applications.',
       pt: 'Explorando avanços em computação quântica, algoritmos quânticos e aplicações práticas.',
-    } as any,
+    },
     adoptionProbability: 0.82,
     similarUserCount: 234,
     articles: [
@@ -74,7 +74,7 @@ const mockTopicsData: Record<string, TopicData> = {
     description: {
       en: 'Deep learning, neural network architectures, training techniques, and real-world applications.',
       pt: 'Deep learning, arquiteturas de redes neurais, técnicas de treinamento e aplicações práticas.',
-    } as any,
+    },
     adoptionProbability: 0.78,
     similarUserCount: 189,
     articles: [
@@ -108,7 +108,7 @@ const mockTopicsData: Record<string, TopicData> = {
     description: {
       en: 'Mars missions, satellite technology, space agencies, and the future of human space exploration.',
       pt: 'Missões a Marte, tecnologia de satélites, agências espaciais e o futuro da exploração espacial.',
-    } as any,
+    },
     adoptionProbability: 0.65,
     similarUserCount: 156,
     articles: [
