@@ -47,6 +47,61 @@ export interface CollaborativeContext {
 }
 
 // ============================================================================
+// Task 1.2: Threshold Configuration & Diversity Constraints
+// ============================================================================
+
+/**
+ * Subtask 1.2.1: Minimum topic distance for serendipity articles
+ * Articles must be 2+ topics away from user's primary interests to qualify
+ * Default threshold: 0.6 (60% dissimilar from all primary topics)
+ */
+export interface SerendipityThresholds {
+  // Subtask 1.2.1: Topic distance threshold
+  minTopicDistance: number; // Default: 0.6 (2+ topics away)
+
+  // Collaborative novelty threshold
+  minCollaborativeNovelty: number; // Default: 0.3 (30% of similar users)
+
+  // Composite score threshold
+  minSerendipityScore: number; // Default: 0.4 (40% overall score)
+}
+
+/**
+ * Subtask 1.2.2: Diversity constraint configuration
+ * Avoid clustering similar serendipity articles (round-robin by topic)
+ */
+export interface DiversityConstraint {
+  // Max articles per topic in serendipity results
+  maxArticlesPerTopic: number; // Default: 2
+
+  // Enforce round-robin selection to spread topics
+  enforceRoundRobin: boolean; // Default: true
+
+  // Prefer articles from underrepresented topics
+  balanceTopicRepresentation: boolean; // Default: true
+}
+
+/**
+ * Default thresholds for serendipity scoring (Subtask 1.2.1)
+ * These define what qualifies as "serendipitous"
+ */
+export const DEFAULT_SERENDIPITY_THRESHOLDS: SerendipityThresholds = {
+  minTopicDistance: 0.6, // 2+ topics away
+  minCollaborativeNovelty: 0.3, // Similar users have read it
+  minSerendipityScore: 0.4, // Minimum composite score
+};
+
+/**
+ * Default diversity constraints (Subtask 1.2.2)
+ * These prevent topic clustering in results
+ */
+export const DEFAULT_DIVERSITY_CONSTRAINT: DiversityConstraint = {
+  maxArticlesPerTopic: 2, // At most 2 serendipity articles from same topic
+  enforceRoundRobin: true, // Pick from different topics alternately
+  balanceTopicRepresentation: true, // Spread evenly
+};
+
+// ============================================================================
 // Subtask 1.1.1: Topic Distance Metric in Embedding Space
 // ============================================================================
 
@@ -212,11 +267,38 @@ export function blendSerendipityScore(
 
 export class SerendipityScorer {
   private topicEmbeddings: TopicEmbeddings;
-  private serendipityThreshold: number = 0.6; // Articles with distance > 0.6 are considered serendipitous
-  private minCollaborativeNovelty: number = 0.3; // Min novelty to consider
+  private thresholds: SerendipityThresholds;
+  private diversityConstraint: DiversityConstraint;
 
-  constructor(topicEmbeddings: TopicEmbeddings) {
+  constructor(
+    topicEmbeddings: TopicEmbeddings,
+    thresholds: SerendipityThresholds = DEFAULT_SERENDIPITY_THRESHOLDS,
+    diversityConstraint: DiversityConstraint = DEFAULT_DIVERSITY_CONSTRAINT
+  ) {
     this.topicEmbeddings = topicEmbeddings;
+    this.thresholds = thresholds;
+    this.diversityConstraint = diversityConstraint;
+
+    // Validate thresholds
+    this.validateThresholds();
+  }
+
+  /**
+   * Validate serendipity thresholds are in valid ranges
+   * Subtask 1.2.1: Validate topic distance threshold
+   */
+  private validateThresholds(): void {
+    if (this.thresholds.minTopicDistance < 0 || this.thresholds.minTopicDistance > 1) {
+      throw new Error(`Invalid minTopicDistance: ${this.thresholds.minTopicDistance}. Must be in [0, 1]`);
+    }
+    if (this.thresholds.minCollaborativeNovelty < 0 || this.thresholds.minCollaborativeNovelty > 1) {
+      throw new Error(
+        `Invalid minCollaborativeNovelty: ${this.thresholds.minCollaborativeNovelty}. Must be in [0, 1]`
+      );
+    }
+    if (this.thresholds.minSerendipityScore < 0 || this.thresholds.minSerendipityScore > 1) {
+      throw new Error(`Invalid minSerendipityScore: ${this.thresholds.minSerendipityScore}. Must be in [0, 1]`);
+    }
   }
 
   /**
@@ -307,35 +389,86 @@ export class SerendipityScorer {
   }
 
   /**
-   * Get serendipitous articles (above threshold)
-   * Threshold: distance > 0.6 AND collaborative_novelty > 0.3
+   * Get serendipitous articles (above thresholds)
+   *
+   * Subtask 1.2.1: Filter by thresholds
+   * - distance > minTopicDistance (2+ topics away)
+   * - collaborative_novelty > minCollaborativeNovelty (30%+ of similar users)
+   * - serendipityScore > minSerendipityScore (40%+ composite)
    */
   public getSerendipitousArticles(rankings: SerendipityRanking[]): SerendipityRanking[] {
     return rankings.filter(
       (r) =>
-        r.topicDistance > this.serendipityThreshold &&
-        r.collaborativeNovelty > this.minCollaborativeNovelty &&
-        r.serendipityScore > 0.4 // Minimum composite score
+        r.topicDistance > this.thresholds.minTopicDistance &&
+        r.collaborativeNovelty > this.thresholds.minCollaborativeNovelty &&
+        r.serendipityScore > this.thresholds.minSerendipityScore
     );
   }
 
   /**
    * Apply diversity constraint: avoid clustering similar serendipity articles
-   * Returns articles with diverse topics (round-robin selection)
+   *
+   * Subtask 1.2.2: Diversity Constraint
+   * - maxArticlesPerTopic: Limit articles from same topic (round-robin)
+   * - enforceRoundRobin: Alternate between topics
+   * - balanceTopicRepresentation: Spread evenly across topics
+   *
+   * Returns articles with diverse topics
    */
-  public diversifySerendipity(
-    rankings: SerendipityRanking[],
-    maxPerTopic: number = 2
-  ): SerendipityRanking[] {
+  public diversifySerendipity(rankings: SerendipityRanking[]): SerendipityRanking[] {
+    if (!this.diversityConstraint.enforceRoundRobin) {
+      // No diversity constraint
+      return rankings;
+    }
+
     const result: SerendipityRanking[] = [];
     const topicCounts = new Map<string, number>();
+    const seenArticles = new Set<string>();
 
-    for (const ranking of rankings) {
-      const count = topicCounts.get(ranking.topic) || 0;
+    // Pass 1: Round-robin by topic to ensure diversity
+    if (this.diversityConstraint.enforceRoundRobin) {
+      let currentTopicIndex = 0;
+      const uniqueTopics = Array.from(new Set(rankings.map((r) => r.topic)));
 
-      if (count < maxPerTopic) {
-        result.push(ranking);
-        topicCounts.set(ranking.topic, count + 1);
+      while (result.length < rankings.length && uniqueTopics.length > 0) {
+        // Find next article from current topic
+        let foundInTopic = false;
+
+        for (const ranking of rankings) {
+          if (seenArticles.has(ranking.articleId)) {
+            continue;
+          }
+
+          const topicIdx = uniqueTopics.indexOf(ranking.topic);
+          if (topicIdx !== currentTopicIndex % uniqueTopics.length) {
+            continue;
+          }
+
+          const count = topicCounts.get(ranking.topic) || 0;
+          if (count < this.diversityConstraint.maxArticlesPerTopic) {
+            result.push(ranking);
+            seenArticles.add(ranking.articleId);
+            topicCounts.set(ranking.topic, count + 1);
+            foundInTopic = true;
+            break;
+          }
+        }
+
+        if (!foundInTopic) {
+          currentTopicIndex++;
+        } else {
+          currentTopicIndex++;
+        }
+      }
+    } else {
+      // Pass 2: Simple max-per-topic constraint (no round-robin)
+      for (const ranking of rankings) {
+        const count = topicCounts.get(ranking.topic) || 0;
+
+        if (count < this.diversityConstraint.maxArticlesPerTopic) {
+          result.push(ranking);
+          topicCounts.set(ranking.topic, count + 1);
+        }
       }
     }
 
@@ -343,10 +476,29 @@ export class SerendipityScorer {
   }
 
   /**
-   * Set custom thresholds (for A/B testing)
+   * Update serendipity thresholds (for A/B testing)
+   * Subtask 1.2.1: Allow dynamic threshold tuning
    */
-  public setThresholds(serendipityThreshold: number, minNovelty: number): void {
-    this.serendipityThreshold = serendipityThreshold;
-    this.minCollaborativeNovelty = minNovelty;
+  public setThresholds(thresholds: Partial<SerendipityThresholds>): void {
+    this.thresholds = { ...this.thresholds, ...thresholds };
+    this.validateThresholds();
+  }
+
+  /**
+   * Update diversity constraints (for A/B testing)
+   * Subtask 1.2.2: Allow dynamic diversity tuning
+   */
+  public setDiversityConstraint(constraint: Partial<DiversityConstraint>): void {
+    this.diversityConstraint = { ...this.diversityConstraint, ...constraint };
+  }
+
+  /**
+   * Get current configuration (for debugging/monitoring)
+   */
+  public getConfig(): { thresholds: SerendipityThresholds; diversity: DiversityConstraint } {
+    return {
+      thresholds: this.thresholds,
+      diversity: this.diversityConstraint,
+    };
   }
 }
