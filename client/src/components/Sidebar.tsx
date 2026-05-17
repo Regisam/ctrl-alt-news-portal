@@ -12,6 +12,7 @@ import { CATEGORY_CONFIG } from "@/lib/constants";
 import { RecommendationsWidget } from "@/components/RecommendationsWidget";
 import { TrendingWidget } from "@/components/TrendingWidget";
 import { DiscoveryWidget } from "@/components/DiscoveryWidget";
+import { TopicRecommendationsContainer } from "@/components/TopicRecommendationsContainer";
 
 // Map popular article IDs (4,5,6) to full article detail IDs
 const POPULAR_TO_ARTICLE_ID: Record<number, number> = {
@@ -271,6 +272,13 @@ export default function Sidebar({ lang }: SidebarProps) {
       <TrendingWidget
         maxTrending={3}
         title="Trending Now"
+      />
+
+      {/* Topic recommendations (Story 13.7) */}
+      <TopicRecommendationsContainer
+        userId="current-user"
+        maxTopics={5}
+        lang={lang}
       />
 
       {/* Personalized recommendations */}
