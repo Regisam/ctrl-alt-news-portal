@@ -5,8 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite --host",
-    "build": "vite build",
-    "start": "NODE_ENV=production node dist/index.js",
+    "build": "vite build && node scripts/build-server.js",
+    "start": "NODE_ENV=production tsx server/index.ts",
     "preview": "vite preview --host",
     "check": "tsc --noEmit",
     "lint": "eslint client/src --ext .ts,.tsx",
