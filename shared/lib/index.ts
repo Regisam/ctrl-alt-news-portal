@@ -68,3 +68,21 @@ export {
   predictForNewUser as predictForNewUserSerendipity,
   predictForNewArticle as predictForNewArticleSerendipity,
 } from './serendipityScorer';
+
+// ============================================================================
+// Feature Flags & A/B Testing (Story 13.6)
+// ============================================================================
+export {
+  SerendipityFeatureFlag,
+  DEFAULT_SERENDIPITY_FLAG,
+  SERENDIPITY_PRESETS,
+  ABTestVariant,
+  SerendipityABTest,
+  DEFAULT_SERENDIPITY_AB_TEST,
+  isUserEligibleForSerendipity,
+  assignUserToVariant,
+  getSerendipityWeightForUser,
+  SerendipityAnalyticsEvent,
+  SerendipityAnalytics,
+  serendipityAnalytics,
+} from './featureFlags';
