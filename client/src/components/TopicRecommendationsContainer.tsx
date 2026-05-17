@@ -23,70 +23,32 @@ export function TopicRecommendationsContainer({
   const [recommendations, setRecommendations] = useState<RecommendedTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [followedTopics, setFollowedTopics] = useState<Set<string>>(new Set());
 
-  // Fetch topic recommendations
+  // Fetch topic recommendations from API
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // TODO: Replace with actual API call to getTopicRecommendations
-        // For now, using placeholder data demonstrating the widget integration
-        const mockRecommendations: RecommendedTopic[] = [
-          {
-            topicId: 'quantum-computing',
-            topicName: 'Quantum Computing',
-            adoptionProbability: 0.82,
-            reason: 'Popular among AI readers',
-            similarityScore: 0.75,
-            similarUserCount: 234,
-          },
-          {
-            topicId: 'neural-networks',
-            topicName: 'Neural Networks',
-            adoptionProbability: 0.78,
-            reason: 'Users like you follow this',
-            similarityScore: 0.72,
-            similarUserCount: 189,
-          },
-          {
-            topicId: 'space-exploration',
-            topicName: 'Space Exploration',
-            adoptionProbability: 0.65,
-            reason: 'Trending among similar users',
-            similarityScore: 0.68,
-            similarUserCount: 156,
-          },
-          {
-            topicId: 'biotech',
-            topicName: 'Biotechnology',
-            adoptionProbability: 0.62,
-            reason: 'Complement to your interests',
-            similarityScore: 0.65,
-            similarUserCount: 142,
-          },
-          {
-            topicId: 'green-energy',
-            topicName: 'Green Energy',
-            adoptionProbability: 0.58,
-            reason: 'Rising interest in your network',
-            similarityScore: 0.62,
-            similarUserCount: 128,
-          },
-        ];
+        const response = await fetch(`/api/topic-recommendations/${userId}?maxTopics=${maxTopics}`);
 
-        setRecommendations(mockRecommendations);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: Failed to fetch topic recommendations`);
+        }
+
+        const data = await response.json();
+        setRecommendations(data.recommendations || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load recommendations');
+        // Silently fail - don't break the sidebar
       } finally {
         setLoading(false);
       }
     };
 
     fetchRecommendations();
-  }, [userId]);
+  }, [userId, maxTopics]);
 
   const handleFollowTopic = (topicId: string) => {
     setFollowedTopics((prev) => new Set(prev).add(topicId));

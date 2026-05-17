@@ -10,6 +10,7 @@ import { logger } from "./logger.js";
 import { generateSitemapXML } from "../client/src/lib/sitemap.js";
 import { handleFeedStream, broadcastFeedUpdate, feedStreamHealth } from "./api/feed-stream.js";
 import digestRouter from "./api/digest.js";
+import topicRecommendationsRouter from "./api/topic-recommendations.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -114,6 +115,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Smart Digest endpoints (Story 12.7)
   app.use('/api/digest', digestRouter);
+
+  // Topic Recommendations endpoints (Story 13.7)
+  app.use('/api', topicRecommendationsRouter);
 
   // Serve static files from dist/public in production
   const staticPath =
