@@ -502,3 +502,230 @@ export class SerendipityScorer {
     };
   }
 }
+
+// ============================================================================
+// Task 2.1: Integration & Cold-Start Handling
+// ============================================================================
+
+/**
+ * Article with click-prediction quality score
+ * Used for ranking integration (Task 2.2)
+ */
+export interface ArticleForRanking extends ArticleFeature {
+  clickPredictionScore: number; // [0, 1] from Story 13.5 neural model
+}
+
+/**
+ * Ranked article with both click-prediction and serendipity scores
+ * Output of rankArticlesWithSerendipity()
+ */
+export interface RankedArticleWithSerendipity extends SerendipityRanking {
+  clickPredictionScore: number;
+  finalScore: number; // Blended score: click * (1 - weight) + serendipity * weight
+  explanation: {
+    topInfluentialArticles: string[];
+    importantFeatures: string[];
+    serendipityReason: string;
+  };
+}
+
+/**
+ * Rank articles with serendipity blending
+ *
+ * Task 2.2: Integration Function
+ * Blends click-prediction scores from Story 13.5 with serendipity scores
+ * Formula: finalScore = clickScore * (1 - serendipity_weight) + serendipityScore * serendipity_weight
+ *
+ * @param articles Articles with click-prediction scores
+ * @param input User input (topics, history)
+ * @param collaborativeContext Similar users context
+ * @param scorer Initialized SerendipityScorer
+ * @param serendipity_weight Blending parameter [0, 1] (default: 0.0 = no serendipity)
+ * @returns Ranked articles with blended scores
+ */
+export function rankArticlesWithSerendipity(
+  articles: ArticleForRanking[],
+  input: SerendipityInput,
+  collaborativeContext: CollaborativeContext,
+  scorer: SerendipityScorer,
+  serendipity_weight: number = 0.0
+): RankedArticleWithSerendipity[] {
+  // 1. Get serendipity scores for all articles
+  const articleQualities = new Map(
+    articles.map((a) => [a.articleId, a.clickPredictionScore])
+  );
+  const serendipityRankings = scorer.rankBySerendipity(input, collaborativeContext, articleQualities);
+
+  // 2. Blend with click-prediction scores
+  const blended: RankedArticleWithSerendipity[] = serendipityRankings.map((ranking) => {
+    const article = articles.find((a) => a.articleId === ranking.articleId);
+    const clickScore = article?.clickPredictionScore ?? 0.5;
+
+    // Clamp serendipity_weight to [0, 1]
+    const weight = Math.max(0, Math.min(1, serendipity_weight));
+
+    // Final score: blend click-prediction with serendipity
+    const finalScore = clickScore * (1 - weight) + ranking.serendipityScore * weight;
+
+    return {
+      ...ranking,
+      clickPredictionScore: clickScore,
+      finalScore,
+      explanation: {
+        topInfluentialArticles: [],
+        importantFeatures: extractImportantFeatures(ranking, clickScore),
+        serendipityReason: ranking.noveltyReason,
+      },
+    };
+  });
+
+  // 3. Re-sort by final blended score
+  blended.sort((a, b) => b.finalScore - a.finalScore);
+
+  // 4. Apply diversity constraints
+  const diversified = scorer.diversifySerendipity(blended);
+
+  return diversified as RankedArticleWithSerendipity[];
+}
+
+/**
+ * Subtask 2.1.3: Cold-start handling for new users
+ *
+ * New users with no read history:
+ * - Use global topic popularity distribution
+ * - Recommend random serendipity articles (broad discovery)
+ * - Fallback to collaborative filtering
+ *
+ * @param scorer Initialized SerendipityScorer
+ * @param globalTopicPopularity Topic popularity [0, 1] across platform
+ * @param candidates Articles to rank
+ * @returns Articles suitable for new user (high diversity, popular topics)
+ */
+export function predictForNewUser(
+  scorer: SerendipityScorer,
+  globalTopicPopularity: Map<string, number>,
+  candidates: ArticleForRanking[]
+): RankedArticleWithSerendipity[] {
+  // New users: no primary topics, use global popularity as proxy
+  const input: SerendipityInput = {
+    userId: 'new-user',
+    userPrimaryTopics: Array.from(globalTopicPopularity.keys()), // All topics equally
+    userReadHistory: new Set(),
+    candidateArticles: candidates,
+  };
+
+  // Empty collaborative context (no similar users yet)
+  const collaborativeContext: CollaborativeContext = {
+    userId: 'new-user',
+    similarUsers: [],
+    similarUserReadHistories: new Map(),
+    similarityScores: new Map(),
+  };
+
+  // Score by global popularity + serendipity
+  const articleQualities = new Map(
+    candidates.map((a) => [a.articleId, globalTopicPopularity.get(a.topic) ?? 0.5])
+  );
+
+  const rankings = scorer.rankBySerendipity(input, collaborativeContext, articleQualities);
+  const diversified = scorer.diversifySerendipity(rankings);
+
+  // Convert to RankedArticleWithSerendipity
+  return diversified.map((r) => {
+    const article = candidates.find((a) => a.articleId === r.articleId);
+    return {
+      ...r,
+      clickPredictionScore: article?.clickPredictionScore ?? 0.5,
+      finalScore: r.serendipityScore, // New users: pure serendipity (no click history)
+      explanation: {
+        topInfluentialArticles: [],
+        importantFeatures: [r.topic, 'popular', 'discovery'],
+        serendipityReason: 'Recommended for new users to explore',
+      },
+    };
+  });
+}
+
+/**
+ * Subtask 2.1.3: Cold-start handling for new articles
+ *
+ * New articles with no engagement history:
+ * - Use topic similarity to user interests
+ * - Recommend if similar users would enjoy
+ * - Fallback to topic-distance score
+ *
+ * @param scorer Initialized SerendipityScorer
+ * @param newArticles Articles with no history
+ * @param userPrimaryTopics User's known topics
+ * @param collaborativeContext Similar users + their history
+ * @returns Scored articles for new content
+ */
+export function predictForNewArticle(
+  scorer: SerendipityScorer,
+  newArticles: ArticleForRanking[],
+  userPrimaryTopics: string[],
+  collaborativeContext: CollaborativeContext
+): RankedArticleWithSerendipity[] {
+  // New articles: use topic similarity + collaborative novelty
+  const input: SerendipityInput = {
+    userId: collaborativeContext.userId,
+    userPrimaryTopics,
+    userReadHistory: new Set(), // New article, user hasn't read yet
+    candidateArticles: newArticles,
+  };
+
+  // For new articles, use moderate click-prediction (no historical data)
+  const articleQualities = new Map(newArticles.map((a) => [a.articleId, 0.5]));
+
+  const rankings = scorer.rankBySerendipity(input, collaborativeContext, articleQualities);
+
+  return rankings.map((r) => {
+    const article = newArticles.find((a) => a.articleId === r.articleId);
+    return {
+      ...r,
+      clickPredictionScore: 0.5,
+      finalScore: r.serendipityScore,
+      explanation: {
+        topInfluentialArticles: Array.from(collaborativeContext.similarUsers).slice(0, 3),
+        importantFeatures: ['new-article', 'similar-users-interested', r.topic],
+        serendipityReason: 'New article similar to your interests',
+      },
+    };
+  });
+}
+
+/**
+ * Helper: Extract important features from ranking result
+ * Used for explanation/explainability in UI
+ */
+function extractImportantFeatures(ranking: SerendipityRanking, clickScore: number): string[] {
+  const features: string[] = [];
+
+  // Feature: Topic distance (novelty)
+  if (ranking.topicDistance > 0.6) {
+    features.push('topic-distant');
+    features.push('novel-discovery');
+  } else if (ranking.topicDistance > 0.3) {
+    features.push('semi-novel');
+  }
+
+  // Feature: Collaborative novelty (credibility)
+  if (ranking.collaborativeNovelty > 0.5) {
+    features.push('similar-users-enjoyed');
+    features.push('high-confidence');
+  } else if (ranking.collaborativeNovelty > 0.2) {
+    features.push('some-user-interest');
+  }
+
+  // Feature: Click prediction (quality)
+  if (clickScore > 0.7) {
+    features.push('high-quality');
+  } else if (clickScore > 0.4) {
+    features.push('moderate-quality');
+  }
+
+  // Always include topic
+  features.push(ranking.topic);
+
+  return features;
+}
