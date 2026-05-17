@@ -346,9 +346,9 @@ export class SerendipityScorer {
 
     // Generate explanation
     let noveltyReason = '';
-    if (topicDistance > this.serendipityThreshold) {
+    if (topicDistance > this.thresholds.minTopicDistance) {
       noveltyReason = `Topic-distant from your interests (${(topicDistance * 100).toFixed(0)}% different)`;
-    } else if (collaborativeNovelty > this.minCollaborativeNovelty) {
+    } else if (collaborativeNovelty > this.thresholds.minCollaborativeNovelty) {
       noveltyReason = `Similar users enjoyed this, but you haven't discovered it yet`;
     } else {
       noveltyReason = `Serendipitous discovery (blended recommendation)`;
@@ -495,10 +495,10 @@ export class SerendipityScorer {
   /**
    * Get current configuration (for debugging/monitoring)
    */
-  public getConfig(): { thresholds: SerendipityThresholds; diversity: DiversityConstraint } {
+  public getConfig(): { thresholds: SerendipityThresholds; diversityConstraint: DiversityConstraint } {
     return {
       thresholds: this.thresholds,
-      diversity: this.diversityConstraint,
+      diversityConstraint: this.diversityConstraint,
     };
   }
 }
