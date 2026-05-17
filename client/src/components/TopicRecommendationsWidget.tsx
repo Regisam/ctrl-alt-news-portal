@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { RecommendedTopic } from '@shared/lib/topicRecommendations';
 import { Users, TrendingUp, ArrowRight } from 'lucide-react';
+import { TopicRecommendationFeedback } from './TopicRecommendationFeedback';
 
 export interface TopicRecommendationsWidgetProps {
   userId: string;
@@ -20,6 +21,7 @@ export function TopicRecommendationsWidget({
   maxTopics = 5,
 }: TopicRecommendationsWidgetProps) {
   const [followedTopics, setFollowedTopics] = useState<Set<string>>(new Set());
+  const [feedbackTopicId, setFeedbackTopicId] = useState<string | null>(null);
 
   const handleFollowTopic = (topicId: string) => {
     setFollowedTopics((prev) => new Set(prev).add(topicId));
@@ -67,13 +69,30 @@ export function TopicRecommendationsWidget({
 
       <div className="space-y-3">
         {displayedTopics.map((topic) => (
-          <TopicRecommendationCard
-            key={topic.topicId}
-            topic={topic}
-            isFollowed={followedTopics.has(topic.topicId)}
-            onFollow={() => handleFollowTopic(topic.topicId)}
-            onNavigate={() => handleNavigateToTopic(topic.topicId)}
-          />
+          <div key={topic.topicId}>
+            <TopicRecommendationCard
+              topic={topic}
+              isFollowed={followedTopics.has(topic.topicId)}
+              onFollow={() => {
+                handleFollowTopic(topic.topicId);
+                setFeedbackTopicId(topic.topicId);
+              }}
+              onNavigate={() => {
+                handleNavigateToTopic(topic.topicId);
+                setFeedbackTopicId(topic.topicId);
+              }}
+            />
+            {feedbackTopicId === topic.topicId && (
+              <div className="mt-2">
+                <TopicRecommendationFeedback
+                  userId={userId}
+                  topicId={topic.topicId}
+                  topicName={topic.topicName}
+                  onDismiss={() => setFeedbackTopicId(null)}
+                />
+              </div>
+            )}
+          </div>
         ))}
       </div>
 

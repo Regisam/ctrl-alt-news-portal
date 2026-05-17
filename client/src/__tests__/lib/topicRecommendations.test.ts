@@ -356,45 +356,147 @@ describe('TopicRecommender', () => {
 });
 
 describe('handleColdStartTopics', () => {
-  it('should return trending topics for new users', () => {
-    const trendingTopics = ['ai', 'science', 'robotics', 'tech', 'health'];
-    const topicNames = new Map([
-      ['ai', 'Artificial Intelligence'],
-      ['science', 'Science'],
-      ['robotics', 'Robotics'],
-      ['tech', 'Technology'],
-      ['health', 'Health'],
-    ]);
+  // AC3.4: Tests verify cold-start produces diverse topics
+  it('should return 2 popular + 3 serendipitous topics', () => {
+    const topicsData = [
+      {
+        topicId: 'ai',
+        topicName: 'AI',
+        articleCount: 100,
+        embedding: [1, 0, 0, 0, 0],
+      },
+      {
+        topicId: 'science',
+        topicName: 'Science',
+        articleCount: 80,
+        embedding: [0, 1, 0, 0, 0],
+      },
+      {
+        topicId: 'robotics',
+        topicName: 'Robotics',
+        articleCount: 60,
+        embedding: [0.8, 0.2, 0, 0, 0],
+      },
+      {
+        topicId: 'tech',
+        topicName: 'Tech',
+        articleCount: 40,
+        embedding: [0, 0, 1, 0, 0],
+      },
+      {
+        topicId: 'health',
+        topicName: 'Health',
+        articleCount: 20,
+        embedding: [0, 0, 0, 1, 0],
+      },
+    ];
 
-    const recommendations = handleColdStartTopics(trendingTopics, topicNames);
+    const recommendations = handleColdStartTopics(topicsData);
 
-    expect(recommendations.length).toBeGreaterThan(0);
-    expect(recommendations.length).toBeLessThanOrEqual(4); // 3 trending + 1 serendipitous
+    expect(recommendations.length).toBe(5); // 2 popular + 3 serendipitous
+    const popularCount = recommendations.filter((r) => r.reason.startsWith('Popular')).length;
+    const serendipitousCount = recommendations.filter((r) => r.reason.includes('Discover')).length;
+
+    expect(popularCount).toBe(2);
+    expect(serendipitousCount).toBe(3);
   });
 
-  it('should include at least 3 trending topics', () => {
-    const trendingTopics = ['ai', 'science', 'robotics', 'tech'];
-    const topicNames = new Map([
-      ['ai', 'AI'],
-      ['science', 'Science'],
-      ['robotics', 'Robotics'],
-      ['tech', 'Tech'],
-    ]);
+  it('should select top 2 by article count as popular', () => {
+    const topicsData = [
+      { topicId: 'ai', topicName: 'AI', articleCount: 100, embedding: [1, 0, 0, 0, 0] },
+      { topicId: 'science', topicName: 'Science', articleCount: 80, embedding: [0, 1, 0, 0, 0] },
+      { topicId: 'robotics', topicName: 'Robotics', articleCount: 60, embedding: [0.8, 0.2, 0, 0, 0] },
+    ];
 
-    const recommendations = handleColdStartTopics(trendingTopics, topicNames);
-    const trendingCount = recommendations.filter((r) => r.reason === 'Trending topic').length;
+    const recommendations = handleColdStartTopics(topicsData);
+    const popular = recommendations.filter((r) => r.reason.startsWith('Popular'));
 
-    expect(trendingCount).toBeGreaterThanOrEqual(3);
+    expect(popular.length).toBe(2);
+    expect(popular.some((r) => r.topicId === 'ai')).toBe(true);
+    expect(popular.some((r) => r.topicId === 'science')).toBe(true);
   });
 
-  it('should handle small trending list', () => {
-    const trendingTopics = ['ai'];
-    const topicNames = new Map([['ai', 'AI']]);
+  it('should select serendipitous topics with high embedding distance from popular', () => {
+    const topicsData = [
+      { topicId: 'ai', topicName: 'AI', articleCount: 100, embedding: [1, 0, 0, 0, 0] },
+      { topicId: 'science', topicName: 'Science', articleCount: 80, embedding: [0.9, 0.1, 0, 0, 0] },
+      { topicId: 'health', topicName: 'Health', articleCount: 50, embedding: [0, 0, 1, 0, 0] },
+      { topicId: 'robotics', topicName: 'Robotics', articleCount: 40, embedding: [0, 0, 0, 1, 0] },
+      { topicId: 'art', topicName: 'Art', articleCount: 30, embedding: [0, 0, 0, 0, 1] },
+    ];
 
-    const recommendations = handleColdStartTopics(trendingTopics, topicNames);
+    const recommendations = handleColdStartTopics(topicsData);
+    const serendipitous = recommendations.filter((r) => r.reason.includes('Discover'));
 
-    expect(recommendations.length).toBeGreaterThan(0);
+    expect(serendipitous.length).toBe(3);
+    // Serendipitous should exclude the top 2 popular
+    expect(serendipitous.every((r) => r.topicId !== 'ai' && r.topicId !== 'science')).toBe(true);
+  });
+
+  it('should handle small topic list', () => {
+    const topicsData = [
+      { topicId: 'ai', topicName: 'AI', articleCount: 100, embedding: [1, 0, 0, 0, 0] },
+    ];
+
+    const recommendations = handleColdStartTopics(topicsData);
+
+    expect(recommendations.length).toBe(1); // 1 popular, 0 serendipitous (not enough topics)
     expect(recommendations[0].topicId).toBe('ai');
+  });
+
+  it('should produce diverse topics (high embedding distance)', () => {
+    const topicsData = [
+      { topicId: 'ai', topicName: 'AI', articleCount: 100, embedding: [1, 0, 0, 0, 0] },
+      { topicId: 'science', topicName: 'Science', articleCount: 90, embedding: [0.95, 0.05, 0, 0, 0] },
+      { topicId: 'health', topicName: 'Health', articleCount: 80, embedding: [0, 1, 0, 0, 0] },
+      { topicId: 'sports', topicName: 'Sports', articleCount: 70, embedding: [0, 0, 1, 0, 0] },
+      { topicId: 'art', topicName: 'Art', articleCount: 60, embedding: [0, 0, 0, 1, 0] },
+    ];
+
+    const topicEmbeddings = new Map([
+      ['ai', [1, 0, 0, 0, 0]],
+      ['science', [0.95, 0.05, 0, 0, 0]],
+      ['health', [0, 1, 0, 0, 0]],
+      ['sports', [0, 0, 1, 0, 0]],
+      ['art', [0, 0, 0, 1, 0]],
+    ]);
+
+    const recommendations = handleColdStartTopics(topicsData, topicEmbeddings);
+
+    // Verify serendipitous topics are more different from popular
+    const serendipitous = recommendations.filter((r) => r.reason.includes('Discover'));
+    const popular = recommendations.filter((r) => r.reason.startsWith('Popular'));
+
+    // Serendipitous should have lower similarity scores than popular
+    const avgSerendipitousSimilarity =
+      serendipitous.reduce((sum, r) => sum + r.similarityScore, 0) / serendipitous.length;
+    const avgPopularSimilarity =
+      popular.reduce((sum, r) => sum + r.similarityScore, 0) / popular.length;
+
+    expect(avgSerendipitousSimilarity).toBeLessThan(avgPopularSimilarity);
+  });
+
+  it('should return empty list for empty input', () => {
+    const recommendations = handleColdStartTopics([]);
+    expect(recommendations).toEqual([]);
+  });
+
+  it('should use random seed for consistent topic selection', () => {
+    const topicsData = [
+      { topicId: 'ai', topicName: 'AI', articleCount: 100, embedding: [1, 0, 0, 0, 0] },
+      { topicId: 'science', topicName: 'Science', articleCount: 80, embedding: [0, 1, 0, 0, 0] },
+      { topicId: 'robotics', topicName: 'Robotics', articleCount: 60, embedding: [0.8, 0.2, 0, 0, 0] },
+      { topicId: 'health', topicName: 'Health', articleCount: 50, embedding: [0, 0, 1, 0, 0] },
+      { topicId: 'sports', topicName: 'Sports', articleCount: 40, embedding: [0, 0, 0, 1, 0] },
+      { topicId: 'art', topicName: 'Art', articleCount: 30, embedding: [0, 0, 0, 0, 1] },
+    ];
+
+    const seed = 'user-123';
+    const recs1 = handleColdStartTopics(topicsData, new Map(), seed);
+    const recs2 = handleColdStartTopics(topicsData, new Map(), seed);
+
+    // Same seed should produce same results
+    expect(recs1.map((r) => r.topicId)).toEqual(recs2.map((r) => r.topicId));
   });
 });
 

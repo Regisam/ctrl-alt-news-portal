@@ -319,42 +319,156 @@ export async function getTopicRecommendations(
   return recommender.rankBySerendipity(input, 5);
 }
 
+export interface ColdStartTopicData {
+  topicId: string;
+  topicName: string;
+  articleCount: number; // trending by articles_count in past week
+  embedding: number[]; // topic embedding vector
+  trendingScore?: number; // optional: normalized trending score
+}
+
 export function handleColdStartTopics(
-  trendingTopics: string[],
-  topicNames: Map<string, string>,
+  topicsData: ColdStartTopicData[],
+  topicEmbeddings: Map<string, number[]> = new Map(),
   randomSeed: string = ''
 ): RecommendedTopic[] {
-  // New users: show top 3 trending + 1 random serendipitous
+  // AC3.1: New users: 2 popular + 3 serendipitous
   const recommendations: RecommendedTopic[] = [];
 
-  for (let i = 0; i < Math.min(3, trendingTopics.length); i++) {
-    const topicId = trendingTopics[i];
+  if (topicsData.length === 0) {
+    return recommendations;
+  }
+
+  // Step 1: Select 2 popular topics (highest article count from past week)
+  // AC3.2: Define "popular": top trending by articles_count in past week
+  const sortedByPopularity = [...topicsData].sort(
+    (a, b) => (b.articleCount || 0) - (a.articleCount || 0)
+  );
+
+  const popularTopics = sortedByPopularity.slice(0, Math.min(2, topicsData.length));
+  for (let i = 0; i < popularTopics.length; i++) {
+    const topic = popularTopics[i];
     recommendations.push({
-      topicId,
-      topicName: topicNames.get(topicId) || topicId,
-      adoptionProbability: 0.8 - i * 0.1,
-      reason: `Trending topic`,
-      similarityScore: 0.5,
-      similarUserCount: 999, // placeholder
+      topicId: topic.topicId,
+      topicName: topic.topicName,
+      adoptionProbability: 0.85 - i * 0.05, // high adoption for popular topics
+      reason: `Popular topic (${topic.articleCount} articles this week)`,
+      similarityScore: 0.8,
+      similarUserCount: topic.articleCount || 0,
     });
   }
 
-  // Add random serendipitous topic
-  if (trendingTopics.length > 3) {
-    const serendipitousIndex = Math.abs(
-      randomSeed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-    ) % trendingTopics.length;
-    const serendipitousTopic = trendingTopics[serendipitousIndex];
+  // Step 2: Select 3 serendipitous topics (high embedding distance from popular topics)
+  // AC3.3: Define "serendipitous": high embedding distance from user's category (popular topics)
+  const serendipitousTopics = selectSerendipitousTopics(
+    topicsData,
+    popularTopics,
+    topicEmbeddings,
+    randomSeed,
+    3
+  );
+
+  for (let i = 0; i < serendipitousTopics.length; i++) {
+    const topic = serendipitousTopics[i];
+    const embedding = topic.embedding || topicEmbeddings.get(topic.topicId) || [];
+    const distance = computeEmbeddingDistance(
+      computeAverageEmbedding(
+        popularTopics.map((t) => t.embedding || topicEmbeddings.get(t.topicId) || [])
+      ),
+      embedding
+    );
 
     recommendations.push({
-      topicId: serendipitousTopic,
-      topicName: topicNames.get(serendipitousTopic) || serendipitousTopic,
-      adoptionProbability: 0.6,
+      topicId: topic.topicId,
+      topicName: topic.topicName,
+      adoptionProbability: 0.6 - i * 0.05, // moderate adoption for serendipitous
       reason: `Discover something new`,
-      similarityScore: 0.3,
+      similarityScore: 1 - distance, // high distance = low similarity (more serendipitous)
       similarUserCount: 0,
     });
   }
 
   return recommendations;
+}
+
+function selectSerendipitousTopics(
+  topicsData: ColdStartTopicData[],
+  popularTopics: ColdStartTopicData[],
+  topicEmbeddings: Map<string, number[]>,
+  randomSeed: string,
+  count: number
+): ColdStartTopicData[] {
+  // Compute average embedding of popular topics
+  const popularEmbedding = computeAverageEmbedding(
+    popularTopics.map((t) => t.embedding || topicEmbeddings.get(t.topicId) || [])
+  );
+
+  // Filter out already selected topics
+  const popularTopicIds = new Set(popularTopics.map((t) => t.topicId));
+  const candidates = topicsData.filter((t) => !popularTopicIds.has(t.topicId));
+
+  // Score by embedding distance from popular topics
+  const scored = candidates.map((topic) => {
+    const embedding = topic.embedding || topicEmbeddings.get(topic.topicId) || [];
+    const distance = computeEmbeddingDistance(popularEmbedding, embedding);
+
+    return {
+      ...topic,
+      distance, // higher = more serendipitous
+      similarityScore: 1 - distance, // for output
+    };
+  });
+
+  // Sort by distance (descending) to get most serendipitous
+  scored.sort((a, b) => (b.distance || 0) - (a.distance || 0));
+
+  // Apply deterministic randomness for consistent selection
+  if (randomSeed && randomSeed.length > 0) {
+    const hash = Math.abs(randomSeed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0));
+    const offset = hash % Math.max(1, scored.length - count);
+    return scored.slice(offset, offset + count);
+  }
+
+  return scored.slice(0, Math.min(count, scored.length));
+}
+
+function computeAverageEmbedding(embeddings: number[][]): number[] {
+  if (embeddings.length === 0) return [];
+
+  const dimension = embeddings[0]?.length || 5;
+  const average = new Array(dimension).fill(0);
+
+  for (const embedding of embeddings) {
+    for (let i = 0; i < dimension && i < embedding.length; i++) {
+      average[i] += embedding[i];
+    }
+  }
+
+  for (let i = 0; i < average.length; i++) {
+    average[i] /= embeddings.length;
+  }
+
+  return average;
+}
+
+function computeEmbeddingDistance(embed1: number[], embed2: number[]): number {
+  // Use (1 - cosine_similarity) / 2 to normalize to [0, 1]
+  if (embed1.length === 0 || embed2.length === 0) return 0.5;
+
+  let dotProduct = 0;
+  let norm1 = 0;
+  let norm2 = 0;
+  const minLen = Math.min(embed1.length, embed2.length);
+
+  for (let i = 0; i < minLen; i++) {
+    dotProduct += embed1[i] * embed2[i];
+    norm1 += embed1[i] * embed1[i];
+    norm2 += embed2[i] * embed2[i];
+  }
+
+  const denominator = Math.sqrt(norm1) * Math.sqrt(norm2);
+  const similarity = denominator === 0 ? 0 : dotProduct / denominator;
+
+  // Map similarity (-1 to 1) to distance (0 to 1)
+  return (1 - similarity) / 2;
 }
