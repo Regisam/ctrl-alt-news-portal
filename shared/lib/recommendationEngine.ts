@@ -387,6 +387,13 @@ export async function rankArticlesWithSerendipityIntegration(
     return rankArticles(articles, userHistory, clickModel, cache, config);
   }
 
+  // Validate serendipity weight is in [0, 1]
+  if (config.serendipity_weight < 0 || config.serendipity_weight > 1) {
+    throw new Error(
+      `Invalid serendipity_weight: ${config.serendipity_weight}. Must be in [0, 1]. Using clamped value.`
+    );
+  }
+
   // Step 1: Get click predictions for all articles (same as standard ranking)
   const predictions = new Map<string, ClickPrediction>();
 
@@ -423,10 +430,21 @@ export async function rankArticlesWithSerendipityIntegration(
   };
 
   // Prepare articles with click-prediction scores for serendipity blending
-  const articlesWithClickScores = articles.map(a => ({
-    ...a,
-    clickPredictionScore: predictions.get(a.articleId)?.clickProbability ?? 0.5,
-  }));
+  const articlesWithClickScores = articles.map(a => {
+    const score = predictions.get(a.articleId)?.clickProbability ?? 0.5;
+
+    // Log if using default score (missing prediction)
+    if (!predictions.has(a.articleId)) {
+      console.warn(
+        `[Serendipity] Missing click-prediction score for article ${a.articleId}. Using default 0.5.`
+      );
+    }
+
+    return {
+      ...a,
+      clickPredictionScore: score,
+    };
+  });
 
   // Get serendipity ranking (blends click + serendipity)
   const serendipityRanked = serendipityRanking(

@@ -82,6 +82,7 @@ export {
   isUserEligibleForSerendipity,
   assignUserToVariant,
   getSerendipityWeightForUser,
+  validateABTestConfig,
   SerendipityAnalyticsEvent,
   SerendipityAnalytics,
   serendipityAnalytics,

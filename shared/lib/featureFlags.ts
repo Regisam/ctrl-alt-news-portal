@@ -191,6 +191,44 @@ export function getSerendipityWeightForUser(
 }
 
 /**
+ * Validate A/B test configuration
+ * Ensures control/treatment weights are in [0, 1] and percentages sum correctly
+ *
+ * @param test A/B test configuration to validate
+ * @throws Error if configuration is invalid
+ */
+export function validateABTestConfig(test: SerendipityABTest): void {
+  if (test.controlWeight < 0 || test.controlWeight > 1) {
+    throw new Error(`Invalid controlWeight: ${test.controlWeight}. Must be in [0, 1].`);
+  }
+
+  if (test.treatmentWeight < 0 || test.treatmentWeight > 1) {
+    throw new Error(`Invalid treatmentWeight: ${test.treatmentWeight}. Must be in [0, 1].`);
+  }
+
+  if (test.controlPercentage < 0 || test.controlPercentage > 100) {
+    throw new Error(`Invalid controlPercentage: ${test.controlPercentage}. Must be in [0, 100].`);
+  }
+
+  if (test.treatmentPercentage < 0 || test.treatmentPercentage > 100) {
+    throw new Error(`Invalid treatmentPercentage: ${test.treatmentPercentage}. Must be in [0, 100].`);
+  }
+
+  const totalPercentage = test.controlPercentage + test.treatmentPercentage;
+  if (totalPercentage > 100) {
+    throw new Error(
+      `Control + treatment percentages exceed 100: ${totalPercentage}%. Control: ${test.controlPercentage}%, Treatment: ${test.treatmentPercentage}%.`
+    );
+  }
+
+  if (test.startDate >= test.endDate) {
+    throw new Error(
+      `Invalid test dates: startDate (${test.startDate}) must be before endDate (${test.endDate}).`
+    );
+  }
+}
+
+/**
  * Simple hash function for user ID bucketing
  * Deterministic: same userId always maps to same bucket
  *
