@@ -6,22 +6,51 @@
  *
  * Usage:
  *   SLACK_BOT_TOKEN=xoxb-... node post-story-13-6-approvals.js
+ *   node post-story-13-6-approvals.js --mock    (test locally, no Slack)
+ *   node post-story-13-6-approvals.js --file    (save to file)
  *
  * Requires:
- *   - npm install @slack/web-api
- *   - SLACK_BOT_TOKEN environment variable
+ *   - npm install @slack/web-api (unless using --mock)
+ *   - SLACK_BOT_TOKEN environment variable (unless using --mock)
  */
 
-const { WebClient } = require('@slack/web-api');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Validate environment
-if (!process.env.SLACK_BOT_TOKEN) {
-  console.error('❌ ERROR: SLACK_BOT_TOKEN not set');
-  console.error('Usage: SLACK_BOT_TOKEN=xoxb-... node post-story-13-6-approvals.js');
-  process.exit(1);
+// Get __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Parse arguments
+const args = process.argv.slice(2);
+const isMock = args.includes('--mock');
+const isSaveFile = args.includes('--file');
+
+// Lazy load Slack client only if needed
+let WebClient;
+let slack;
+
+if (!isMock && !isSaveFile) {
+  try {
+    const slackModule = await import('@slack/web-api');
+    WebClient = slackModule.WebClient;
+  } catch (e) {
+    console.error('❌ ERROR: @slack/web-api not installed');
+    console.error('Run: npm install @slack/web-api');
+    process.exit(1);
+  }
+
+  // Validate environment (only if not mock mode)
+  if (!process.env.SLACK_BOT_TOKEN) {
+    console.error('❌ ERROR: SLACK_BOT_TOKEN not set');
+    console.error('Usage: SLACK_BOT_TOKEN=xoxb-... node post-story-13-6-approvals.js');
+    console.error('Or use: node post-story-13-6-approvals.js --mock (test locally)');
+    process.exit(1);
+  }
+
+  slack = new WebClient(process.env.SLACK_BOT_TOKEN);
 }
-
-const slack = new WebClient(process.env.SLACK_BOT_TOKEN);
 
 // Message templates
 const messages = {
@@ -187,8 +216,36 @@ const messages = {
   },
 };
 
-// Send message helper
-async function sendMessage(channelOrUser, messageConfig, isMention = false) {
+// Mock mode: simulate sending
+function mockSendMessage(channelOrUser, messageConfig, isMention = false) {
+  const userText = isMention ? `@${channelOrUser}` : channelOrUser;
+  const textContent = messageConfig.text || (messageConfig.blocks && messageConfig.blocks[0]?.text?.text) || 'Message';
+
+  console.log(`\n📱 [MOCK] Message to ${userText}:`);
+  console.log(`   ${textContent.substring(0, 80)}...`);
+  console.log(`   ✅ Would send (${messageConfig.blocks ? messageConfig.blocks.length : 1} blocks)`);
+
+  return Promise.resolve({ ok: true, ts: 'mock-ts' });
+}
+
+// File mode: save to file
+const allMessages = [];
+
+function fileSendMessage(channelOrUser, messageConfig, isMention = false) {
+  const userText = isMention ? `@${channelOrUser}` : channelOrUser;
+
+  allMessages.push({
+    channel: userText,
+    message: messageConfig,
+    timestamp: new Date().toISOString(),
+  });
+
+  console.log(`📄 Message saved for: ${userText}`);
+  return Promise.resolve({ ok: true, ts: 'file-ts' });
+}
+
+// Real Slack mode: send via API
+async function slackSendMessage(channelOrUser, messageConfig, isMention = false) {
   try {
     const result = await slack.chat.postMessage({
       channel: channelOrUser,
@@ -212,9 +269,19 @@ async function sendMessage(channelOrUser, messageConfig, isMention = false) {
   }
 }
 
+// Select appropriate send function
+const sendMessage = isMock ? mockSendMessage : (isSaveFile ? fileSendMessage : slackSendMessage);
+
 // Main execution
 async function main() {
-  console.log('\n📱 Story 13.6: Sending Slack Notifications...\n');
+  // Print mode
+  if (isMock) {
+    console.log('\n🎭 MOCK MODE: Testing locally (no Slack connection)\n');
+  } else if (isSaveFile) {
+    console.log('\n📄 FILE MODE: Saving messages to JSON\n');
+  } else {
+    console.log('\n📱 Story 13.6: Sending Slack Notifications via API...\n');
+  }
 
   try {
     // 1. Send general message to channel
@@ -237,16 +304,33 @@ async function main() {
     console.log('📤 [5/5] Sending approval reminder to @dev (Dex)...');
     await sendMessage('@dev', messages.devApproval, true);
 
-    console.log('\n✅ All notifications sent successfully!\n');
-    console.log('📊 Status:');
-    console.log('   ✅ #serendipity-alerts: General announcement + mentions');
-    console.log('   ✅ @devops: Full briefing + templates');
-    console.log('   ✅ @qa: Approval checklist');
-    console.log('   ✅ @pm: Approval checklist');
-    console.log('   ✅ @dev: Approval checklist');
-    console.log('\n🎯 Next step: Monitor approvals (deadline 2026-05-18 EOD)\n');
+    console.log('\n✅ All notifications processed successfully!\n');
+
+    if (isMock) {
+      console.log('🎭 Mock mode complete! All messages would be sent to Slack exactly like this.\n');
+      console.log('Ready to send for real? Get Slack Bot Token at https://api.slack.com/apps\n');
+      console.log('Then run:\n');
+      console.log('  SLACK_BOT_TOKEN=xoxb-YOUR-TOKEN node scripts/post-story-13-6-approvals.js\n');
+    } else if (isSaveFile) {
+      // Save to file
+      const outputFile = path.join(__dirname, '../docs/stories/13.6-slack-messages.json');
+      fs.writeFileSync(outputFile, JSON.stringify(allMessages, null, 2));
+      console.log(`📄 Messages saved to: ${outputFile}\n`);
+      console.log('You can now:\n');
+      console.log('  1. Review the JSON file');
+      console.log('  2. Copy/paste messages manually to Slack');
+      console.log('  3. Or run with Slack API when ready\n');
+    } else {
+      console.log('📊 Status:');
+      console.log('   ✅ #serendipity-alerts: General announcement + mentions');
+      console.log('   ✅ @devops: Full briefing + templates');
+      console.log('   ✅ @qa: Approval checklist');
+      console.log('   ✅ @pm: Approval checklist');
+      console.log('   ✅ @dev: Approval checklist');
+      console.log('\n🎯 Next step: Monitor approvals (deadline 2026-05-18 EOD)\n');
+    }
   } catch (error) {
-    console.error('\n❌ Notification send failed:', error.message);
+    console.error('\n❌ Process failed:', error.message);
     process.exit(1);
   }
 }
