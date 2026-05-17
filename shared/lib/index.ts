@@ -23,7 +23,7 @@ export {
 } from './clickPredictionModel';
 
 // ============================================================================
-// Recommendation Engine Integration (Story 13.5)
+// Recommendation Engine Integration (Story 13.5 + 13.6)
 // ============================================================================
 export {
   ArticleForRanking,
@@ -38,4 +38,33 @@ export {
   generateRankingExplanation,
   PerformanceMetrics,
   rankArticlesWithMonitoring,
+  IntegrationConfigWithSerendipity,
+  getDefaultConfigWithSerendipity,
+  rankArticlesWithSerendipityIntegration,
+  rankArticlesWithSerendipityForUsers,
 } from './recommendationEngine';
+
+// ============================================================================
+// Serendipity Scoring Engine (Story 13.6)
+// ============================================================================
+export {
+  SerendipityInput,
+  ArticleFeature,
+  SerendipityRanking,
+  TopicEmbeddings,
+  CollaborativeContext,
+  SerendipityThresholds,
+  DiversityConstraint,
+  DEFAULT_SERENDIPITY_THRESHOLDS,
+  DEFAULT_DIVERSITY_CONSTRAINT,
+  cosineSimilarity,
+  computeTopicDistance,
+  computeCollaborativeNovelty,
+  blendSerendipityScore,
+  SerendipityScorer,
+  ArticleForRanking as ArticleForRankingSerendipity,
+  RankedArticleWithSerendipity,
+  rankArticlesWithSerendipity,
+  predictForNewUser as predictForNewUserSerendipity,
+  predictForNewArticle as predictForNewArticleSerendipity,
+} from './serendipityScorer';

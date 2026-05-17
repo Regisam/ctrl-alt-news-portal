@@ -10,6 +10,14 @@ import {
   ClickPrediction,
 } from './clickPredictionModel';
 
+import {
+  SerendipityScorer,
+  rankArticlesWithSerendipity as serendipityRanking,
+  RankedArticleWithSerendipity,
+  SerendipityInput,
+  CollaborativeContext,
+} from './serendipityScorer';
+
 /**
  * Article features for ranking
  */
@@ -317,4 +325,179 @@ export async function rankArticlesWithMonitoring(
       avgFinalScore,
     },
   };
+}
+
+// ============================================================================
+// Task 2.2: Serendipity Integration (Story 13.6)
+// ============================================================================
+
+/**
+ * Extended integration config with serendipity support
+ */
+export interface IntegrationConfigWithSerendipity extends IntegrationConfig {
+  serendipity_weight: number; // [0, 1] - weight for serendipity blending (default: 0.0)
+  serendipity_enabled: boolean; // Feature flag for serendipity
+}
+
+/**
+ * Get default config with serendipity disabled
+ */
+export function getDefaultConfigWithSerendipity(): IntegrationConfigWithSerendipity {
+  return {
+    ...getDefaultIntegrationConfig(),
+    serendipity_weight: 0.0,
+    serendipity_enabled: false,
+  };
+}
+
+/**
+ * Rank articles with optional serendipity blending
+ *
+ * Subtask 2.2.1-2.2.3: Main integration function
+ * - Combines click predictions (Story 13.5) with serendipity (Story 13.6)
+ * - Provides explanations for both click and serendipity scores
+ * - Supports dynamic blending via serendipity_weight parameter
+ *
+ * @param articles Articles to rank with click-prediction scores
+ * @param userHistory User engagement history
+ * @param clickModel Click prediction neural model
+ * @param serendipityScorer Initialized serendipity scorer
+ * @param userPrimaryTopics User's primary topics (for serendipity)
+ * @param collaborativeContext Similar users context (for serendipity)
+ * @param cache Optional prediction cache
+ * @param config Integration config including serendipity_weight
+ * @returns Ranked articles with blended scores and explanations
+ */
+export async function rankArticlesWithSerendipityIntegration(
+  articles: ArticleForRanking[],
+  userHistory: UserEngagementHistory,
+  clickModel: ClickPredictionModel,
+  serendipityScorer: SerendipityScorer,
+  userPrimaryTopics: string[],
+  collaborativeContext: CollaborativeContext,
+  cache?: ClickPredictionCache,
+  config: IntegrationConfigWithSerendipity = getDefaultConfigWithSerendipity()
+): Promise<RankedArticleWithClickPrediction[]> {
+  if (articles.length === 0) {
+    return [];
+  }
+
+  // If serendipity is disabled, use standard ranking
+  if (!config.serendipity_enabled || config.serendipity_weight === 0) {
+    return rankArticles(articles, userHistory, clickModel, cache, config);
+  }
+
+  // Step 1: Get click predictions for all articles (same as standard ranking)
+  const predictions = new Map<string, ClickPrediction>();
+
+  for (const article of articles) {
+    const cacheKey = cache ? cache.getCacheKey(userHistory.userId, article.articleId) : null;
+
+    let prediction: ClickPrediction | null = null;
+
+    // Try cache first if enabled
+    if (config.useCache && cache && cacheKey) {
+      prediction = cache.get(cacheKey);
+    }
+
+    // If not in cache, generate prediction
+    if (!prediction) {
+      prediction = clickModel.predict(userHistory, article.embedding, article.topic);
+      prediction.articleId = article.articleId;
+
+      // Store in cache if enabled
+      if (config.useCache && cache && cacheKey) {
+        cache.set(cacheKey, prediction);
+      }
+    }
+
+    predictions.set(article.articleId, prediction);
+  }
+
+  // Step 2: Use serendipity ranking for blending
+  const serendipityInput: SerendipityInput = {
+    userId: userHistory.userId,
+    userPrimaryTopics,
+    userReadHistory: new Set(userHistory.engagedArticles.map(a => a.articleId)),
+    candidateArticles: articles,
+  };
+
+  // Prepare articles with click-prediction scores for serendipity blending
+  const articlesWithClickScores = articles.map(a => ({
+    ...a,
+    clickPredictionScore: predictions.get(a.articleId)?.clickProbability ?? 0.5,
+  }));
+
+  // Get serendipity ranking (blends click + serendipity)
+  const serendipityRanked = serendipityRanking(
+    articlesWithClickScores,
+    serendipityInput,
+    collaborativeContext,
+    serendipityScorer,
+    config.serendipity_weight
+  );
+
+  // Step 3: Convert serendipity results back to standard format with enhanced explanations
+  const ranked: RankedArticleWithClickPrediction[] = serendipityRanked.map((sr) => {
+    const article = articles.find(a => a.articleId === sr.articleId)!;
+    const prediction = predictions.get(sr.articleId)!;
+
+    return {
+      articleId: sr.articleId,
+      title: article.title,
+      topic: sr.topic,
+      embedding: article.embedding,
+      hybridScore: sr.clickPredictionScore,
+      clickProbability: sr.clickPredictionScore,
+      finalScore: sr.finalScore,
+      explanation: {
+        hybridReasoning: `Click prediction: ${sr.clickPredictionScore.toFixed(3)} (${(sr.clickPredictionScore * 100).toFixed(1)}%)`,
+        clickReasoning: `Serendipity score: ${sr.serendipityScore.toFixed(3)} (${(sr.serendipityScore * 100).toFixed(1)}%)`,
+        influentialPastArticles: sr.explanation?.topInfluentialArticles ?? [],
+      },
+    };
+  });
+
+  return ranked;
+}
+
+/**
+ * Batch rank articles with serendipity for multiple users
+ */
+export async function rankArticlesWithSerendipityForUsers(
+  articles: ArticleForRanking[],
+  userHistories: Map<string, UserEngagementHistory>,
+  userTopics: Map<string, string[]>, // userId -> primary topics
+  collaborativeContexts: Map<string, CollaborativeContext>, // userId -> context
+  clickModel: ClickPredictionModel,
+  serendipityScorer: SerendipityScorer,
+  cache?: ClickPredictionCache,
+  config: IntegrationConfigWithSerendipity = getDefaultConfigWithSerendipity()
+): Promise<Map<string, RankedArticleWithClickPrediction[]>> {
+  const results = new Map<string, RankedArticleWithClickPrediction[]>();
+
+  for (const [userId, history] of userHistories) {
+    const topics = userTopics.get(userId) ?? [];
+    const collaborativeContext = collaborativeContexts.get(userId) ?? {
+      userId,
+      similarUsers: [],
+      similarUserReadHistories: new Map(),
+      similarityScores: new Map(),
+    };
+
+    const ranked = await rankArticlesWithSerendipityIntegration(
+      articles,
+      history,
+      clickModel,
+      serendipityScorer,
+      topics,
+      collaborativeContext,
+      cache,
+      config
+    );
+
+    results.set(userId, ranked);
+  }
+
+  return results;
 }
