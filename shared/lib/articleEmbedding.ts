@@ -95,7 +95,6 @@ export interface TrainingSample {
 const DEFAULT_VOCAB_SIZE = 5000; // Vocabulary for text encoding
 const OOV_TOKEN = '<OOV>'; // Out-of-vocabulary token
 const PAD_TOKEN = '<PAD>';
-const UNK_EMBEDDING_DIM = 128; // Fallback embedding for unknown tokens
 
 /**
  * Simple vocabulary builder for text encoding
@@ -304,12 +303,12 @@ export class EmbeddingEncoder {
     textVector = this.relu(this.matVecMul(this.weights.textDense2, textVector));
 
     // 2. Metadata encoding pathway
-    let metadataVector = this.relu(
+    const metadataVector = this.relu(
       this.matVecMul(this.weights.metadataDense, metadataEncoding.map(x => x / 100))
     );
 
     // 3. Engagement encoding pathway
-    let engagementVector = this.relu(
+    const engagementVector = this.relu(
       this.matVecMul(this.weights.engagementDense, engagementEncoding)
     );
 
@@ -968,17 +967,14 @@ export function generateTuningReport(
   benchmarks: DimensionalityBenchmark[],
   latencyTargetMs: number = 10.0
 ): DimensionalityTuningReport {
-  const { optimal, candidates } = findOptimalDimensionality(benchmarks, latencyTargetMs);
+  const { optimal } = findOptimalDimensionality(benchmarks, latencyTargetMs);
 
-  let recommendation = '';
-  if (optimal.meetsLatencyTarget) {
-    recommendation = `Optimal: ${optimal.dimensionality}D (${optimal.p95InferenceTimeMs.toFixed(2)}ms @ p95). ` +
-      `Quality: Higher dimension = richer embeddings. Speed: Meets <10ms target.`;
-  } else {
-    recommendation = `Warning: No dimension meets <10ms target. ` +
+  const recommendation = optimal.meetsLatencyTarget
+    ? `Optimal: ${optimal.dimensionality}D (${optimal.p95InferenceTimeMs.toFixed(2)}ms @ p95). ` +
+      `Quality: Higher dimension = richer embeddings. Speed: Meets <10ms target.`
+    : `Warning: No dimension meets <10ms target. ` +
       `Best achievable: ${optimal.dimensionality}D (${optimal.p95InferenceTimeMs.toFixed(2)}ms @ p95). ` +
       `Recommendation: Optimize encoding pipeline or accept higher latency.`;
-  }
 
   return {
     benchmarks,
@@ -1026,27 +1022,6 @@ function clusterEmbeddingsByTopic(
   return clusters;
 }
 
-/**
- * Calculate intra-cluster distance (average distance within cluster)
- */
-function intraClusterDistance(clusterEmbeddings: ArticleEmbedding[]): number {
-  if (clusterEmbeddings.length <= 1) return 0;
-
-  let totalDistance = 0;
-  let count = 0;
-
-  for (let i = 0; i < clusterEmbeddings.length; i++) {
-    for (let j = i + 1; j < clusterEmbeddings.length; j++) {
-      totalDistance += euclideanDistance(
-        clusterEmbeddings[i].embedding,
-        clusterEmbeddings[j].embedding
-      );
-      count++;
-    }
-  }
-
-  return count > 0 ? totalDistance / count : 0;
-}
 
 /**
  * Calculate cluster center (centroid)
@@ -1364,20 +1339,6 @@ function computeLowDimSimilarities(Y: number[][]): number[][] {
   return Q;
 }
 
-/**
- * Compute KL divergence: Σ_ij P_ij * log(P_ij / Q_ij)
- */
-function computeKLDivergence(P: number[][], Q: number[][]): number {
-  let kl = 0;
-  for (let i = 0; i < P.length; i++) {
-    for (let j = 0; j < P[i].length; j++) {
-      if (P[i][j] > 0 && Q[i][j] > 0) {
-        kl += P[i][j] * Math.log(P[i][j] / Q[i][j]);
-      }
-    }
-  }
-  return kl;
-}
 
 /**
  * Compute gradient of KL divergence w.r.t. Y
@@ -1799,7 +1760,10 @@ export function loadModelFromJSON(jsonString: string): EmbeddingModel {
     const parsed = JSON.parse(jsonString) as SerializedEmbeddingModel;
     return deserializeEmbeddingModel(parsed);
   } catch (error) {
-    throw new Error(`Failed to load model from JSON: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to load model from JSON: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      { cause: error }
+    );
   }
 }
 
@@ -1928,8 +1892,8 @@ export function handleOutOfVocabularyTokens(
  */
 export function encodeColdStartArticle(
   article: ArticleFeatures,
-  encoder: EmbeddingEncoder,
-  minEngagementThreshold: number = 0
+  encoder: EmbeddingEncoder
+  // minEngagementThreshold parameter reserved for future use (cold-start threshold implementation)
 ): ArticleEmbedding {
   // For cold-start: use only content features (title, summary, tags, topic)
   // Ignore or weight down engagement-based features
@@ -1967,8 +1931,8 @@ export interface EdgeCaseValidationResult {
 export function validateEdgeCaseHandling(
   articles: ArticleFeatures[],
   embeddings: ArticleEmbedding[],
-  tokenEmbeddings: Map<string, number[]>,
-  engagementThreshold: number = 1 // Articles with <= 1 engagement signal are "sparse"
+  tokenEmbeddings: Map<string, number[]>
+  // engagementThreshold parameter reserved for future use (sparse engagement filtering)
 ): EdgeCaseValidationResult {
   // Count different edge case categories
   let coldStartCount = 0;
@@ -1976,7 +1940,6 @@ export function validateEdgeCaseHandling(
 
   // Count OOV tokens across all articles
   let totalOOVTokens = 0;
-  let totalTokens = 0;
 
   for (const article of articles) {
     // Check if article is cold-start (no engagement data)
@@ -1998,7 +1961,6 @@ export function validateEdgeCaseHandling(
     const allText = `${article.title} ${article.summary}`;
     const tokens = allText.toLowerCase().split(/\s+/);
     for (const token of tokens) {
-      totalTokens++;
       if (!tokenEmbeddings.has(token)) {
         totalOOVTokens++;
       }
