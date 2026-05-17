@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RecommendationsWidget } from '@/components/RecommendationsWidget';
-import { aiArticles, scienceArticles } from '@/lib/data';
+import { aiArticles } from '@/lib/data';
 import { describe, it, expect } from 'vitest';
 
 describe('RecommendationsWidget component', () => {

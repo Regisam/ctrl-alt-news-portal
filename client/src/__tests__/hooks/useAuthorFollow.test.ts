@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { useAuthorFollow } from '@/hooks/useAuthorFollow';
 import { storageAuthorFollow } from '@/lib/storage';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 describe('useAuthorFollow hook', () => {
   beforeEach(() => {

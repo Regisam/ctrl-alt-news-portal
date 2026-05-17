@@ -21,7 +21,7 @@ const mockArticle: Article = {
 describe("ShareButton", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete (global as any).gtag;
+    delete (global as unknown as { gtag?: unknown }).gtag;
   });
 
   afterEach(() => {

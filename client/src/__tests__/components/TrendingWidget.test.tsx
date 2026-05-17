@@ -1,10 +1,22 @@
 import { render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 import { TrendingWidget } from '@/components/TrendingWidget';
+import type { ReactNode } from 'react';
+
+interface LinkProps {
+  href: string;
+  children: ReactNode;
+  [key: string]: unknown;
+}
+
+interface UseTrendingParams {
+  count?: number;
+  maxCount?: number;
+}
 
 // Mock wouter Link component
 vi.mock('wouter', () => ({
-  Link: ({ href, children, ...props }: any) => (
+  Link: ({ href, children, ...props }: LinkProps) => (
     <a href={href} {...props}>
       {children}
     </a>
@@ -13,7 +25,7 @@ vi.mock('wouter', () => ({
 
 // Mock the useTrending hook
 vi.mock('@/hooks/useTrending', () => ({
-  useTrending: ({ count, maxCount }: any) => {
+  useTrending: ({ count, maxCount }: UseTrendingParams) => {
     const allArticles = [
       {
         id: 1,

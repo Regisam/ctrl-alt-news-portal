@@ -10,7 +10,7 @@ describe('useImageLazyLoading Hook', () => {
       disconnect: vi.fn()
     }));
 
-    global.IntersectionObserver = mockIntersectionObserver as any;
+    global.IntersectionObserver = mockIntersectionObserver as unknown as typeof IntersectionObserver;
   });
 
   it('initializes with isInView false', () => {

@@ -79,8 +79,6 @@ describe('useABTest hook', () => {
       expect(['A', 'B']).toContain(result.current);
     });
 
-    const variant = result.current;
-
     // Disable experiment
     mutableExp.enabled = false;
     rerender();
@@ -92,7 +90,7 @@ describe('useABTest hook', () => {
 
   it('should track variant in GA4 when assigned', async () => {
     const gtag = vi.fn();
-    (window as any).gtag = gtag;
+    (window as unknown as { gtag: typeof gtag }).gtag = gtag;
 
     const { result } = renderHook(() => useABTest(testExperiment, 'user-789'));
 
@@ -139,7 +137,7 @@ describe('useABTests hook', () => {
 
   it('should track all variants in GA4', async () => {
     const gtag = vi.fn();
-    (window as any).gtag = gtag;
+    (window as unknown as { gtag: typeof gtag }).gtag = gtag;
 
     const exp1: ABExperiment = { id: 'exp-1', name: 'Exp 1', enabled: true, variants: ['A', 'B'] };
     const exp2: ABExperiment = { id: 'exp-2', name: 'Exp 2', enabled: true, variants: ['X', 'Y'] };

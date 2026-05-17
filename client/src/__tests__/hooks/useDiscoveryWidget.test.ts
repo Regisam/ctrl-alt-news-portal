@@ -97,7 +97,7 @@ describe('useDiscoveryWidget', () => {
     });
 
     it('should respect cache TTL', async () => {
-      const { result } = renderHook(() => useDiscoveryWidget(userId, 5, 1));
+      renderHook(() => useDiscoveryWidget(userId, 5, 1));
 
       await new Promise((resolve) => setTimeout(resolve, 300));
 
@@ -121,7 +121,6 @@ describe('useDiscoveryWidget', () => {
       const { result } = renderHook(() => useDiscoveryWidget(userId, 5, 60));
 
       await new Promise((resolve) => setTimeout(resolve, 300));
-      const articles1 = result.current.articles;
 
       act(() => {
         result.current.refresh();

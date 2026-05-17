@@ -72,7 +72,7 @@ describe('useIsMobile', () => {
         addListener: vi.fn(),
         removeListener: vi.fn(),
         dispatchEvent: vi.fn(),
-      } as any));
+      } as unknown as MediaQueryList));
 
       const { result } = renderHook(() => useIsMobile());
       expect(result.current).toBe(false);
@@ -80,7 +80,7 @@ describe('useIsMobile', () => {
       // Simulate window resize to mobile
       act(() => {
         window.innerWidth = 640;
-        listeners.forEach(listener => listener({} as any));
+        listeners.forEach(listener => listener({} as unknown as MediaQueryListEvent));
       });
 
       expect(result.current).toBe(true);
@@ -101,7 +101,7 @@ describe('useIsMobile', () => {
         addListener: vi.fn(),
         removeListener: vi.fn(),
         dispatchEvent: vi.fn(),
-      } as any));
+      } as unknown as MediaQueryList));
 
       const { result } = renderHook(() => useIsMobile());
       expect(result.current).toBe(true);
@@ -109,7 +109,7 @@ describe('useIsMobile', () => {
       // Simulate window resize to desktop
       act(() => {
         window.innerWidth = 1024;
-        listeners.forEach(listener => listener({} as any));
+        listeners.forEach(listener => listener({} as unknown as MediaQueryListEvent));
       });
 
       expect(result.current).toBe(false);
@@ -130,7 +130,7 @@ describe('useIsMobile', () => {
         addListener: vi.fn(),
         removeListener: vi.fn(),
         dispatchEvent: vi.fn(),
-      } as any));
+      } as unknown as MediaQueryList));
 
       const { unmount } = renderHook(() => useIsMobile());
       unmount();
@@ -169,7 +169,7 @@ describe('useIsMobile', () => {
         addListener: vi.fn(),
         removeListener: vi.fn(),
         dispatchEvent: vi.fn(),
-      } as any));
+      } as unknown as MediaQueryList));
 
       const { result: result1 } = renderHook(() => useIsMobile());
       const { result: result2 } = renderHook(() => useIsMobile());
@@ -180,7 +180,7 @@ describe('useIsMobile', () => {
       // Change to mobile
       act(() => {
         window.innerWidth = 640;
-        listeners.forEach(listener => listener({} as any));
+        listeners.forEach(listener => listener({} as unknown as MediaQueryListEvent));
       });
 
       expect(result1.current).toBe(true);
