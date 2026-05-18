@@ -269,7 +269,7 @@ export default function TopicRecommendationsMonitoringPage() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis yAxisId="left" />
-              <Tooltip formatter={(value) => `${(value * 100).toFixed(1)}%`} />
+              <Tooltip formatter={(value) => (typeof value === 'number' ? `${(value * 100).toFixed(1)}%` : '')} />
               <Legend />
               {Object.entries(variantLabels).map(([key, label]) => (
                 <Line
