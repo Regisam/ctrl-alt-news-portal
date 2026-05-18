@@ -9,7 +9,7 @@ import {
   httpErrorsTotal,
   activeSessionsGauge,
   articlesViewedTotal,
-} from '../middleware/metricsMiddleware';
+} from '../middleware/metricsMiddleware.js';
 
 describe('Metrics Middleware', () => {
   let app: ReturnType<typeof express>;

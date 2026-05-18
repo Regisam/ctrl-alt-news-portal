@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { FeedStreamService } from '../../services/FeedStreamService';
-import type { FeedDelta } from '../../services/DeltaEncoder';
+import { FeedStreamService } from '../../services/FeedStreamService.js';
+import type { FeedDelta } from '../../services/DeltaEncoder.js';
 
 describe('FeedStreamService', () => {
   let service: FeedStreamService;

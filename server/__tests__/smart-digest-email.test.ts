@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { renderDigestEmail, generateOneTimeToken } from '../services/SmartDigestService';
+import { renderDigestEmail, generateOneTimeToken } from '../services/SmartDigestService.js';
 import { SmartDigestPayload, SmartDigestConfig, DigestArticle } from '../../client/src/lib/smart-digest.types';
 
 describe('SmartDigestService - Email Rendering (Phase 2)', () => {

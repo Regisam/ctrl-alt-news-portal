@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import request from 'supertest';
 import express, { Express } from 'express';
-import digestRouter from '../../api/digest';
-import { digestScheduler } from '../../services/DigestScheduler';
+import digestRouter from '../../api/digest.js';
+import { digestScheduler } from '../../services/DigestScheduler.js';
 import type { SmartDigestConfig } from '@shared/types';
 
 describe('Digest API', () => {

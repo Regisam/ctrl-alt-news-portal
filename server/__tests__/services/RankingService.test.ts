@@ -3,7 +3,7 @@ import {
   RankingService,
   type RankedArticle,
   type UserContext,
-} from '../../services/RankingService';
+} from '../../services/RankingService.js';
 import type { Article } from '@shared/types';
 
 const mockArticles: Article[] = [

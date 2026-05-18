@@ -3,7 +3,7 @@ import {
   handleFeedStream,
   broadcastFeedUpdate,
   feedStreamHealth,
-} from '../../api/feed-stream';
+} from '../../api/feed-stream.js';
 import type { Request, Response } from 'express';
 
 describe('Feed Stream API Endpoints', () => {

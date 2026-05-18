@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { RankingService } from '../../services/RankingService';
+import { RankingService } from '../../services/RankingService.js';
 import type { Article } from '@shared/types';
-import type { UserContext } from '../../services/RankingService';
+import type { UserContext } from '../../services/RankingService.js';
 
 /**
  * Integration tests for hybrid ranking pipeline

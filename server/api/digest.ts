@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
-import { digestScheduler } from '../services/DigestScheduler';
+import { digestScheduler } from '../services/DigestScheduler.js';
 
 const router = Router();
 

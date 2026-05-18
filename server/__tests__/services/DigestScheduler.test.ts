@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { DigestScheduler } from '../../services/DigestScheduler';
+import { DigestScheduler } from '../../services/DigestScheduler.js';
 import type { SmartDigestConfig } from '@shared/types';
 
 describe('DigestScheduler', () => {

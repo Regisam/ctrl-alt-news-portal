@@ -6,8 +6,8 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { FeedStreamService } from '../../services/FeedStreamService';
-import type { FeedDelta } from '../../services/DeltaEncoder';
+import { FeedStreamService } from '../../services/FeedStreamService.js';
+import type { FeedDelta } from '../../services/DeltaEncoder.js';
 
 describe('FeedStreamService Memory Safety — Story 12.6 AC7', () => {
   let service: FeedStreamService;

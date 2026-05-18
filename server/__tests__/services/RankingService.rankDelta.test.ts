@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { RankingService, type RankedArticle, type UserContext } from '../../services/RankingService';
+import { RankingService, type RankedArticle, type UserContext } from '../../services/RankingService.js';
 import type { Article } from '@shared/types';
 
 describe('RankingService.rankDelta — Story 12.6 AC6', () => {

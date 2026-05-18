@@ -4,9 +4,9 @@
  * Scheduled for Sunday 2 AM UTC (off-peak)
  */
 
-import { computeSimilarityMatrix, computeSimilarityMetrics } from '../../shared/lib/userSimilarity';
+import { computeSimilarityMatrix, computeSimilarityMetrics } from '../../shared/lib/userSimilarity.js';
 import { UserEngagementVector } from '../../shared/lib/engagementVectors';
-import { logger } from '../logger';
+import { logger } from '../logger.js';
 
 export interface BatchJobResult {
   success: boolean;

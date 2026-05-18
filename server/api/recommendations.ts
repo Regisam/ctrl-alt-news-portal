@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import type { Article } from '@shared/types';
-import { RankingService } from '../services/RankingService';
+import { RankingService } from '../services/RankingService.js';
 
 interface HybridRecommendationRequest {
   userId: string;

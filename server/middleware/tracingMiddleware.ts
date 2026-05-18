@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { trace, context } from '@opentelemetry/api';
-import { getTracer, getOrGenerateRequestId } from '../tracing';
+import { getTracer, getOrGenerateRequestId } from '../tracing.js';
 
 const tracer = getTracer();
 

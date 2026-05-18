@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { logger } from '../logger';
+import { logger } from '../logger.js';
 import fs from 'fs';
 import path from 'path';
 

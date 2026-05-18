@@ -36,68 +36,43 @@ export default function TopicRecommendationsMonitoringPage() {
     return { start: sevenDaysAgo, end: today };
   });
 
-  // Generate mock daily data once on mount
-  const [dailyDataMock] = useState(() => {
-    const days = [];
-    const start = new Date(dateRange.start);
-    const end = new Date(dateRange.end);
-
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      days.push({
-        date: d.toISOString().split('T')[0],
-        'Control (Baseline)': 0.12 + Math.random() * 0.04,
-        'High Serendipity': 0.15 + Math.random() * 0.06,
-        Balanced: 0.14 + Math.random() * 0.04,
-        Safe: 0.10 + Math.random() * 0.04,
-      });
-    }
-    return days;
-  });
-
-  // Mock data for demonstration
-  const mockMetrics: Record<SerendipityVariant, VariantMetrics> = {
-    control: {
-      variant: 'control',
-      adoptionRate: 0.14,
-      ctr: 0.17,
-      crossTopicEngagementLift: 0.07,
-      sampleSize: 1200,
-    },
-    high_serendipity: {
-      variant: 'high_serendipity',
-      adoptionRate: 0.18,
-      ctr: 0.22,
-      crossTopicEngagementLift: 0.10,
-      sampleSize: 1100,
-    },
-    balanced: {
-      variant: 'balanced',
-      adoptionRate: 0.16,
-      ctr: 0.20,
-      crossTopicEngagementLift: 0.08,
-      sampleSize: 1150,
-    },
-    safe: {
-      variant: 'safe',
-      adoptionRate: 0.12,
-      ctr: 0.14,
-      crossTopicEngagementLift: 0.05,
-      sampleSize: 1050,
-    },
-  };
+  // Fetch daily data from API
+  const [dailyData, setDailyData] = useState<Array<{ date: string; metrics: Record<SerendipityVariant, VariantMetrics> }>>([]);
 
   useEffect(() => {
-    // Simulate API call to fetch analytics
+    const fetchDailyMetrics = async () => {
+      try {
+        const response = await fetch(`/api/topic-recommendations/analytics/daily?days=7`);
+        if (!response.ok) throw new Error('Failed to fetch daily metrics');
+        const data = await response.json();
+
+        // Transform daily metrics to chart format
+        const chartData = data.map((day: { date: string; metrics: Record<SerendipityVariant, VariantMetrics> }) => ({
+          date: day.date,
+          'Control (Baseline)': day.metrics.control?.adoptionRate || 0,
+          'High Serendipity': day.metrics.high_serendipity?.adoptionRate || 0,
+          'Balanced': day.metrics.balanced?.adoptionRate || 0,
+          'Safe': day.metrics.safe?.adoptionRate || 0,
+        }));
+        setDailyData(chartData);
+      } catch (err) {
+        console.error('Error fetching daily metrics:', err);
+        setDailyData([]);
+      }
+    };
+
+    fetchDailyMetrics();
+  }, []);
+
+  useEffect(() => {
+    // Fetch variant metrics from API
     const fetchMetrics = async () => {
       try {
         setLoading(true);
-        // TODO: Replace with real API call
-        // const response = await fetch(`/api/topic-recommendations/analytics?start=${dateRange.start}&end=${dateRange.end}`);
-        // const data = await response.json();
-        // setMetrics(data);
-
-        // For now, use mock data
-        setMetrics(mockMetrics);
+        const response = await fetch(`/api/topic-recommendations/analytics?start=${dateRange.start}&end=${dateRange.end}`);
+        if (!response.ok) throw new Error('Failed to fetch analytics');
+        const data = await response.json();
+        setMetrics(data);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load metrics');
@@ -114,9 +89,6 @@ export default function TopicRecommendationsMonitoringPage() {
     if (!metrics) return null;
     return analyzeABTestResults(metrics);
   }, [metrics]);
-
-  // Use pre-generated mock daily data
-  const dailyData = useMemo(() => dailyDataMock, [dailyDataMock]);
 
   if (loading) {
     return (

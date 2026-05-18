@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
-import { getFeedStreamService } from '../services/FeedStreamService';
-import { DeltaEncoder } from '../services/DeltaEncoder';
+import { getFeedStreamService } from '../services/FeedStreamService.js';
+import { DeltaEncoder } from '../services/DeltaEncoder.js';
 
 /**
  * GET /api/feed/stream?userId={id}

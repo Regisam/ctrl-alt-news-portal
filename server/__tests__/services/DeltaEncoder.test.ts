@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { DeltaEncoder, type ArticleWithPosition } from '../../services/DeltaEncoder';
+import { DeltaEncoder, type ArticleWithPosition } from '../../services/DeltaEncoder.js';
 
 describe('DeltaEncoder', () => {
   let encoder: DeltaEncoder;

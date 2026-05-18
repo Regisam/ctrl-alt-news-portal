@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../logger';
+import { logger } from '../logger.js';
 import { v4 as uuidv4 } from 'uuid';
 
 export function loggingMiddleware(req: Request, res: Response, next: NextFunction) {
