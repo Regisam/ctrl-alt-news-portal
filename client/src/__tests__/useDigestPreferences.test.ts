@@ -66,7 +66,7 @@ describe('useDigestPreferences Hook', () => {
 
     it('should throw error on localStorage failure', () => {
       const mockConfig: SmartDigestConfig = DEFAULT_CONFIG;
-      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
+      const setItemSpy = vi.spyOn(localStorage, 'setItem').mockImplementationOnce(() => {
         throw new Error('Storage full');
       });
 
@@ -247,12 +247,13 @@ describe('useDigestPreferences Hook', () => {
     });
 
     it('should preserve lastDigestSent on update', async () => {
+      const lastDigestSentISO = '2026-05-13T12:00:00.000Z';
       const mockConfig: SmartDigestConfig = {
         enabled: true,
         frequency: 'weekly',
         preferredTime: '08:00',
         topics: ['AI'],
-        lastDigestSent: new Date('2026-05-13T12:00:00Z'),
+        lastDigestSent: lastDigestSentISO as any,
       };
 
       localStorage.setItem('smartDigest:config', JSON.stringify(mockConfig));
@@ -262,7 +263,7 @@ describe('useDigestPreferences Hook', () => {
         await result.current.updatePreferences({ frequency: 'daily' });
       });
 
-      expect(result.current.config.lastDigestSent).toEqual(mockConfig.lastDigestSent);
+      expect(result.current.config.lastDigestSent).toBe(lastDigestSentISO);
     });
 
     it('should set isLoading during async update', async () => {

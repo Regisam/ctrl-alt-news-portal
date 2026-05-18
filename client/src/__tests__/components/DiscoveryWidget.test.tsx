@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { DiscoveryWidget } from '../../components/DiscoveryWidget';
 
 describe('DiscoveryWidget', () => {
@@ -25,11 +25,13 @@ describe('DiscoveryWidget', () => {
       expect(widget).toBeTruthy();
     });
 
-    it('should render widget title', () => {
+    it('should render widget title', async () => {
       render(<DiscoveryWidget userId={userId} />);
 
-      const title = screen.getByText('Trending in Your Interests');
-      expect(title).toBeTruthy();
+      await waitFor(() => {
+        const title = screen.getByText('Trending in Your Interests');
+        expect(title).toBeTruthy();
+      });
     });
 
     it('should accept and apply custom className', () => {
@@ -79,35 +81,43 @@ describe('DiscoveryWidget', () => {
   });
 
   describe('structure', () => {
-    it('should have widget container with correct attributes', () => {
+    it('should have widget container with correct attributes', async () => {
       const { container } = render(
         <DiscoveryWidget userId={userId} />
       );
 
-      const widget = container.querySelector('[data-testid="discovery-widget"]');
-      expect(widget).toBeTruthy();
+      await waitFor(() => {
+        const widget = container.querySelector('[data-testid="discovery-widget"]');
+        expect(widget).toBeTruthy();
+      });
     });
 
-    it('should render heading with icon', () => {
+    it('should render heading with icon', async () => {
       render(<DiscoveryWidget userId={userId} />);
 
-      const heading = screen.getByText('Trending in Your Interests');
-      expect(heading).toBeTruthy();
-      expect(heading.parentElement).toBeTruthy();
+      await waitFor(() => {
+        const heading = screen.getByText('Trending in Your Interests');
+        expect(heading).toBeTruthy();
+        expect(heading.parentElement).toBeTruthy();
+      });
     });
   });
 
   describe('responsive behavior', () => {
-    it('should render different layouts based on maxItems', () => {
+    it('should render different layouts based on maxItems', async () => {
       const { rerender } = render(
         <DiscoveryWidget userId={userId} maxItems={3} />
       );
 
-      expect(screen.getByText('Trending in Your Interests')).toBeTruthy();
+      await waitFor(() => {
+        expect(screen.getByText('Trending in Your Interests')).toBeTruthy();
+      });
 
       rerender(<DiscoveryWidget userId={userId} maxItems={5} />);
 
-      expect(screen.getByText('Trending in Your Interests')).toBeTruthy();
+      await waitFor(() => {
+        expect(screen.getByText('Trending in Your Interests')).toBeTruthy();
+      });
     });
   });
 

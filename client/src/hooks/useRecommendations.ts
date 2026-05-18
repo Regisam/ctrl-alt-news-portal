@@ -227,7 +227,7 @@ export function useRecommendations({
       const result = engineRef.current.evaluate(userContext);
 
       Promise.resolve().then(() => {
-        setIsLoading(true);
+        setIsLoading(false);
         setRecommendations(result.articles.slice(0, count));
         setFiredRules(result.firedRules);
         setExecutionTime(result.executionTime);

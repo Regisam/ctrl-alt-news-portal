@@ -17,6 +17,13 @@ export function useABTest(experiment: ABExperiment, userId: string = ''): string
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
+    // If experiment is disabled, return null
+    if (!experiment.enabled) {
+      setVariant(null);
+      setIsLoading(false);
+      return;
+    }
+
     // Generate user ID if not provided (use localStorage or generate new)
     let effectiveUserId = userId;
     if (!effectiveUserId) {
@@ -46,7 +53,7 @@ export function useABTest(experiment: ABExperiment, userId: string = ''): string
       setVariant(assignedVariant);
       setIsLoading(false);
     });
-  }, [experiment, userId]);
+  }, [experiment.id, experiment.enabled, userId]);
 
   return variant;
 }
@@ -80,6 +87,12 @@ export function useABTests(
     const result: Record<string, string | null> = {};
 
     experiments.forEach((experiment) => {
+      // Return null if experiment is disabled
+      if (!experiment.enabled) {
+        result[experiment.id] = null;
+        return;
+      }
+
       // Register experiment
       registerExperiment(experiment);
 

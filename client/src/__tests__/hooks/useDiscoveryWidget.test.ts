@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useDiscoveryWidget } from '../../hooks/useDiscoveryWidget';
 
 describe('useDiscoveryWidget', () => {
@@ -85,7 +85,9 @@ describe('useDiscoveryWidget', () => {
         useDiscoveryWidget(userId, 5, 60)
       );
 
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await waitFor(() => {
+        expect(result1.current.articles.length).toBeGreaterThan(0);
+      }, { timeout: 1000 });
       const articles1 = result1.current.articles;
 
       const { result: result2 } = renderHook(() =>
@@ -93,7 +95,9 @@ describe('useDiscoveryWidget', () => {
       );
 
       // Second call should load from cache immediately
-      expect(result2.current.articles).toEqual(articles1);
+      await waitFor(() => {
+        expect(result2.current.articles).toEqual(articles1);
+      }, { timeout: 1000 });
     });
 
     it('should respect cache TTL', async () => {

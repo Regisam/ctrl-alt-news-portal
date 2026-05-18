@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactionButton } from '@/components/ReactionButton';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -169,16 +169,20 @@ describe('ReactionButton component', () => {
 
     expect(screen.getByText('5')).toBeInTheDocument();
 
-    rerender(
-      <ReactionButton
-        articleId="article-1"
-        userId="user-1"
-        type="like"
-        count={10}
-      />
-    );
+    await act(async () => {
+      rerender(
+        <ReactionButton
+          articleId="article-1"
+          userId="user-1"
+          type="like"
+          count={10}
+        />
+      );
+    });
 
-    expect(screen.getByText('10')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('10')).toBeInTheDocument();
+    });
   });
 
   it('should call onReactionChange with correct parameters', async () => {

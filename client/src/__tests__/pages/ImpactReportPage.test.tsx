@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ImpactReportPage from '../../pages/ImpactReportPage';
 import { useReadingHistory } from '../../hooks/useReadingHistory';
@@ -191,11 +191,13 @@ describe('ImpactReportPage', () => {
     expect(screen.getByText('Avg Time Spent Comparison')).toBeInTheDocument();
   });
 
-  it('should display category engagement table', () => {
+  it('should display category engagement table', async () => {
     render(<ImpactReportPage />);
-    expect(screen.getByText('Category Engagement (Top 5)')).toBeInTheDocument();
-    expect(screen.getByText('Category')).toBeInTheDocument();
-    expect(screen.getAllByText('Saves').length).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(screen.getByText('Category Engagement (Top 5)')).toBeInTheDocument();
+      expect(screen.getByText('Category')).toBeInTheDocument();
+      expect(screen.getAllByText('Saves').length).toBeGreaterThan(0);
+    });
   });
 
   it('should display A/B test results section', () => {
@@ -220,10 +222,12 @@ describe('ImpactReportPage', () => {
     expect(darkModeElements.length).toBeGreaterThan(0);
   });
 
-  it('should render category data in table', () => {
+  it('should render category data in table', async () => {
     render(<ImpactReportPage />);
-    const table = screen.getByRole('table');
-    expect(table).toBeInTheDocument();
+    await waitFor(() => {
+      const table = screen.getByRole('table');
+      expect(table).toBeInTheDocument();
+    });
   });
 
   it('should calculate metrics correctly', () => {
@@ -277,9 +281,11 @@ describe('ImpactReportPage', () => {
     expect(screen.getByText(/Confidence Level:/)).toBeInTheDocument();
   });
 
-  it('should show category engagement columns', () => {
+  it('should show category engagement columns', async () => {
     render(<ImpactReportPage />);
-    const headers = screen.getAllByText('Reactions');
-    expect(headers.length).toBeGreaterThan(0);
+    await waitFor(() => {
+      const headers = screen.getAllByText('Reactions');
+      expect(headers.length).toBeGreaterThan(0);
+    });
   });
 });

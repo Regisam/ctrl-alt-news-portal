@@ -12,60 +12,78 @@ describe('RecommendationsWidget component', () => {
     });
   });
 
-  it('should render with custom title', () => {
+  it('should render with custom title', async () => {
     render(<RecommendationsWidget title="Custom Recommendations" />);
-    expect(screen.getByText('Custom Recommendations')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Custom Recommendations')).toBeInTheDocument();
+    });
   });
 
-  it('should render recommendations', () => {
+  it('should render recommendations', async () => {
     const { container } = render(<RecommendationsWidget />);
-    const links = container.querySelectorAll('a[href^="/article/"]');
-    expect(links.length).toBeGreaterThan(0);
+    await waitFor(() => {
+      const links = container.querySelectorAll('a[href^="/article/"]');
+      expect(links.length).toBeGreaterThan(0);
+    });
   });
 
-  it('should display recommendation cards', () => {
+  it('should display recommendation cards', async () => {
     render(<RecommendationsWidget count={5} />);
-    const links = screen.getAllByRole('link');
-    expect(links.length).toBeGreaterThan(0);
+    await waitFor(() => {
+      const links = screen.getAllByRole('link');
+      expect(links.length).toBeGreaterThan(0);
+    });
   });
 
-  it('should display article titles', () => {
+  it('should display article titles', async () => {
     render(<RecommendationsWidget />);
-    const titles = screen.queryAllByText(/./);
-    expect(titles.length).toBeGreaterThan(0);
+    await waitFor(() => {
+      const titles = screen.queryAllByText(/./);
+      expect(titles.length).toBeGreaterThan(0);
+    });
   });
 
-  it('should display read time for articles', () => {
+  it('should display read time for articles', async () => {
     render(<RecommendationsWidget />);
-    const timeElements = screen.queryAllByText(/min/i);
-    expect(timeElements.length).toBeGreaterThan(0);
+    await waitFor(() => {
+      const timeElements = screen.queryAllByText(/min/i);
+      expect(timeElements.length).toBeGreaterThan(0);
+    });
   });
 
-  it('should display view count for articles', () => {
+  it('should display view count for articles', async () => {
     const { container } = render(<RecommendationsWidget />);
-    expect(screen.getByText('Recommended For You')).toBeInTheDocument();
-    const svg = container.querySelector('svg');
-    expect(svg).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Recommended For You')).toBeInTheDocument();
+      const svg = container.querySelector('svg');
+      expect(svg).toBeInTheDocument();
+    });
   });
 
-  it('should respect count prop', () => {
+  it('should respect count prop', async () => {
     const { container } = render(<RecommendationsWidget count={2} />);
-    const cards = container.querySelectorAll('a[href^="/article/"]');
-    expect(cards.length).toBeLessThanOrEqual(2);
+    await waitFor(() => {
+      const cards = container.querySelectorAll('a[href^="/article/"]');
+      expect(cards.length).toBeLessThanOrEqual(2);
+    });
   });
 
-  it('should exclude current article from recommendations', () => {
+  it('should exclude current article from recommendations', async () => {
     render(<RecommendationsWidget excludeArticleId={aiArticles[0].id} />);
-    expect(screen.getByText('Recommended For You')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Recommended For You')).toBeInTheDocument();
+    });
   });
 
-  it('should render category badges', () => {
+  it('should render category badges', async () => {
     render(<RecommendationsWidget />);
-    const categoryBadges = screen.queryAllByText(/^(AI|SCIENCE|ROBOTICS|GADGETS)$/);
-    expect(categoryBadges.length).toBeGreaterThan(0);
+    await waitFor(() => {
+      const categoryBadges = screen.queryAllByText(/^(AI|SCIENCE|ROBOTICS|GADGETS)$/);
+      expect(categoryBadges.length).toBeGreaterThan(0);
+    });
   });
 
-  it('should accept custom category colors', () => {
+  it('should accept custom category colors', async () => {
     const { container } = render(
       <RecommendationsWidget
         categoryColor="#FF0000"
@@ -73,27 +91,38 @@ describe('RecommendationsWidget component', () => {
         categoryBorder="rgba(255,0,0,0.4)"
       />
     );
-    expect(screen.getByText('Recommended For You')).toBeInTheDocument();
-    expect(container.querySelector('a')).toBeInTheDocument();
-  });
-
-  it('should link to article detail pages', () => {
-    render(<RecommendationsWidget />);
-    const links = screen.getAllByRole('link');
-    links.forEach(link => {
-      expect(link.getAttribute('href')).toMatch(/^\/article\/\d+$/);
+    await waitFor(() => {
+      expect(screen.getByText('Recommended For You')).toBeInTheDocument();
+      expect(container.querySelector('a')).toBeInTheDocument();
     });
   });
 
-  it('should display article images', () => {
+  it('should link to article detail pages', async () => {
+    render(<RecommendationsWidget />);
+    await waitFor(() => {
+      const links = screen.getAllByRole('link');
+      links.forEach(link => {
+        expect(link.getAttribute('href')).toMatch(/^\/article\/\d+$/);
+      });
+    });
+  });
+
+  it('should display article images', async () => {
     const { container } = render(<RecommendationsWidget />);
-    const images = container.querySelectorAll('img');
-    expect(images.length).toBeGreaterThan(0);
+    await waitFor(() => {
+      const images = container.querySelectorAll('img');
+      expect(images.length).toBeGreaterThan(0);
+    });
   });
 
   it('should be keyboard accessible', async () => {
     const user = userEvent.setup();
     const { container } = render(<RecommendationsWidget />);
+
+    await waitFor(() => {
+      const firstLink = container.querySelector('a');
+      expect(firstLink).toBeInTheDocument();
+    });
 
     const firstLink = container.querySelector('a');
     if (firstLink) {
@@ -102,23 +131,30 @@ describe('RecommendationsWidget component', () => {
     }
   });
 
-  it('should render with lazy loading for images', () => {
+  it('should render with lazy loading for images', async () => {
     const { container } = render(<RecommendationsWidget />);
-    const images = container.querySelectorAll('img');
-    images.forEach(img => {
-      expect(img.getAttribute('loading')).toBe('lazy');
+    await waitFor(() => {
+      const images = container.querySelectorAll('img');
+      expect(images.length).toBeGreaterThan(0);
+      images.forEach(img => {
+        expect(img.getAttribute('loading')).toBe('lazy');
+      });
     });
   });
 
-  it('should render recommendations with default count', () => {
+  it('should render recommendations with default count', async () => {
     const { container } = render(<RecommendationsWidget />);
-    const links = container.querySelectorAll('a[href^="/article/"]');
-    expect(links.length).toBeLessThanOrEqual(3);
+    await waitFor(() => {
+      const links = container.querySelectorAll('a[href^="/article/"]');
+      expect(links.length).toBeLessThanOrEqual(3);
+    });
   });
 
-  it('should handle large count values gracefully', () => {
+  it('should handle large count values gracefully', async () => {
     const { container } = render(<RecommendationsWidget count={100} />);
-    const links = container.querySelectorAll('a[href^="/article/"]');
-    expect(links.length).toBeGreaterThan(0);
+    await waitFor(() => {
+      const links = container.querySelectorAll('a[href^="/article/"]');
+      expect(links.length).toBeGreaterThan(0);
+    });
   });
 });
