@@ -128,7 +128,14 @@ export default function TopicRecommendationsMonitoringPage() {
       }
     };
 
+    // Fetch immediately on mount
     fetchDailyMetrics();
+
+    // AC11: Hourly refresh (3600000ms = 1 hour)
+    const interval = setInterval(fetchDailyMetrics, 3600000);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {

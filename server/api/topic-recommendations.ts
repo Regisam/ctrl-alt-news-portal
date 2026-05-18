@@ -38,6 +38,8 @@ router.get('/topic-recommendations/analytics', async (req: Request, res: Respons
     }
 
     const metrics = await getVariantAnalyticsFromSupabase(supabase, startDate, endDate);
+    // AC10: Cache analytics for 5 minutes
+    res.set('Cache-Control', 'public, max-age=300');
     res.json(metrics);
   } catch (error) {
     console.error('Error fetching analytics:', error);
@@ -55,6 +57,8 @@ router.get('/topic-recommendations/analytics/daily', async (req: Request, res: R
     const days = parseInt(req.query.days as string) || 7;
 
     const dailyMetrics = await getDailyMetricsByVariant(supabase, days);
+    // AC10: Cache daily metrics for 1 hour (matches hourly refresh)
+    res.set('Cache-Control', 'public, max-age=3600');
     res.json(dailyMetrics);
   } catch (error) {
     console.error('Error fetching daily analytics:', error);
@@ -83,6 +87,8 @@ router.get('/topic-recommendations/analytics/segments', async (req: Request, res
     }
 
     const segmentMetrics = await getMetricsByUserSegment(supabase, startDate, endDate);
+    // AC10: Cache segment metrics for 5 minutes
+    res.set('Cache-Control', 'public, max-age=300');
     res.json(segmentMetrics);
   } catch (error) {
     console.error('Error fetching segment analytics:', error);
