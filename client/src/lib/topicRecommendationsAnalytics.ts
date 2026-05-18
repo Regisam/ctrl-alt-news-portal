@@ -30,6 +30,9 @@ export interface ABTestResult extends VariantMetrics {
 export interface SupabaseClient {
   from(table: string): {
     select(columns: string): {
+      gte(column: string, value: number | string): {
+        lte(column: string, value: number | string): Promise<{ data: unknown[]; error: unknown }>;
+      };
       eq(column: string, value: string | number | boolean): {
         gte(column: string, value: number | string): {
           lte(column: string, value: number | string): Promise<{ data: unknown[]; error: unknown }>;
@@ -63,57 +66,90 @@ export async function getVariantAnalyticsFromSupabase(
   startDate: Date,
   endDate: Date
 ): Promise<Record<SerendipityVariant, VariantMetrics>> {
-  // 1. Fetch user_recommendations with variant assignment
-  // Query structure:
-  //   - user_id: who was recommended
-  //   - topic_id: which topic was recommended
-  //   - variant: which A/B variant they were in (control|high_serendipity|balanced|safe)
-  //   - created_at: when recommendation was made
-
-  // 2. Fetch user_topic_interactions (actual engagement)
-  // Query structure:
-  //   - user_id: who engaged
-  //   - topic_id: which topic they engaged with
-  //   - interaction_type: bookmark|reaction|read
-  //   - created_at: when engagement happened
-
-  // 3. Compute metrics per variant:
-  //   adoptionRate = (topics_with_interaction / total_recommendations) * 100
-  //   ctr = (interactions / recommendations) * 100
-  //   crossTopicEngagementLift = (articles_from_recommended / total_articles_read) vs control
-
-  // Placeholder implementation (to be filled with real queries)
-  // For now, return structure that will be used by dashboard
   const variants: SerendipityVariant[] = ['control', 'high_serendipity', 'balanced', 'safe'];
-
   const metrics: Record<SerendipityVariant, VariantMetrics> = {} as Record<
     SerendipityVariant,
     VariantMetrics
   >;
 
+  const startISO = startDate.toISOString();
+  const endISO = endDate.toISOString();
+
+  // Fetch all recommendations in period
+  const { data: allRecommendations, error: recError } = await supabase
+    .from('user_recommendations')
+    .select('user_id, topic_id, variant, created_at')
+    .gte('created_at', startISO)
+    .lte('created_at', endISO);
+
+  if (recError || !allRecommendations) {
+    console.error('Error fetching recommendations:', recError);
+    // Return placeholder metrics on error
+    return Object.fromEntries(
+      variants.map(v => [v, {
+        variant: v,
+        adoptionRate: 0,
+        ctr: 0,
+        crossTopicEngagementLift: 0,
+        sampleSize: 0,
+      }])
+    ) as Record<SerendipityVariant, VariantMetrics>;
+  }
+
+  // Fetch all interactions in period
+  const { data: allInteractions, error: intError } = await supabase
+    .from('user_topic_interactions')
+    .select('user_id, topic_id, interaction_type, created_at')
+    .gte('created_at', startISO)
+    .lte('created_at', endISO);
+
+  let interactionsData = allInteractions || [];
+  if (intError || !allInteractions) {
+    console.error('Error fetching interactions:', intError);
+    interactionsData = [];
+  }
+
+  // Process each variant
   for (const variant of variants) {
-    // TODO: Query Supabase for real data
-    // const { data: recommendations } = await supabase
-    //   .from('user_recommendations')
-    //   .select('user_id, topic_id, variant, created_at')
-    //   .eq('variant', variant)
-    //   .gte('created_at', startDate.toISOString())
-    //   .lte('created_at', endDate.toISOString());
+    const variantRecs = (allRecommendations as any[]).filter(r => r.variant === variant);
 
-    // const { data: interactions } = await supabase
-    //   .from('user_topic_interactions')
-    //   .select('user_id, topic_id, interaction_type, created_at')
-    //   .gte('created_at', startDate.toISOString())
-    //   .lte('created_at', endDate.toISOString());
+    if (variantRecs.length === 0) {
+      metrics[variant] = {
+        variant,
+        adoptionRate: 0,
+        ctr: 0,
+        crossTopicEngagementLift: 0,
+        sampleSize: 0,
+      };
+      continue;
+    }
 
-    // Compute metrics from data...
+    // Get unique users and topics recommended to
+    const recTopics = new Set(variantRecs.map(r => r.topic_id));
+    const recUsers = new Set(variantRecs.map(r => r.user_id));
+
+    // Find interactions on recommended topics
+    const adoptedInteractions = (interactionsData as any[]).filter(
+      i => recTopics.has(i.topic_id) && recUsers.has(i.user_id)
+    );
+
+    // Adoption rate: unique topics with engagement / total unique topics recommended
+    const topicsWithEngagement = new Set(adoptedInteractions.map(i => i.topic_id));
+    const adoptionRate = recTopics.size > 0 ? topicsWithEngagement.size / recTopics.size : 0;
+
+    // CTR: total interactions / total recommendations
+    const ctr = variantRecs.length > 0 ? adoptedInteractions.length / variantRecs.length : 0;
+
+    // Cross-topic lift: (interactions on recommended topics) / (total interactions)
+    const totalInteractions = (interactionsData as any[]).length;
+    const crossTopicEngagementLift = totalInteractions > 0 ? adoptedInteractions.length / totalInteractions : 0;
 
     metrics[variant] = {
       variant,
-      adoptionRate: 0.15, // Placeholder: will be replaced with real calculation
-      ctr: 0.18,
-      crossTopicEngagementLift: 0.08,
-      sampleSize: 1000,
+      adoptionRate,
+      ctr,
+      crossTopicEngagementLift,
+      sampleSize: recUsers.size,
     };
   }
 
@@ -227,13 +263,28 @@ export async function getDailyMetricsByVariant(
   supabase: SupabaseClient,
   days: number = 7
 ): Promise<Array<{ date: string; metrics: Record<SerendipityVariant, VariantMetrics> }>> {
-  // Query Supabase for daily breakdowns
-  // Return aggregated metrics per day per variant for charting
   const data: Array<{ date: string; metrics: Record<SerendipityVariant, VariantMetrics> }> = [];
+  const now = new Date();
+  const variants: SerendipityVariant[] = ['control', 'high_serendipity', 'balanced', 'safe'];
 
-  // TODO: Implement daily aggregation queries
-  // For now, return empty
-  return data;
+  for (let i = 0; i < days; i++) {
+    const dayStart = new Date(now);
+    dayStart.setDate(dayStart.getDate() - i);
+    dayStart.setHours(0, 0, 0, 0);
+
+    const dayEnd = new Date(dayStart);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    // Get metrics for this day using the main function
+    const dayMetrics = await getVariantAnalyticsFromSupabase(supabase, dayStart, dayEnd);
+
+    data.push({
+      date: dayStart.toISOString().split('T')[0],
+      metrics: dayMetrics,
+    });
+  }
+
+  return data.reverse(); // Oldest first for charting
 }
 
 /**
@@ -251,13 +302,89 @@ export async function getMetricsByUserSegment(
   newUsers: Record<SerendipityVariant, VariantMetrics>;
   returningUsers: Record<SerendipityVariant, VariantMetrics>;
 }> {
-  // Query Supabase segmented by user creation date vs. recommendation date
-  // Return separate metrics for new (created during period) vs. returning (existed before)
+  const variants: SerendipityVariant[] = ['control', 'high_serendipity', 'balanced', 'safe'];
+  const startISO = startDate.toISOString();
+  const endISO = endDate.toISOString();
 
-  // TODO: Implement segmentation queries
-  // For now, return placeholder structure
+  // Fetch recommendations with user creation dates
+  const { data: recsWithUsers, error: recError } = await supabase
+    .from('user_recommendations')
+    .select('user_id, topic_id, variant, created_at, users(created_at)')
+    .gte('created_at', startISO)
+    .lte('created_at', endISO);
+
+  if (recError || !recsWithUsers) {
+    console.error('Error fetching segmented recommendations:', recError);
+    const empty = Object.fromEntries(
+      variants.map(v => [v, {
+        variant: v,
+        adoptionRate: 0,
+        ctr: 0,
+        crossTopicEngagementLift: 0,
+        sampleSize: 0,
+      }])
+    ) as Record<SerendipityVariant, VariantMetrics>;
+    return { newUsers: empty, returningUsers: empty };
+  }
+
+  // Fetch interactions
+  const { data: interactions } = await supabase
+    .from('user_topic_interactions')
+    .select('user_id, topic_id, interaction_type')
+    .gte('created_at', startISO)
+    .lte('created_at', endISO);
+
+  // Segment by user creation date
+  const newUserRecs = (recsWithUsers as any[]).filter(r => {
+    const userCreatedAt = new Date(r.users?.created_at);
+    const recCreatedAt = new Date(r.created_at);
+    return userCreatedAt >= startDate && userCreatedAt <= endDate;
+  });
+
+  const returningUserRecs = (recsWithUsers as any[]).filter(r => {
+    const userCreatedAt = new Date(r.users?.created_at);
+    return userCreatedAt < startDate;
+  });
+
+  // Compute metrics for each segment
+  const computeSegmentMetrics = (recs: any[], allInteractions: any[]) => {
+    const metrics: Record<SerendipityVariant, VariantMetrics> = {} as Record<
+      SerendipityVariant,
+      VariantMetrics
+    >;
+
+    for (const variant of variants) {
+      const variantRecs = recs.filter(r => r.variant === variant);
+      if (variantRecs.length === 0) {
+        metrics[variant] = {
+          variant,
+          adoptionRate: 0,
+          ctr: 0,
+          crossTopicEngagementLift: 0,
+          sampleSize: 0,
+        };
+        continue;
+      }
+
+      const topicsRec = new Set(variantRecs.map(r => r.topic_id));
+      const usersRec = new Set(variantRecs.map(r => r.user_id));
+      const adoptedInteractions = (allInteractions || []).filter(
+        i => topicsRec.has(i.topic_id) && usersRec.has(i.user_id)
+      );
+
+      metrics[variant] = {
+        variant,
+        adoptionRate: topicsRec.size > 0 ? new Set(adoptedInteractions.map(i => i.topic_id)).size / topicsRec.size : 0,
+        ctr: variantRecs.length > 0 ? adoptedInteractions.length / variantRecs.length : 0,
+        crossTopicEngagementLift: (allInteractions?.length || 0) > 0 ? adoptedInteractions.length / (allInteractions?.length || 1) : 0,
+        sampleSize: usersRec.size,
+      };
+    }
+    return metrics;
+  };
+
   return {
-    newUsers: {} as Record<SerendipityVariant, VariantMetrics>,
-    returningUsers: {} as Record<SerendipityVariant, VariantMetrics>,
+    newUsers: computeSegmentMetrics(newUserRecs, interactions || []),
+    returningUsers: computeSegmentMetrics(returningUserRecs, interactions || []),
   };
 }
