@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { AlertCircle, CheckCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 import { analyzeABTestResults, type VariantMetrics } from '../lib/topicRecommendationsAnalytics';
 import { type SerendipityVariant } from '../lib/topicRecommendationsTuning';
 
@@ -24,6 +25,54 @@ const variantLabels: Record<SerendipityVariant, string> = {
   safe: 'Safe',
 };
 
+interface Alert {
+  variant: SerendipityVariant;
+  type: 'low_adoption' | 'sharp_drop';
+  message: string;
+  severity: 'warning' | 'critical';
+}
+
+function detectAlerts(
+  metrics: Record<SerendipityVariant, VariantMetrics> | null,
+  dailyData: Array<{ date: string; metrics: Record<SerendipityVariant, VariantMetrics> }>
+): Alert[] {
+  if (!metrics || dailyData.length < 2) return [];
+
+  const alerts: Alert[] = [];
+  const today = dailyData[dailyData.length - 1];
+  const yesterday = dailyData[dailyData.length - 2];
+
+  Object.entries(metrics).forEach(([variant, data]) => {
+    const variantKey = variant as SerendipityVariant;
+
+    // AC9a: Check adoption rate < 10%
+    if (data.adoptionRate < 0.1) {
+      alerts.push({
+        variant: variantKey,
+        type: 'low_adoption',
+        message: `${variantLabels[variantKey]}: Low adoption rate (${(data.adoptionRate * 100).toFixed(1)}%)`,
+        severity: 'critical',
+      });
+    }
+
+    // AC9b: Check for >20% drop from yesterday
+    if (yesterday && yesterday.metrics[variantKey]) {
+      const yesterdayAdoption = yesterday.metrics[variantKey].adoptionRate;
+      const drop = (yesterdayAdoption - data.adoptionRate) / yesterdayAdoption;
+      if (drop > 0.2) {
+        alerts.push({
+          variant: variantKey,
+          type: 'sharp_drop',
+          message: `${variantLabels[variantKey]}: Sharp adoption drop (${(drop * 100).toFixed(1)}%)`,
+          severity: 'warning',
+        });
+      }
+    }
+  });
+
+  return alerts;
+}
+
 export default function TopicRecommendationsMonitoringPage() {
   const [metrics, setMetrics] = useState<Record<SerendipityVariant, VariantMetrics> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,6 +87,24 @@ export default function TopicRecommendationsMonitoringPage() {
 
   // Fetch daily data from API
   const [dailyData, setDailyData] = useState<Array<{ date: string; metrics: Record<SerendipityVariant, VariantMetrics> }>>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [alertsShown, setAlertsShown] = useState<Set<string>>(new Set());
+
+  // Detect alerts when metrics or dailyData changes
+  useEffect(() => {
+    const newAlerts = detectAlerts(metrics, dailyData);
+    setAlerts(newAlerts);
+
+    // Show toast notifications for new alerts
+    newAlerts.forEach((alert) => {
+      const alertKey = `${alert.variant}-${alert.type}`;
+      if (!alertsShown.has(alertKey)) {
+        const toastFn = alert.severity === 'critical' ? toast.error : toast.warning;
+        toastFn(alert.message);
+        setAlertsShown((prev) => new Set([...prev, alertKey]));
+      }
+    });
+  }, [metrics, dailyData, alertsShown]);
 
   useEffect(() => {
     const fetchDailyMetrics = async () => {
@@ -136,6 +203,39 @@ export default function TopicRecommendationsMonitoringPage() {
             />
           </div>
         </div>
+
+        {/* AC9: Monitoring Alerts */}
+        {alerts.length > 0 && (
+          <div className="mb-8 bg-red-50 border border-red-200 rounded-lg p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-red-900 text-lg">Active Alerts</h3>
+                <p className="text-red-800 text-sm mt-1">Thresholds exceeded for variant metrics</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              {alerts.map((alert, idx) => (
+                <div
+                  key={idx}
+                  className={`p-3 rounded flex items-start gap-2 ${
+                    alert.severity === 'critical' ? 'bg-red-100 border border-red-300' : 'bg-orange-100 border border-orange-300'
+                  }`}
+                >
+                  <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${alert.severity === 'critical' ? 'bg-red-600' : 'bg-orange-600'}`} />
+                  <div className="flex-1">
+                    <p className={alert.severity === 'critical' ? 'text-red-900 font-medium' : 'text-orange-900 font-medium'}>
+                      {alert.message}
+                    </p>
+                    <p className="text-xs mt-1 opacity-75">
+                      {alert.type === 'low_adoption' ? 'Adoption rate below 10% threshold' : 'Sharp drop (>20%) from previous day'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Winner Alert */}
         {analysis && analysis.winningVariant && (
