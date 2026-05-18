@@ -2,9 +2,29 @@ import '@testing-library/jest-dom';
 import { expect, afterEach, vi, beforeAll } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
+// Mock localStorage with functional implementation
+const localStorageData: { [key: string]: string } = {};
+const localStorageMock = {
+  getItem: (key: string) => localStorageData[key] ?? null,
+  setItem: (key: string, value: string) => {
+    localStorageData[key] = value;
+  },
+  removeItem: (key: string) => {
+    delete localStorageData[key];
+  },
+  clear: () => {
+    Object.keys(localStorageData).forEach(key => {
+      delete localStorageData[key];
+    });
+  },
+};
+global.localStorage = localStorageMock as any;
+
 // Cleanup after each test
 afterEach(() => {
   cleanup();
+  // Clear localStorage between tests to prevent cross-test contamination
+  localStorageMock.clear();
 });
 
 // Mock window.matchMedia
@@ -28,24 +48,6 @@ global.ResizeObserver = vi.fn().mockImplementation(() => ({
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }));
-
-// Mock localStorage with functional implementation
-const localStorageData: { [key: string]: string } = {};
-const localStorageMock = {
-  getItem: (key: string) => localStorageData[key] ?? null,
-  setItem: (key: string, value: string) => {
-    localStorageData[key] = value;
-  },
-  removeItem: (key: string) => {
-    delete localStorageData[key];
-  },
-  clear: () => {
-    Object.keys(localStorageData).forEach(key => {
-      delete localStorageData[key];
-    });
-  },
-};
-global.localStorage = localStorageMock as any;
 
 // Suppress console errors in tests (optional)
 const originalError = console.error;
