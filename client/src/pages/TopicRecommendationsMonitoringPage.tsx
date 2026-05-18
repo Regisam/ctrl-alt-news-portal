@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { AlertCircle, CheckCircle, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -39,7 +39,6 @@ function detectAlerts(
   if (!metrics || dailyData.length < 2) return [];
 
   const alerts: Alert[] = [];
-  const today = dailyData[dailyData.length - 1];
   const yesterday = dailyData[dailyData.length - 2];
 
   Object.entries(metrics).forEach(([variant, data]) => {
@@ -88,23 +87,25 @@ export default function TopicRecommendationsMonitoringPage() {
   // Fetch daily data from API
   const [dailyData, setDailyData] = useState<Array<{ date: string; metrics: Record<SerendipityVariant, VariantMetrics> }>>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [alertsShown, setAlertsShown] = useState<Set<string>>(new Set());
+  const alertsShownRef = useRef(new Set<string>());
 
   // Detect alerts when metrics or dailyData changes
   useEffect(() => {
     const newAlerts = detectAlerts(metrics, dailyData);
     setAlerts(newAlerts);
+  }, [metrics, dailyData]);
 
-    // Show toast notifications for new alerts
-    newAlerts.forEach((alert) => {
+  // Show toast notifications for new alerts
+  useEffect(() => {
+    alerts.forEach((alert) => {
       const alertKey = `${alert.variant}-${alert.type}`;
-      if (!alertsShown.has(alertKey)) {
+      if (!alertsShownRef.current.has(alertKey)) {
         const toastFn = alert.severity === 'critical' ? toast.error : toast.warning;
         toastFn(alert.message);
-        setAlertsShown((prev) => new Set([...prev, alertKey]));
+        alertsShownRef.current.add(alertKey);
       }
     });
-  }, [metrics, dailyData, alertsShown]);
+  }, [alerts]);
 
   useEffect(() => {
     const fetchDailyMetrics = async () => {

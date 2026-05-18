@@ -23,7 +23,6 @@ function detectAlerts(
   if (!metrics || dailyData.length < 2) return [];
 
   const alerts: Alert[] = [];
-  const today = dailyData[dailyData.length - 1];
   const yesterday = dailyData[dailyData.length - 2];
 
   Object.entries(metrics).forEach(([variant, data]) => {
