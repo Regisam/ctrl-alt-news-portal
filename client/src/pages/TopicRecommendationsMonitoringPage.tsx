@@ -38,6 +38,24 @@ export default function TopicRecommendationsMonitoringPage() {
 
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>(defaultDates);
 
+  // Generate mock daily data once on mount
+  const [dailyDataMock] = useState(() => {
+    const days = [];
+    const start = new Date(dateRange.start);
+    const end = new Date(dateRange.end);
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      days.push({
+        date: d.toISOString().split('T')[0],
+        'Control (Baseline)': 0.12 + Math.random() * 0.04,
+        'High Serendipity': 0.15 + Math.random() * 0.06,
+        Balanced: 0.14 + Math.random() * 0.04,
+        Safe: 0.10 + Math.random() * 0.04,
+      });
+    }
+    return days;
+  });
+
   // Mock data for demonstration
   const mockMetrics: Record<SerendipityVariant, VariantMetrics> = {
     control: {
@@ -99,23 +117,8 @@ export default function TopicRecommendationsMonitoringPage() {
     return analyzeABTestResults(metrics);
   }, [metrics]);
 
-  // Mock daily data for charts
-  const dailyData = useMemo(() => {
-    const days = [];
-    const start = new Date(dateRange.start);
-    const end = new Date(dateRange.end);
-
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      days.push({
-        date: d.toISOString().split('T')[0],
-        'Control (Baseline)': 0.12 + Math.random() * 0.04,
-        'High Serendipity': 0.15 + Math.random() * 0.06,
-        Balanced: 0.14 + Math.random() * 0.04,
-        Safe: 0.10 + Math.random() * 0.04,
-      });
-    }
-    return days;
-  }, [dateRange]);
+  // Use pre-generated mock daily data
+  const dailyData = useMemo(() => dailyDataMock, [dailyDataMock]);
 
   if (loading) {
     return (
