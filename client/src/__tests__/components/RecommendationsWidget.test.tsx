@@ -1,13 +1,15 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RecommendationsWidget } from '@/components/RecommendationsWidget';
 import { aiArticles } from '@/lib/data';
 import { describe, it, expect } from 'vitest';
 
 describe('RecommendationsWidget component', () => {
-  it('should render with default title', () => {
+  it('should render with default title', async () => {
     render(<RecommendationsWidget />);
-    expect(screen.getByText('Recommended For You')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Recommended For You')).toBeInTheDocument();
+    });
   });
 
   it('should render with custom title', () => {
