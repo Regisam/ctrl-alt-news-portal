@@ -4,7 +4,7 @@
  * AC9-10: A/B test analysis and monitoring dashboard data
  */
 
-import { SerendipityVariant } from './topicRecommendationsTuning';
+export type SerendipityVariant = 'control' | 'high_serendipity' | 'balanced' | 'safe';
 
 export interface VariantMetrics {
   variant: SerendipityVariant;
