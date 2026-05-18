@@ -29,14 +29,12 @@ export default function TopicRecommendationsMonitoringPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Calculate default date range (7 days back to today)
-  const defaultDates = useMemo(() => {
+  // Initialize date range once on mount
+  const [dateRange, setDateRange] = useState<{ start: string; end: string }>(() => {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const today = new Date().toISOString().split('T')[0];
     return { start: sevenDaysAgo, end: today };
-  }, []);
-
-  const [dateRange, setDateRange] = useState<{ start: string; end: string }>(defaultDates);
+  });
 
   // Generate mock daily data once on mount
   const [dailyDataMock] = useState(() => {
