@@ -1,5 +1,6 @@
 import express, { type Request, type Response, type NextFunction } from "express";
 import compression from "compression";
+import cookieParser from "cookie-parser";
 import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -23,6 +24,7 @@ async function startServer() {
   // Body parser middleware (before logging middleware)
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ limit: '10mb', extended: true }));
+  app.use(cookieParser());
 
   // Logging middleware (early in the chain)
   app.use(loggingMiddleware);
