@@ -37,7 +37,7 @@ router.get('/topic-recommendations/analytics', async (req: Request, res: Respons
       return res.status(400).json({ error: 'Invalid date format' });
     }
 
-    const metrics = await getVariantAnalyticsFromSupabase(supabase, startDate, endDate);
+    const metrics = await getVariantAnalyticsFromSupabase(supabase as any, startDate, endDate);
     // AC10: Cache analytics for 5 minutes
     res.set('Cache-Control', 'public, max-age=300');
     res.json(metrics);
@@ -56,7 +56,7 @@ router.get('/topic-recommendations/analytics/daily', async (req: Request, res: R
   try {
     const days = parseInt(req.query.days as string) || 7;
 
-    const dailyMetrics = await getDailyMetricsByVariant(supabase, days);
+    const dailyMetrics = await getDailyMetricsByVariant(supabase as any, days);
     // AC10: Cache daily metrics for 1 hour (matches hourly refresh)
     res.set('Cache-Control', 'public, max-age=3600');
     res.json(dailyMetrics);
@@ -86,7 +86,7 @@ router.get('/topic-recommendations/analytics/segments', async (req: Request, res
       return res.status(400).json({ error: 'Invalid date format' });
     }
 
-    const segmentMetrics = await getMetricsByUserSegment(supabase, startDate, endDate);
+    const segmentMetrics = await getMetricsByUserSegment(supabase as any, startDate, endDate);
     // AC10: Cache segment metrics for 5 minutes
     res.set('Cache-Control', 'public, max-age=300');
     res.json(segmentMetrics);

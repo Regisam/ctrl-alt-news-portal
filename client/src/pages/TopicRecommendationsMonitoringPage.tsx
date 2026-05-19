@@ -86,13 +86,11 @@ export default function TopicRecommendationsMonitoringPage() {
 
   // Fetch daily data from API
   const [dailyData, setDailyData] = useState<Array<{ date: string; metrics: Record<SerendipityVariant, VariantMetrics> }>>([]);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
   const alertsShownRef = useRef(new Set<string>());
 
-  // Detect alerts when metrics or dailyData changes
-  useEffect(() => {
-    const newAlerts = detectAlerts(metrics, dailyData);
-    setAlerts(newAlerts);
+  // Compute alerts when metrics or dailyData changes
+  const alerts = useMemo(() => {
+    return detectAlerts(metrics, dailyData);
   }, [metrics, dailyData]);
 
   // Show toast notifications for new alerts

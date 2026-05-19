@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
       return res.status(400).json({ error: 'Invalid date format' });
     }
 
-    const metrics = await getVariantAnalyticsFromSupabase(supabase, startDate, endDate);
+    const metrics = await getVariantAnalyticsFromSupabase(supabase as any, startDate, endDate);
     res.json(metrics);
   } catch (error) {
     console.error('Error fetching analytics:', error);
@@ -50,7 +50,7 @@ router.get('/daily', async (req, res) => {
   try {
     const days = parseInt(req.query.days as string) || 7;
 
-    const dailyMetrics = await getDailyMetricsByVariant(supabase, days);
+    const dailyMetrics = await getDailyMetricsByVariant(supabase as any, days);
     res.json(dailyMetrics);
   } catch (error) {
     console.error('Error fetching daily analytics:', error);
@@ -78,7 +78,7 @@ router.get('/segments', async (req, res) => {
       return res.status(400).json({ error: 'Invalid date format' });
     }
 
-    const segmentMetrics = await getMetricsByUserSegment(supabase, startDate, endDate);
+    const segmentMetrics = await getMetricsByUserSegment(supabase as any, startDate, endDate);
     res.json(segmentMetrics);
   } catch (error) {
     console.error('Error fetching segment analytics:', error);
