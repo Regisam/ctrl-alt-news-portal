@@ -13,6 +13,7 @@ import { handleFeedStream, broadcastFeedUpdate, feedStreamHealth } from "./api/f
 import digestRouter from "./api/digest.js";
 import topicRecommendationsRouter from "./api/topic-recommendations.js";
 import authRouter from "./src/routes/auth.js";
+import usersRouter from "./src/routes/users.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -124,6 +125,10 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Authentication endpoints (Story 3.1-3.2)
   app.use('/api/auth', authRouter);
+
+  // User profile endpoints (Story 3.3)
+  app.use('/api/user', usersRouter);
+  app.use('/api/users', usersRouter);
 
   // Serve static files from dist/public in production
   const staticPath =
