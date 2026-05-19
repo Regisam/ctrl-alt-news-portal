@@ -11,6 +11,7 @@ import { generateSitemapXML } from "./lib/sitemap.js";
 import { handleFeedStream, broadcastFeedUpdate, feedStreamHealth } from "./api/feed-stream.js";
 import digestRouter from "./api/digest.js";
 import topicRecommendationsRouter from "./api/topic-recommendations.js";
+import authRouter from "./src/routes/auth.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -118,6 +119,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Topic Recommendations endpoints (Story 13.7)
   app.use('/api', topicRecommendationsRouter);
+
+  // Authentication endpoints (Story 3.1-3.2)
+  app.use('/api/auth', authRouter);
 
   // Serve static files from dist/public in production
   const staticPath =
