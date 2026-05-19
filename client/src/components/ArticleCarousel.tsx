@@ -72,7 +72,7 @@ function CarouselCard({
   };
 
   return (
-    <div
+    <article
       onClick={() => navigate(`/article/${article.id}`)}
       role="button"
       tabIndex={0}
@@ -80,6 +80,8 @@ function CarouselCard({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       aria-label={title}
+      data-testid="article-card"
+      className="article-card"
       style={baseStyle}
     >
       {/* Thumbnail */}
@@ -216,7 +218,7 @@ function CarouselCard({
           </span>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 

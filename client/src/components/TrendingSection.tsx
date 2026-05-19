@@ -78,6 +78,7 @@ export default function TrendingSection({ lang }: TrendingSectionProps) {
               <article
                 key={article.id}
                 className={`trending-card glass-card ${cat.cardClass}`}
+                data-testid="article-card"
                 style={{
                   borderRadius: '6px',
                   overflow: 'hidden',

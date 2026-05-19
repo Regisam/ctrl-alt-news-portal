@@ -107,6 +107,7 @@ export default function GadgetsSection({ lang }: GadgetsSectionProps) {
                 key={product.id}
                 aria-label={`${product.name} — ${product.badge}, ${product.rating} ${lang === 'en' ? 'stars' : 'estrelas'}`}
                 className="news-card glass-card"
+                data-testid="article-card"
                 style={{
                   borderRadius: '8px',
                   overflow: 'hidden',

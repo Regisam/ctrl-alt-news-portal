@@ -219,7 +219,7 @@ function FeedCard({ article, lang, position, onArticleClick }: FeedCardProps) {
         cursor: 'pointer',
       }}
     >
-      <div
+      <article
         style={{
           borderRadius: '8px',
           overflow: 'hidden',
@@ -231,6 +231,7 @@ function FeedCard({ article, lang, position, onArticleClick }: FeedCardProps) {
           flexDirection: 'column',
         }}
         className="feed-card"
+        data-testid="article-card"
         onMouseEnter={(e) => {
           (e.currentTarget as HTMLElement).style.borderColor = `${cat.color}66`;
           (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)';
@@ -335,7 +336,7 @@ function FeedCard({ article, lang, position, onArticleClick }: FeedCardProps) {
             <span>{article.readTime}</span>
           </div>
         </div>
-      </div>
+      </article>
     </Link>
   );
 }

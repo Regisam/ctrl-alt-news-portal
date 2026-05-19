@@ -86,6 +86,7 @@ export default function HeroSection({ lang }: HeroSectionProps) {
 
       {/* Content */}
       <article
+        data-testid="article-card"
         style={{
           position: 'relative',
           zIndex: 2,

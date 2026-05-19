@@ -12,13 +12,540 @@
 # Error details
 
 ```
-Error: browserType.launch: Executable doesn't exist at /Users/regis/Library/Caches/ms-playwright/chromium_headless_shell-1217/chrome-headless-shell-mac-arm64/chrome-headless-shell
-╔════════════════════════════════════════════════════════════╗
-║ Looks like Playwright was just installed or updated.       ║
-║ Please run the following command to download new browsers: ║
-║                                                            ║
-║     npx playwright install                                 ║
-║                                                            ║
-║ <3 Playwright Team                                         ║
-╚════════════════════════════════════════════════════════════╝
+Error: expect(received).toContain(expected) // indexOf
+
+Expected substring: "robotics"
+Received string:    ""
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - region "Notifications alt+T"
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e6]:
+        - link "CTRL + ALT News — Página inicial" [ref=e7] [cursor=pointer]:
+          - /url: /
+          - img [ref=e8]
+          - img "CTRL + ALT News" [ref=e9]
+        - navigation "Main navigation" [ref=e10]:
+          - button "AI news section" [ref=e11] [cursor=pointer]: AI
+          - button "Science news section" [ref=e12] [cursor=pointer]: SCIENCE
+          - button "Robotics news section" [ref=e13] [cursor=pointer]: ROBOTICS
+          - button "Gadgets reviews and deals" [ref=e14] [cursor=pointer]: GADGETS
+        - generic [ref=e15]:
+          - button "Open search" [ref=e17] [cursor=pointer]:
+            - img [ref=e18]
+            - generic [ref=e21]: Search
+          - group "Language selection" [ref=e22]:
+            - img [ref=e23]
+            - button "Mudar para Português" [ref=e26] [cursor=pointer]: PT
+            - generic [ref=e27]: "|"
+            - button "Switch to English" [pressed] [ref=e28] [cursor=pointer]: EN
+    - main [ref=e29]:
+      - generic [ref=e30]:
+        - button "Back" [ref=e31] [cursor=pointer]:
+          - img [ref=e32]
+          - text: Back
+        - generic [ref=e35]:
+          - img
+          - searchbox "Search articles, categories, authors…" [ref=e36]
+        - generic [ref=e37]:
+          - button "ALL" [ref=e38] [cursor=pointer]
+          - button "AI" [ref=e39] [cursor=pointer]
+          - button "SCIENCE" [ref=e40] [cursor=pointer]
+          - button "ROBOTICS" [ref=e41] [cursor=pointer]
+        - generic [ref=e42]:
+          - link [ref=e43] [cursor=pointer]:
+            - /url: /article/101
+            - article [ref=e44]:
+              - generic [ref=e46]:
+                - generic [ref=e47]:
+                  - generic [ref=e48]: AI
+                  - generic [ref=e49]: Alex Chen
+                - heading "GPT-5 Reasoning Engine Surpasses Human Experts" [level=3] [ref=e50]
+                - generic [ref=e51]:
+                  - generic [ref=e52]:
+                    - img [ref=e53]
+                    - text: 5 min
+                  - generic [ref=e56]:
+                    - img [ref=e57]
+                    - text: 48.2K
+                  - generic [ref=e60]: Feb 24, 2026
+          - link [ref=e61] [cursor=pointer]:
+            - /url: /article/102
+            - article [ref=e62]:
+              - generic [ref=e64]:
+                - generic [ref=e65]:
+                  - generic [ref=e66]: AI
+                  - generic [ref=e67]: Dr. Sarah Kim
+                - heading "AI Designs New Antibiotics Resistant to Superbugs" [level=3] [ref=e68]
+                - generic [ref=e69]:
+                  - generic [ref=e70]:
+                    - img [ref=e71]
+                    - text: 6 min
+                  - generic [ref=e74]:
+                    - img [ref=e75]
+                    - text: 35.7K
+                  - generic [ref=e78]: Feb 23, 2026
+          - link [ref=e79] [cursor=pointer]:
+            - /url: /article/103
+            - article [ref=e80]:
+              - generic [ref=e82]:
+                - generic [ref=e83]:
+                  - generic [ref=e84]: AI
+                  - generic [ref=e85]: James Wright
+                - heading "Neural Interface Lets Paralysed Patients Type at 200 WPM" [level=3] [ref=e86]
+                - generic [ref=e87]:
+                  - generic [ref=e88]:
+                    - img [ref=e89]
+                    - text: 7 min
+                  - generic [ref=e92]:
+                    - img [ref=e93]
+                    - text: 44.7K
+                  - generic [ref=e96]: Feb 22, 2026
+          - link [ref=e97] [cursor=pointer]:
+            - /url: /article/105
+            - article [ref=e98]:
+              - generic [ref=e100]:
+                - generic [ref=e101]:
+                  - generic [ref=e102]: AI
+                  - generic [ref=e103]: Manus AI
+                - 'heading "The Agentic AI Revolution: Model Context Protocol (MCP) Goes Mainstream" [level=3] [ref=e104]'
+                - generic [ref=e105]:
+                  - generic [ref=e106]:
+                    - img [ref=e107]
+                    - text: 6 min
+                  - generic [ref=e110]:
+                    - img [ref=e111]
+                    - text: 67.4K
+                  - generic [ref=e114]: Feb 21, 2026
+          - link [ref=e115] [cursor=pointer]:
+            - /url: /article/106
+            - article [ref=e116]:
+              - generic [ref=e118]:
+                - generic [ref=e119]:
+                  - generic [ref=e120]: AI
+                  - generic [ref=e121]: Manus AI
+                - heading "Daily Edition — AI, Science, Robotics & Gadgets Roundup" [level=3] [ref=e122]
+                - generic [ref=e123]:
+                  - generic [ref=e124]:
+                    - img [ref=e125]
+                    - text: 12 min
+                  - generic [ref=e128]:
+                    - img [ref=e129]
+                    - text: 89.2K
+                  - generic [ref=e132]: Feb 21, 2026
+          - link [ref=e133] [cursor=pointer]:
+            - /url: /article/104
+            - article [ref=e134]:
+              - generic [ref=e136]:
+                - generic [ref=e137]:
+                  - generic [ref=e138]: AI
+                  - generic [ref=e139]: Marcus Lee
+                - 'heading "NVIDIA Blackwell Ultra: The GPU That Runs AGI" [level=3] [ref=e140]'
+                - generic [ref=e141]:
+                  - generic [ref=e142]:
+                    - img [ref=e143]
+                    - text: 4 min
+                  - generic [ref=e146]:
+                    - img [ref=e147]
+                    - text: 52.1K
+                  - generic [ref=e150]: Feb 21, 2026
+          - link [ref=e151] [cursor=pointer]:
+            - /url: /article/201
+            - article [ref=e152]:
+              - generic [ref=e154]:
+                - generic [ref=e155]:
+                  - generic [ref=e156]: SCIENCE
+                  - generic [ref=e157]: Dr. Maria Santos
+                - heading "CRISPR 3.0 Edits Genes With Zero Off-Target Errors" [level=3] [ref=e158]
+                - generic [ref=e159]:
+                  - generic [ref=e160]:
+                    - img [ref=e161]
+                    - text: 8 min
+                  - generic [ref=e164]:
+                    - img [ref=e165]
+                    - text: 38.9K
+                  - generic [ref=e168]: Feb 24, 2026
+          - link [ref=e169] [cursor=pointer]:
+            - /url: /article/202
+            - article [ref=e170]:
+              - generic [ref=e172]:
+                - generic [ref=e173]:
+                  - generic [ref=e174]: SCIENCE
+                  - generic [ref=e175]: Dr. Elena Vasquez
+                - heading "James Webb Captures First Image of an Earth-Like Exoplanet" [level=3] [ref=e176]
+                - generic [ref=e177]:
+                  - generic [ref=e178]:
+                    - img [ref=e179]
+                    - text: 6 min
+                  - generic [ref=e182]:
+                    - img [ref=e183]
+                    - text: 61.3K
+                  - generic [ref=e186]: Feb 23, 2026
+          - link [ref=e187] [cursor=pointer]:
+            - /url: /article/203
+            - article [ref=e188]:
+              - generic [ref=e190]:
+                - generic [ref=e191]:
+                  - generic [ref=e192]: SCIENCE
+                  - generic [ref=e193]: Prof. Raj Patel
+                - heading "Room-Temperature Superconductor Confirmed by Three Labs" [level=3] [ref=e194]
+                - generic [ref=e195]:
+                  - generic [ref=e196]:
+                    - img [ref=e197]
+                    - text: 9 min
+                  - generic [ref=e200]:
+                    - img [ref=e201]
+                    - text: 29.4K
+                  - generic [ref=e204]: Feb 22, 2026
+          - link [ref=e205] [cursor=pointer]:
+            - /url: /article/204
+            - article [ref=e206]:
+              - generic [ref=e208]:
+                - generic [ref=e209]:
+                  - generic [ref=e210]: SCIENCE
+                  - generic [ref=e211]: Dr. Yuki Tanaka
+                - heading "Dark Matter Signal Detected at CERN Collider" [level=3] [ref=e212]
+                - generic [ref=e213]:
+                  - generic [ref=e214]:
+                    - img [ref=e215]
+                    - text: 7 min
+                  - generic [ref=e218]:
+                    - img [ref=e219]
+                    - text: 43.8K
+                  - generic [ref=e222]: Feb 21, 2026
+          - link [ref=e223] [cursor=pointer]:
+            - /url: /article/205
+            - article [ref=e224]:
+              - generic [ref=e226]:
+                - generic [ref=e227]:
+                  - generic [ref=e228]: SCIENCE
+                  - generic [ref=e229]: Manus AI
+                - heading "\"Ushikuvirus\" Giant Virus Discovery Could Rewrite the Origin of Complex Life" [level=3] [ref=e230]
+                - generic [ref=e231]:
+                  - generic [ref=e232]:
+                    - img [ref=e233]
+                    - text: 7 min
+                  - generic [ref=e236]:
+                    - img [ref=e237]
+                    - text: 31.5K
+                  - generic [ref=e240]: Feb 21, 2026
+          - link [ref=e241] [cursor=pointer]:
+            - /url: /article/206
+            - article [ref=e242]:
+              - generic [ref=e244]:
+                - generic [ref=e245]:
+                  - generic [ref=e246]: SCIENCE
+                  - generic [ref=e247]: Manus AI
+                - 'heading "Samsung Galaxy Unpacked 2026: The Galaxy S26 Series Is Set to Launch on 25th February" [level=3] [ref=e248]'
+                - generic [ref=e249]:
+                  - generic [ref=e250]:
+                    - img [ref=e251]
+                    - text: 5 min
+                  - generic [ref=e254]:
+                    - img [ref=e255]
+                    - text: 55.8K
+                  - generic [ref=e258]: Feb 21, 2026
+          - link [ref=e259] [cursor=pointer]:
+            - /url: /article/301
+            - article [ref=e260]:
+              - generic [ref=e262]:
+                - generic [ref=e263]:
+                  - generic [ref=e264]: ROBOTICS
+                  - generic [ref=e265]: James Wright
+                - heading "Tesla Optimus Gen 3 Begins Full Factory Deployment" [level=3] [ref=e266]
+                - generic [ref=e267]:
+                  - generic [ref=e268]:
+                    - img [ref=e269]
+                    - text: 5 min
+                  - generic [ref=e272]:
+                    - img [ref=e273]
+                    - text: 57.2K
+                  - generic [ref=e276]: Feb 24, 2026
+          - link [ref=e277] [cursor=pointer]:
+            - /url: /article/302
+            - article [ref=e278]:
+              - generic [ref=e280]:
+                - generic [ref=e281]:
+                  - generic [ref=e282]: ROBOTICS
+                  - generic [ref=e283]: Marcus Lee
+                - heading "Boston Dynamics Atlas 3.0 Learns New Skills in Real Time" [level=3] [ref=e284]
+                - generic [ref=e285]:
+                  - generic [ref=e286]:
+                    - img [ref=e287]
+                    - text: 6 min
+                  - generic [ref=e290]:
+                    - img [ref=e291]
+                    - text: 29.4K
+                  - generic [ref=e294]: Feb 23, 2026
+          - link [ref=e295] [cursor=pointer]:
+            - /url: /article/303
+            - article [ref=e296]:
+              - generic [ref=e298]:
+                - generic [ref=e299]:
+                  - generic [ref=e300]: ROBOTICS
+                  - generic [ref=e301]: Dr. Sarah Kim
+                - heading "Surgical Robots Perform 10,000 Procedures Without Human Assist" [level=3] [ref=e302]
+                - generic [ref=e303]:
+                  - generic [ref=e304]:
+                    - img [ref=e305]
+                    - text: 7 min
+                  - generic [ref=e308]:
+                    - img [ref=e309]
+                    - text: 41.6K
+                  - generic [ref=e312]: Feb 22, 2026
+          - link [ref=e313] [cursor=pointer]:
+            - /url: /article/304
+            - article [ref=e314]:
+              - generic [ref=e316]:
+                - generic [ref=e317]:
+                  - generic [ref=e318]: ROBOTICS
+                  - generic [ref=e319]: Prof. Raj Patel
+                - heading "Micro-Robots Deliver Cancer Drugs Directly to Tumours" [level=3] [ref=e320]
+                - generic [ref=e321]:
+                  - generic [ref=e322]:
+                    - img [ref=e323]
+                    - text: 8 min
+                  - generic [ref=e326]:
+                    - img [ref=e327]
+                    - text: 33.1K
+                  - generic [ref=e330]: Feb 21, 2026
+          - link [ref=e331] [cursor=pointer]:
+            - /url: /article/305
+            - article [ref=e332]:
+              - generic [ref=e334]:
+                - generic [ref=e335]:
+                  - generic [ref=e336]: ROBOTICS
+                  - generic [ref=e337]: Manus AI
+                - heading "China's Humanoid Robots Steal the Show at Spring Festival Gala" [level=3] [ref=e338]
+                - generic [ref=e339]:
+                  - generic [ref=e340]:
+                    - img [ref=e341]
+                    - text: 6 min
+                  - generic [ref=e344]:
+                    - img [ref=e345]
+                    - text: 74.3K
+                  - generic [ref=e348]: Feb 21, 2026
+    - contentinfo "Site footer" [ref=e349]:
+      - generic [ref=e350]:
+        - generic [ref=e351]:
+          - generic [ref=e352]:
+            - link "CTRL + ALT News — Home" [ref=e353] [cursor=pointer]:
+              - /url: /
+              - img "CTRL + ALT News" [ref=e354]
+            - paragraph [ref=e355]: Your source for the future of technology.
+            - list "Social media links" [ref=e356]:
+              - button "Follow on X (Twitter)" [ref=e357] [cursor=pointer]: X
+              - button "Watch on YouTube" [ref=e358] [cursor=pointer]: YT
+              - button "Follow on Instagram" [ref=e359] [cursor=pointer]: IG
+              - button "Join on Telegram" [ref=e360] [cursor=pointer]: TG
+          - navigation "News categories" [ref=e361]:
+            - heading "Categories" [level=2] [ref=e362]
+            - button "AI news section" [ref=e363] [cursor=pointer]: AI
+            - button "Science news section" [ref=e364] [cursor=pointer]: SCIENCE
+            - button "Robotics news section" [ref=e365] [cursor=pointer]: ROBOTICS
+            - button "Gadgets reviews" [ref=e366] [cursor=pointer]: GADGETS
+          - navigation "Company links" [ref=e367]:
+            - heading "Company" [level=2] [ref=e368]
+            - link "About" [ref=e369] [cursor=pointer]:
+              - /url: /about
+            - link "Contact" [ref=e370] [cursor=pointer]:
+              - /url: /contact
+            - button "Advertise" [ref=e371] [cursor=pointer]
+            - link "Sitemap" [ref=e372] [cursor=pointer]:
+              - /url: /sitemap.xml
+          - navigation "Legal links" [ref=e373]:
+            - heading "Legal" [level=2] [ref=e374]
+            - link "Privacy Policy" [ref=e375] [cursor=pointer]:
+              - /url: /privacy
+            - link "Terms of Use" [ref=e376] [cursor=pointer]:
+              - /url: /terms
+        - generic [ref=e378]:
+          - paragraph [ref=e379]: © 2026 CTRL + ALT News. All rights reserved.
+          - paragraph [ref=e380]: "Affiliate disclosure: Some links may earn us a commission at no extra cost to you."
+```
+
+# Test source
+
+```ts
+  1   | import { test, expect } from '@playwright/test';
+  2   | import { HomePage } from './fixtures/home.page';
+  3   | import { SearchPage } from './fixtures/search.page';
+  4   | import { ArticlePage } from './fixtures/article.page';
+  5   | 
+  6   | test.describe('Search Functionality', () => {
+  7   |   let homePage: HomePage;
+  8   |   let searchPage: SearchPage;
+  9   |   let articlePage: ArticlePage;
+  10  | 
+  11  |   test.beforeEach(async ({ page }) => {
+  12  |     homePage = new HomePage(page);
+  13  |     searchPage = new SearchPage(page);
+  14  |     articlePage = new ArticlePage(page);
+  15  |     await homePage.navigateToHome();
+  16  |   });
+  17  | 
+  18  |   test('should access search page', async ({ page }) => {
+  19  |     await searchPage.navigateToSearch();
+  20  | 
+  21  |     const isLoaded = await searchPage.isSearchPageLoaded();
+  22  |     expect(isLoaded).toBe(true);
+  23  |   });
+  24  | 
+  25  |   test('should perform basic search', async ({ page }) => {
+  26  |     await searchPage.navigateToSearch();
+  27  |     await searchPage.performSearch('AI');
+  28  | 
+  29  |     await searchPage.waitForSearchResults();
+  30  |     const hasResults = await searchPage.hasSearchResults();
+  31  |     expect(hasResults).toBe(true);
+  32  |   });
+  33  | 
+  34  |   test('should display search results with titles', async ({ page }) => {
+  35  |     await searchPage.navigateToSearch();
+  36  |     await searchPage.performSearch('quantum');
+  37  | 
+  38  |     const titles = await searchPage.getResultTitles();
+  39  |     titles.forEach(title => {
+  40  |       expect(title.length).toBeGreaterThan(0);
+  41  |     });
+  42  |   });
+  43  | 
+  44  |   test('should show no results for non-existent search', async ({ page }) => {
+  45  |     await searchPage.navigateToSearch();
+  46  |     await searchPage.performSearch('xyzabc123notreal');
+  47  | 
+  48  |     await searchPage.waitForSearchResults();
+  49  |     const hasNoResults = await searchPage.hasNoResultsMessage();
+  50  |     expect(hasNoResults).toBe(true);
+  51  |   });
+  52  | 
+  53  |   test('should navigate to article from search results', async ({ page }) => {
+  54  |     await searchPage.navigateToSearch();
+  55  |     await searchPage.performSearch('AI');
+  56  | 
+  57  |     const hasResults = await searchPage.hasSearchResults();
+  58  |     if (hasResults) {
+  59  |       const resultCount = await searchPage.getSearchResultCount();
+  60  |       if (resultCount > 0) {
+  61  |         await searchPage.clickFirstResult();
+  62  | 
+  63  |         const url = await page.url();
+  64  |         expect(url).toContain('/article/');
+  65  |       }
+  66  |     }
+  67  |   });
+  68  | 
+  69  |   test('should maintain search query in input', async ({ page }) => {
+  70  |     await searchPage.navigateToSearch();
+  71  |     const searchQuery = 'robotics';
+  72  |     await searchPage.performSearch(searchQuery);
+  73  | 
+  74  |     const inputValue = await searchPage.getSearchInputValue();
+> 75  |     expect(inputValue).toContain(searchQuery);
+      |                        ^ Error: expect(received).toContain(expected) // indexOf
+  76  |   });
+  77  | 
+  78  |   test('should clear search results', async ({ page }) => {
+  79  |     await searchPage.navigateToSearch();
+  80  |     await searchPage.performSearch('AI');
+  81  | 
+  82  |     const initialCount = await searchPage.getSearchResultCount();
+  83  |     expect(initialCount).toBeGreaterThan(0);
+  84  | 
+  85  |     await searchPage.clearSearch();
+  86  | 
+  87  |     // After clearing, should either show all articles or no results
+  88  |     const finalCount = await searchPage.getSearchResultCount();
+  89  |     // Count might be different from initial (could be showing all, or all matching empty query)
+  90  |     expect(typeof finalCount).toBe('number');
+  91  |   });
+  92  | 
+  93  |   test('should handle multiple searches sequentially', async ({ page }) => {
+  94  |     await searchPage.navigateToSearch();
+  95  | 
+  96  |     // Search for first query
+  97  |     await searchPage.performSearch('science');
+  98  |     const firstResults = await searchPage.getSearchResultCount();
+  99  | 
+  100 |     // Search for second query
+  101 |     await searchPage.performSearch('technology');
+  102 |     await searchPage.waitForSearchResults();
+  103 |     const secondResults = await searchPage.getSearchResultCount();
+  104 | 
+  105 |     // Results should update
+  106 |     expect(typeof firstResults).toBe('number');
+  107 |     expect(typeof secondResults).toBe('number');
+  108 |   });
+  109 | 
+  110 |   test('should be responsive on mobile', async ({ browser }) => {
+  111 |     const mobileContext = await browser.newContext({
+  112 |       viewport: { width: 375, height: 667 }
+  113 |     });
+  114 |     const mobilePage = await mobileContext.newPage();
+  115 |     const mobileSearch = new SearchPage(mobilePage);
+  116 | 
+  117 |     await mobileSearch.navigateToSearch();
+  118 |     const isLoaded = await mobileSearch.isSearchPageLoaded();
+  119 |     expect(isLoaded).toBe(true);
+  120 | 
+  121 |     // Perform search on mobile
+  122 |     await mobileSearch.performSearch('AI');
+  123 |     await mobileSearch.waitForSearchResults();
+  124 | 
+  125 |     const hasResults = await mobileSearch.hasSearchResults();
+  126 |     expect(hasResults).toBe(true);
+  127 | 
+  128 |     // Verify results are readable on mobile
+  129 |     const titles = await mobileSearch.getResultTitles();
+  130 |     expect(titles.length).toBeGreaterThan(0);
+  131 | 
+  132 |     await mobileContext.close();
+  133 |   });
+  134 | 
+  135 |   test('should filter search results by category', async ({ page }) => {
+  136 |     await searchPage.navigateToSearch();
+  137 |     await searchPage.performSearch('');
+  138 | 
+  139 |     // Try to apply category filter
+  140 |     try {
+  141 |       await searchPage.filterByCategory('AI');
+  142 |       const results = await searchPage.getSearchResultCount();
+  143 |       expect(results).toBeGreaterThanOrEqual(0);
+  144 |     } catch {
+  145 |       // Filter might not be available, that's okay
+  146 |       expect(true).toBe(true);
+  147 |     }
+  148 |   });
+  149 | 
+  150 |   test('should display result metadata', async ({ page }) => {
+  151 |     await searchPage.navigateToSearch();
+  152 |     await searchPage.performSearch('AI');
+  153 | 
+  154 |     const hasResults = await searchPage.hasSearchResults();
+  155 |     if (hasResults) {
+  156 |       const metadata = await searchPage.getResultMetadata(0);
+  157 |       expect(metadata.title).toBeTruthy();
+  158 |     }
+  159 |   });
+  160 | 
+  161 |   test('should handle search from home page', async ({ page }) => {
+  162 |     await homePage.navigateToHome();
+  163 |     await homePage.waitForArticlesToLoad();
+  164 | 
+  165 |     // Perform search from home page
+  166 |     await homePage.searchArticles('quantum');
+  167 | 
+  168 |     // Verify search was performed
+  169 |     const url = await page.url();
+  170 |     expect(url).toContain('/search') || expect(url).toContain('?');
+  171 | 
+  172 |     // Should show results
+  173 |     const hasResults = await searchPage.hasSearchResults();
+  174 |     expect(hasResults).toBe(true);
+  175 |   });
 ```

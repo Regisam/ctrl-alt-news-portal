@@ -12,13 +12,808 @@
 # Error details
 
 ```
-Error: browserType.launch: Executable doesn't exist at /Users/regis/Library/Caches/ms-playwright/webkit-2272/pw_run.sh
-╔════════════════════════════════════════════════════════════╗
-║ Looks like Playwright was just installed or updated.       ║
-║ Please run the following command to download new browsers: ║
-║                                                            ║
-║     npx playwright install                                 ║
-║                                                            ║
-║ <3 Playwright Team                                         ║
-╚════════════════════════════════════════════════════════════╝
+Error: locator.isVisible: Error: strict mode violation: locator('div[class*="p-6"]') resolved to 2 elements:
+    1) <div class="rounded-xl p-6 mb-8" data-loc="client/src/components/TrendingWidget.tsx:57">…</div> aka getByText('Trending Now#1GPT-5 Breaks')
+    2) <div class="rounded-xl p-6 mb-8" data-loc="client/src/components/RecommendationsWidget.tsx:65">…</div> aka getByText('Recommended for youGPT-5')
+
+Call log:
+    - checking visibility of locator('div[class*="p-6"]')
+
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - region "Notifications alt+T"
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e6]:
+        - link "CTRL + ALT News — Página inicial" [ref=e7] [cursor=pointer]:
+          - /url: /
+          - img [ref=e8]
+          - img "CTRL + ALT News" [ref=e9]
+        - navigation "Main navigation" [ref=e10]:
+          - button "AI news section" [ref=e11] [cursor=pointer]: AI
+          - button "Science news section" [ref=e12] [cursor=pointer]: SCIENCE
+          - button "Robotics news section" [ref=e13] [cursor=pointer]: ROBOTICS
+          - button "Gadgets reviews and deals" [ref=e14] [cursor=pointer]: GADGETS
+        - generic [ref=e15]:
+          - button "Open search" [ref=e17] [cursor=pointer]:
+            - img [ref=e18]
+            - generic [ref=e21]: Search
+          - group "Language selection" [ref=e22]:
+            - img [ref=e23]
+            - button "Mudar para Português" [ref=e26] [cursor=pointer]: PT
+            - generic [ref=e27]: "|"
+            - button "Switch to English" [pressed] [ref=e28] [cursor=pointer]: EN
+    - complementary "Advertisement" [ref=e31]: Google AdSense — Leaderboard 728×90
+    - generic [ref=e32]:
+      - region "Featured article" [ref=e34]:
+        - img "Futuristic quantum computing laboratory with AI neural network visualizations in deep blue and cyan" [ref=e35]
+        - article [ref=e38]:
+          - generic [ref=e39]:
+            - generic "BREAKING" [ref=e40]
+            - generic [ref=e41]: AI × SCIENCE
+          - 'heading "THE QUANTUM REVOLUTION: How AI is Reshaping Science" [level=1] [ref=e42]'
+          - paragraph [ref=e43]: A new class of hybrid quantum-AI systems is breaking the boundaries of what's computationally possible — redefining drug discovery, climate modelling, and the very nature of intelligence itself.
+          - generic [ref=e44]:
+            - generic [ref=e45]:
+              - generic [ref=e46]: EV
+              - generic [ref=e47]: Dr. Elena Vasquez
+            - generic [ref=e48]: ·
+            - time [ref=e49]: Feb 24, 2026
+            - generic [ref=e50]:
+              - img [ref=e51]
+              - generic [ref=e54]: 8 min read
+            - generic [ref=e55]:
+              - img [ref=e56]
+              - generic [ref=e59]: 124.5K views
+          - 'link "Continue reading: The Quantum Revolution" [ref=e60] [cursor=pointer]':
+            - /url: /article/101
+            - text: Continue Reading
+            - img [ref=e61]
+      - 'complementary "Sidebar: popular articles and newsletter" [ref=e64]':
+        - region "Popular tech articles" [ref=e65]:
+          - heading "Popular Tech" [level=2] [ref=e67]
+          - list "Popular articles ranked by views" [ref=e68]:
+            - listitem [ref=e69]:
+              - 'link "Read #1: AI Chip Wars: NVIDIA vs. AMD vs. Intel in 2026 — 52.1K views" [ref=e70] [cursor=pointer]':
+                - /url: /article/104
+                - generic [ref=e71]: "01"
+                - generic [ref=e73]:
+                  - generic [ref=e74]: AI
+                  - paragraph [ref=e75]: "AI Chip Wars: NVIDIA vs. AMD vs. Intel in 2026"
+                  - generic [ref=e76]:
+                    - img [ref=e77]
+                    - generic [ref=e80]: 52.1K
+                - img [ref=e81]
+            - listitem [ref=e83]:
+              - 'link "Read #2: Dark Matter Detected? Scientists Report Anomalous Signal — 38.9K views" [ref=e84] [cursor=pointer]':
+                - /url: /article/202
+                - generic [ref=e85]: "02"
+                - generic [ref=e87]:
+                  - generic [ref=e88]: SCIENCE
+                  - paragraph [ref=e89]: Dark Matter Detected? Scientists Report Anomalous Signal
+                  - generic [ref=e90]:
+                    - img [ref=e91]
+                    - generic [ref=e94]: 38.9K
+                - img [ref=e95]
+            - listitem [ref=e97]:
+              - 'link "Read #3: Humanoid Robots Enter the Workforce: 1 Million Units Deployed — 29.4K views" [ref=e98] [cursor=pointer]':
+                - /url: /article/303
+                - generic [ref=e99]: "03"
+                - generic [ref=e101]:
+                  - generic [ref=e102]: ROBOTICS
+                  - paragraph [ref=e103]: "Humanoid Robots Enter the Workforce: 1 Million Units Deployed"
+                  - generic [ref=e104]:
+                    - img [ref=e105]
+                    - generic [ref=e108]: 29.4K
+                - img [ref=e109]
+        - region "Newsletter signup" [ref=e111]:
+          - heading "⚡ Stay Ahead of Tech" [level=2] [ref=e112]
+          - paragraph [ref=e113]: Get the latest AI, Science & Robotics news delivered to your inbox.
+          - generic [ref=e114]: Email address
+          - textbox "Email address" [ref=e115]:
+            - /placeholder: your@email.com
+          - button "Subscribe to newsletter" [ref=e116] [cursor=pointer]: Subscribe Free
+        - generic [ref=e123]:
+          - generic [ref=e124]:
+            - img [ref=e125]
+            - heading "Trending Now" [level=3] [ref=e127]
+          - generic [ref=e128]:
+            - 'link "GPT-5 Breaks Every Benchmark: The New Era of Reasoning AI 48.2K • 5 min AI" [ref=e129] [cursor=pointer]':
+              - /url: /article/1
+              - generic [ref=e130]:
+                - generic [ref=e131]: "#1"
+                - generic [ref=e132]:
+                  - 'heading "GPT-5 Breaks Every Benchmark: The New Era of Reasoning AI" [level=4] [ref=e133]'
+                  - generic [ref=e134]:
+                    - generic [ref=e135]:
+                      - img [ref=e136]
+                      - text: 48.2K
+                    - generic [ref=e139]: •
+                    - generic [ref=e140]: 5 min
+                  - generic [ref=e142]: AI
+                - img [ref=e144]
+            - 'link "Quantum Frontiers: Inside the Next-Gen Lab Reshaping Physics 31.5K • 7 min SCIENCE" [ref=e146] [cursor=pointer]':
+              - /url: /article/2
+              - generic [ref=e147]:
+                - generic [ref=e148]: "#2"
+                - generic [ref=e149]:
+                  - 'heading "Quantum Frontiers: Inside the Next-Gen Lab Reshaping Physics" [level=4] [ref=e150]'
+                  - generic [ref=e151]:
+                    - generic [ref=e152]:
+                      - img [ref=e153]
+                      - text: 31.5K
+                    - generic [ref=e156]: •
+                    - generic [ref=e157]: 7 min
+                  - generic [ref=e159]: SCIENCE
+                - img [ref=e161]
+            - 'link "Boston Dynamics'' Atlas 3.0: The Robot That Thinks While It Moves 27.8K • 6 min ROBOTICS" [ref=e163] [cursor=pointer]':
+              - /url: /article/3
+              - generic [ref=e164]:
+                - generic [ref=e165]: "#3"
+                - generic [ref=e166]:
+                  - 'heading "Boston Dynamics'' Atlas 3.0: The Robot That Thinks While It Moves" [level=4] [ref=e167]'
+                  - generic [ref=e168]:
+                    - generic [ref=e169]:
+                      - img [ref=e170]
+                      - text: 27.8K
+                    - generic [ref=e173]: •
+                    - generic [ref=e174]: 6 min
+                  - generic [ref=e176]: ROBOTICS
+                - img [ref=e178]
+        - generic [ref=e180]:
+          - heading "Recommended for you" [level=3] [ref=e181]
+          - generic [ref=e182]:
+            - link "GPT-5 Reasoning Engine Surpasses Human Experts GPT-5 Reasoning Engine Surpasses Human Experts 5 min 48.2K AI" [ref=e183] [cursor=pointer]:
+              - /url: /article/101
+              - generic [ref=e184]:
+                - img "GPT-5 Reasoning Engine Surpasses Human Experts" [ref=e185]
+                - generic [ref=e186]:
+                  - heading "GPT-5 Reasoning Engine Surpasses Human Experts" [level=4] [ref=e187]
+                  - generic [ref=e188]:
+                    - generic [ref=e189]:
+                      - img [ref=e190]
+                      - text: 5 min
+                    - generic [ref=e193]:
+                      - img [ref=e194]
+                      - text: 48.2K
+                  - generic [ref=e198]: AI
+                - img [ref=e200]
+            - link "AI Designs New Antibiotics Resistant to Superbugs AI Designs New Antibiotics Resistant to Superbugs 6 min 35.7K AI" [ref=e202] [cursor=pointer]:
+              - /url: /article/102
+              - generic [ref=e203]:
+                - img "AI Designs New Antibiotics Resistant to Superbugs" [ref=e204]
+                - generic [ref=e205]:
+                  - heading "AI Designs New Antibiotics Resistant to Superbugs" [level=4] [ref=e206]
+                  - generic [ref=e207]:
+                    - generic [ref=e208]:
+                      - img [ref=e209]
+                      - text: 6 min
+                    - generic [ref=e212]:
+                      - img [ref=e213]
+                      - text: 35.7K
+                  - generic [ref=e217]: AI
+                - img [ref=e219]
+            - link "Neural Interface Lets Paralysed Patients Type at 200 WPM Neural Interface Lets Paralysed Patients Type at 200 WPM 7 min 44.7K AI" [ref=e221] [cursor=pointer]:
+              - /url: /article/103
+              - generic [ref=e222]:
+                - img "Neural Interface Lets Paralysed Patients Type at 200 WPM" [ref=e223]
+                - generic [ref=e224]:
+                  - heading "Neural Interface Lets Paralysed Patients Type at 200 WPM" [level=4] [ref=e225]
+                  - generic [ref=e226]:
+                    - generic [ref=e227]:
+                      - img [ref=e228]
+                      - text: 7 min
+                    - generic [ref=e231]:
+                      - img [ref=e232]
+                      - text: 44.7K
+                  - generic [ref=e236]: AI
+                - img [ref=e238]
+    - complementary "Advertisement" [ref=e241]: Google AdSense — Leaderboard 728×90
+    - region "Personalized feed" [ref=e243]:
+      - generic [ref=e244]:
+        - heading "🎯 For You" [level=2] [ref=e245]
+        - paragraph [ref=e246]: Handpicked for your interests
+      - generic [ref=e247]:
+        - 'link "Read: GPT-5 Breaks Every Benchmark: The New Era of Reasoning AI" [ref=e248] [cursor=pointer]':
+          - /url: /article/1
+          - article [ref=e249]:
+            - generic [ref=e251]:
+              - generic [ref=e252]: AI
+              - 'heading "GPT-5 Breaks Every Benchmark: The New Era of Reasoning AI" [level=3] [ref=e253]'
+              - paragraph [ref=e254]: OpenAI's latest model demonstrates unprecedented logical reasoning capabilities, surpassing human performance on complex multi-step problems.
+              - generic [ref=e255]:
+                - generic [ref=e256]:
+                  - img [ref=e257]
+                  - generic [ref=e260]: 48.2K
+                - generic [ref=e261]: ·
+                - generic [ref=e262]: 5 min
+        - 'link "Read: Quantum Frontiers: Inside the Next-Gen Lab Reshaping Physics" [ref=e263] [cursor=pointer]':
+          - /url: /article/2
+          - article [ref=e264]:
+            - generic [ref=e266]:
+              - generic [ref=e267]: SCIENCE
+              - 'heading "Quantum Frontiers: Inside the Next-Gen Lab Reshaping Physics" [level=3] [ref=e268]'
+              - paragraph [ref=e269]: Scientists at CERN have achieved a breakthrough in quantum entanglement stability, opening doors to practical quantum computing at room temperature.
+              - generic [ref=e270]:
+                - generic [ref=e271]:
+                  - img [ref=e272]
+                  - generic [ref=e275]: 31.5K
+                - generic [ref=e276]: ·
+                - generic [ref=e277]: 7 min
+        - 'link "Read: Boston Dynamics'' Atlas 3.0: The Robot That Thinks While It Moves" [ref=e278] [cursor=pointer]':
+          - /url: /article/3
+          - article [ref=e279]:
+            - generic [ref=e281]:
+              - generic [ref=e282]: ROBOTICS
+              - 'heading "Boston Dynamics'' Atlas 3.0: The Robot That Thinks While It Moves" [level=3] [ref=e283]'
+              - paragraph [ref=e284]: The latest iteration of Atlas combines real-time neural processing with physical agility, enabling autonomous decision-making in unstructured environments.
+              - generic [ref=e285]:
+                - generic [ref=e286]:
+                  - img [ref=e287]
+                  - generic [ref=e290]: 27.8K
+                - generic [ref=e291]: ·
+                - generic [ref=e292]: 6 min
+    - region "Trending news" [ref=e293]:
+      - generic [ref=e294]:
+        - generic [ref=e295]:
+          - generic [ref=e296]:
+            - img [ref=e297]
+            - heading "Trending Now" [level=2] [ref=e300]
+          - button "View all trending articles" [ref=e301] [cursor=pointer]: View All →
+        - generic [ref=e302]:
+          - article [ref=e303] [cursor=pointer]:
+            - 'link "Read article: GPT-5 Breaks Every Benchmark: The New Era of Reasoning AI" [ref=e304]':
+              - /url: /article/101
+              - generic [ref=e305]:
+                - 'img "GPT-5 Breaks Every Benchmark: The New Era of Reasoning AI" [ref=e306]'
+                - 'generic "Category: AI" [ref=e308]': AI
+              - generic [ref=e309]:
+                - 'heading "GPT-5 Breaks Every Benchmark: The New Era of Reasoning AI" [level=3] [ref=e310]'
+                - paragraph [ref=e311]: OpenAI's latest model demonstrates unprecedented logical reasoning capabilities, surpassing human performance on complex multi-step problems.
+                - generic [ref=e312]:
+                  - generic [ref=e313]:
+                    - generic [ref=e314]: AC
+                    - generic [ref=e315]: Alex Chen
+                  - generic [ref=e316]:
+                    - generic [ref=e317]:
+                      - img [ref=e318]
+                      - generic [ref=e321]: 5 min
+                    - generic [ref=e322]:
+                      - img [ref=e323]
+                      - generic [ref=e326]: 48.2K
+          - article [ref=e328] [cursor=pointer]:
+            - 'link "Read article: Quantum Frontiers: Inside the Next-Gen Lab Reshaping Physics" [ref=e329]':
+              - /url: /article/201
+              - generic [ref=e330]:
+                - 'img "Quantum Frontiers: Inside the Next-Gen Lab Reshaping Physics" [ref=e331]'
+                - 'generic "Category: SCIENCE" [ref=e333]': SCIENCE
+              - generic [ref=e334]:
+                - 'heading "Quantum Frontiers: Inside the Next-Gen Lab Reshaping Physics" [level=3] [ref=e335]'
+                - paragraph [ref=e336]: Scientists at CERN have achieved a breakthrough in quantum entanglement stability, opening doors to practical quantum computing at room temperature.
+                - generic [ref=e337]:
+                  - generic [ref=e338]:
+                    - generic [ref=e339]: DMS
+                    - generic [ref=e340]: Dr. Maria Santos
+                  - generic [ref=e341]:
+                    - generic [ref=e342]:
+                      - img [ref=e343]
+                      - generic [ref=e346]: 7 min
+                    - generic [ref=e347]:
+                      - img [ref=e348]
+                      - generic [ref=e351]: 31.5K
+          - article [ref=e353] [cursor=pointer]:
+            - 'link "Read article: Boston Dynamics'' Atlas 3.0: The Robot That Thinks While It Moves" [ref=e354]':
+              - /url: /article/301
+              - generic [ref=e355]:
+                - 'img "Boston Dynamics'' Atlas 3.0: The Robot That Thinks While It Moves" [ref=e356]'
+                - 'generic "Category: ROBOTICS" [ref=e358]': ROBOTICS
+              - generic [ref=e359]:
+                - 'heading "Boston Dynamics'' Atlas 3.0: The Robot That Thinks While It Moves" [level=3] [ref=e360]'
+                - paragraph [ref=e361]: The latest iteration of Atlas combines real-time neural processing with physical agility, enabling autonomous decision-making in unstructured environments.
+                - generic [ref=e362]:
+                  - generic [ref=e363]:
+                    - generic [ref=e364]: JW
+                    - generic [ref=e365]: James Wright
+                  - generic [ref=e366]:
+                    - generic [ref=e367]:
+                      - img [ref=e368]
+                      - generic [ref=e371]: 6 min
+                    - generic [ref=e372]:
+                      - img [ref=e373]
+                      - generic [ref=e376]: 27.8K
+    - generic [ref=e378]:
+      - region "🤖 Latest in Artificial Intelligence" [ref=e379]:
+        - generic [ref=e380]:
+          - generic [ref=e381]:
+            - generic [ref=e382]: 🤖
+            - generic [ref=e383]:
+              - paragraph [ref=e384]: Latest in
+              - heading "Artificial Intelligence" [level=2] [ref=e385]
+          - button "View all Artificial Intelligence" [ref=e388] [cursor=pointer]:
+            - text: View All
+            - img [ref=e389]
+        - generic [ref=e391]:
+          - button "GPT-5 Reasoning Engine Surpasses Human Experts" [ref=e392] [cursor=pointer]:
+            - generic [ref=e393]:
+              - img "GPT-5 Reasoning Engine Surpasses Human Experts" [ref=e394]
+              - generic [ref=e395]: AI
+            - generic [ref=e396]:
+              - generic [ref=e397]:
+                - generic [ref=e398]: Feb 24, 2026
+                - generic [ref=e399]: •
+                - generic [ref=e400]: 5 min min read
+              - heading "GPT-5 Reasoning Engine Surpasses Human Experts" [level=3] [ref=e401]
+              - paragraph [ref=e402]: OpenAI's latest model sets new records across all major benchmarks, demonstrating multi-step logical reasoning.
+              - generic [ref=e403]:
+                - generic [ref=e404]: AC
+                - generic [ref=e405]: Alex Chen
+          - button "AI Designs New Antibiotics Resistant to Superbugs" [ref=e406] [cursor=pointer]:
+            - generic [ref=e407]:
+              - img "AI Designs New Antibiotics Resistant to Superbugs" [ref=e408]
+              - generic [ref=e409]: AI
+            - generic [ref=e410]:
+              - generic [ref=e411]:
+                - generic [ref=e412]: Feb 23, 2026
+                - generic [ref=e413]: •
+                - generic [ref=e414]: 6 min min read
+              - heading "AI Designs New Antibiotics Resistant to Superbugs" [level=3] [ref=e415]
+              - paragraph [ref=e416]: A deep learning model has discovered a novel class of antibiotics effective against drug-resistant bacteria.
+              - generic [ref=e417]:
+                - generic [ref=e418]: DS
+                - generic [ref=e419]: Dr. Sarah Kim
+          - button "Neural Interface Lets Paralysed Patients Type at 200 WPM" [ref=e420] [cursor=pointer]:
+            - generic [ref=e421]:
+              - img "Neural Interface Lets Paralysed Patients Type at 200 WPM" [ref=e422]
+              - generic [ref=e423]: AI
+            - generic [ref=e424]:
+              - generic [ref=e425]:
+                - generic [ref=e426]: Feb 22, 2026
+                - generic [ref=e427]: •
+                - generic [ref=e428]: 7 min min read
+              - heading "Neural Interface Lets Paralysed Patients Type at 200 WPM" [level=3] [ref=e429]
+              - paragraph [ref=e430]: A brain-computer interface breakthrough enables direct neural-to-text communication at unprecedented speeds.
+              - generic [ref=e431]:
+                - generic [ref=e432]: JW
+                - generic [ref=e433]: James Wright
+          - 'button "The Agentic AI Revolution: Model Context Protocol (MCP) Goes Mainstream" [ref=e434] [cursor=pointer]':
+            - generic [ref=e435]:
+              - 'img "The Agentic AI Revolution: Model Context Protocol (MCP) Goes Mainstream" [ref=e436]'
+              - generic [ref=e437]: AI
+            - generic [ref=e438]:
+              - generic [ref=e439]:
+                - generic [ref=e440]: Feb 21, 2026
+                - generic [ref=e441]: •
+                - generic [ref=e442]: 6 min min read
+              - 'heading "The Agentic AI Revolution: Model Context Protocol (MCP) Goes Mainstream" [level=3] [ref=e443]'
+              - paragraph [ref=e444]: February 2026 marks a seismic shift from AI as a passive tool to AI as an autonomous worker, powered by the open-source Model Context Protocol.
+              - generic [ref=e445]:
+                - generic [ref=e446]: MA
+                - generic [ref=e447]: Manus AI
+          - button "Daily Edition — AI, Science, Robotics & Gadgets Roundup" [ref=e448] [cursor=pointer]:
+            - generic [ref=e449]:
+              - img "Daily Edition — AI, Science, Robotics & Gadgets Roundup" [ref=e450]
+              - generic [ref=e451]: AI
+            - generic [ref=e452]:
+              - generic [ref=e453]:
+                - generic [ref=e454]: Feb 21, 2026
+                - generic [ref=e455]: •
+                - generic [ref=e456]: 12 min min read
+              - heading "Daily Edition — AI, Science, Robotics & Gadgets Roundup" [level=3] [ref=e457]
+              - paragraph [ref=e458]: "Our 21 February 2026 daily briefing: MCP goes mainstream, the ushikuvirus rewrites evolution, China's robots steal the Spring Festival Gala, and Samsung Galaxy S26 confirmed."
+              - generic [ref=e459]:
+                - generic [ref=e460]: MA
+                - generic [ref=e461]: Manus AI
+          - 'button "NVIDIA Blackwell Ultra: The GPU That Runs AGI" [ref=e462] [cursor=pointer]':
+            - generic [ref=e463]:
+              - 'img "NVIDIA Blackwell Ultra: The GPU That Runs AGI" [ref=e464]'
+              - generic [ref=e465]: AI
+            - generic [ref=e466]:
+              - generic [ref=e467]:
+                - generic [ref=e468]: Feb 21, 2026
+                - generic [ref=e469]: •
+                - generic [ref=e470]: 4 min min read
+              - 'heading "NVIDIA Blackwell Ultra: The GPU That Runs AGI" [level=3] [ref=e471]'
+              - paragraph [ref=e472]: NVIDIA's next-generation GPU architecture promises a 10x performance leap for large language model inference.
+              - generic [ref=e473]:
+                - generic [ref=e474]: ML
+                - generic [ref=e475]: Marcus Lee
+      - complementary "Advertisement" [ref=e476]: Google AdSense — Leaderboard 728×90
+      - region "🔬 Latest in Science" [ref=e477]:
+        - generic [ref=e478]:
+          - generic [ref=e479]:
+            - generic [ref=e480]: 🔬
+            - generic [ref=e481]:
+              - paragraph [ref=e482]: Latest in
+              - heading "Science" [level=2] [ref=e483]
+          - button "View all Science" [ref=e486] [cursor=pointer]:
+            - text: View All
+            - img [ref=e487]
+        - generic [ref=e489]:
+          - button "CRISPR 3.0 Edits Genes With Zero Off-Target Errors" [ref=e490] [cursor=pointer]:
+            - generic [ref=e491]:
+              - img "CRISPR 3.0 Edits Genes With Zero Off-Target Errors" [ref=e492]
+              - generic [ref=e493]: SCIENCE
+            - generic [ref=e494]:
+              - generic [ref=e495]:
+                - generic [ref=e496]: Feb 24, 2026
+                - generic [ref=e497]: •
+                - generic [ref=e498]: 8 min min read
+              - heading "CRISPR 3.0 Edits Genes With Zero Off-Target Errors" [level=3] [ref=e499]
+              - paragraph [ref=e500]: A new generation of CRISPR tools achieves near-perfect precision in gene editing, opening new doors for genetic medicine.
+              - generic [ref=e501]:
+                - generic [ref=e502]: DM
+                - generic [ref=e503]: Dr. Maria Santos
+          - button "James Webb Captures First Image of an Earth-Like Exoplanet" [ref=e504] [cursor=pointer]:
+            - generic [ref=e505]:
+              - img "James Webb Captures First Image of an Earth-Like Exoplanet" [ref=e506]
+              - generic [ref=e507]: SCIENCE
+            - generic [ref=e508]:
+              - generic [ref=e509]:
+                - generic [ref=e510]: Feb 23, 2026
+                - generic [ref=e511]: •
+                - generic [ref=e512]: 6 min min read
+              - heading "James Webb Captures First Image of an Earth-Like Exoplanet" [level=3] [ref=e513]
+              - paragraph [ref=e514]: The telescope's infrared sensors have resolved the surface of a rocky exoplanet in the habitable zone for the first time.
+              - generic [ref=e515]:
+                - generic [ref=e516]: DE
+                - generic [ref=e517]: Dr. Elena Vasquez
+          - button "Room-Temperature Superconductor Confirmed by Three Labs" [ref=e518] [cursor=pointer]:
+            - generic [ref=e519]:
+              - img "Room-Temperature Superconductor Confirmed by Three Labs" [ref=e520]
+              - generic [ref=e521]: SCIENCE
+            - generic [ref=e522]:
+              - generic [ref=e523]:
+                - generic [ref=e524]: Feb 22, 2026
+                - generic [ref=e525]: •
+                - generic [ref=e526]: 9 min min read
+              - heading "Room-Temperature Superconductor Confirmed by Three Labs" [level=3] [ref=e527]
+              - paragraph [ref=e528]: Independent verification of the LK-99 successor material marks a turning point for energy transmission and quantum computing.
+              - generic [ref=e529]:
+                - generic [ref=e530]: PR
+                - generic [ref=e531]: Prof. Raj Patel
+          - button "Dark Matter Signal Detected at CERN Collider" [ref=e532] [cursor=pointer]:
+            - generic [ref=e533]:
+              - img "Dark Matter Signal Detected at CERN Collider" [ref=e534]
+              - generic [ref=e535]: SCIENCE
+            - generic [ref=e536]:
+              - generic [ref=e537]:
+                - generic [ref=e538]: Feb 21, 2026
+                - generic [ref=e539]: •
+                - generic [ref=e540]: 7 min min read
+              - heading "Dark Matter Signal Detected at CERN Collider" [level=3] [ref=e541]
+              - paragraph [ref=e542]: Physicists report an anomalous energy signature that may represent the first direct detection of dark matter particles.
+              - generic [ref=e543]:
+                - generic [ref=e544]: DY
+                - generic [ref=e545]: Dr. Yuki Tanaka
+          - button "\"Ushikuvirus\" Giant Virus Discovery Could Rewrite the Origin of Complex Life" [ref=e546] [cursor=pointer]:
+            - generic [ref=e547]:
+              - img "\"Ushikuvirus\" Giant Virus Discovery Could Rewrite the Origin of Complex Life" [ref=e548]
+              - generic [ref=e549]: SCIENCE
+            - generic [ref=e550]:
+              - generic [ref=e551]:
+                - generic [ref=e552]: Feb 21, 2026
+                - generic [ref=e553]: •
+                - generic [ref=e554]: 7 min min read
+              - heading "\"Ushikuvirus\" Giant Virus Discovery Could Rewrite the Origin of Complex Life" [level=3] [ref=e555]
+              - paragraph [ref=e556]: Researchers from Tokyo University of Science have identified a new giant virus that provides compelling support for the viral eukaryogenesis theory.
+              - generic [ref=e557]:
+                - generic [ref=e558]: MA
+                - generic [ref=e559]: Manus AI
+          - 'button "Samsung Galaxy Unpacked 2026: The Galaxy S26 Series Is Set to Launch on 25th February" [ref=e560] [cursor=pointer]':
+            - generic [ref=e561]:
+              - 'img "Samsung Galaxy Unpacked 2026: The Galaxy S26 Series Is Set to Launch on 25th February" [ref=e562]'
+              - generic [ref=e563]: SCIENCE
+            - generic [ref=e564]:
+              - generic [ref=e565]:
+                - generic [ref=e566]: Feb 21, 2026
+                - generic [ref=e567]: •
+                - generic [ref=e568]: 5 min min read
+              - 'heading "Samsung Galaxy Unpacked 2026: The Galaxy S26 Series Is Set to Launch on 25th February" [level=3] [ref=e569]'
+              - paragraph [ref=e570]: Samsung confirms Galaxy Unpacked 2026 in San Francisco, unveiling the S26 series with Snapdragon 8 Elite Gen 5 and long-awaited Qi2 wireless charging support.
+              - generic [ref=e571]:
+                - generic [ref=e572]: MA
+                - generic [ref=e573]: Manus AI
+      - complementary "Advertisement" [ref=e574]: Google AdSense — Leaderboard 728×90
+      - region "⚙️ Latest in Robotics" [ref=e575]:
+        - generic [ref=e576]:
+          - generic [ref=e577]:
+            - generic [ref=e578]: ⚙️
+            - generic [ref=e579]:
+              - paragraph [ref=e580]: Latest in
+              - heading "Robotics" [level=2] [ref=e581]
+          - button "View all Robotics" [ref=e584] [cursor=pointer]:
+            - text: View All
+            - img [ref=e585]
+        - generic [ref=e587]:
+          - button "Tesla Optimus Gen 3 Begins Full Factory Deployment" [ref=e588] [cursor=pointer]:
+            - generic [ref=e589]:
+              - img "Tesla Optimus Gen 3 Begins Full Factory Deployment" [ref=e590]
+              - generic [ref=e591]: ROBOTICS
+            - generic [ref=e592]:
+              - generic [ref=e593]:
+                - generic [ref=e594]: Feb 24, 2026
+                - generic [ref=e595]: •
+                - generic [ref=e596]: 5 min min read
+              - heading "Tesla Optimus Gen 3 Begins Full Factory Deployment" [level=3] [ref=e597]
+              - paragraph [ref=e598]: Tesla's humanoid robot begins autonomous assembly line work at Gigafactory Texas, handling 200+ tasks per shift.
+              - generic [ref=e599]:
+                - generic [ref=e600]: JW
+                - generic [ref=e601]: James Wright
+          - button "Boston Dynamics Atlas 3.0 Learns New Skills in Real Time" [ref=e602] [cursor=pointer]:
+            - generic [ref=e603]:
+              - img "Boston Dynamics Atlas 3.0 Learns New Skills in Real Time" [ref=e604]
+              - generic [ref=e605]: ROBOTICS
+            - generic [ref=e606]:
+              - generic [ref=e607]:
+                - generic [ref=e608]: Feb 23, 2026
+                - generic [ref=e609]: •
+                - generic [ref=e610]: 6 min min read
+              - heading "Boston Dynamics Atlas 3.0 Learns New Skills in Real Time" [level=3] [ref=e611]
+              - paragraph [ref=e612]: The latest Atlas combines real-time neural processing with physical agility, enabling autonomous decision-making in unstructured environments.
+              - generic [ref=e613]:
+                - generic [ref=e614]: ML
+                - generic [ref=e615]: Marcus Lee
+          - button "Surgical Robots Perform 10,000 Procedures Without Human Assist" [ref=e616] [cursor=pointer]:
+            - generic [ref=e617]:
+              - img "Surgical Robots Perform 10,000 Procedures Without Human Assist" [ref=e618]
+              - generic [ref=e619]: ROBOTICS
+            - generic [ref=e620]:
+              - generic [ref=e621]:
+                - generic [ref=e622]: Feb 22, 2026
+                - generic [ref=e623]: •
+                - generic [ref=e624]: 7 min min read
+              - heading "Surgical Robots Perform 10,000 Procedures Without Human Assist" [level=3] [ref=e625]
+              - paragraph [ref=e626]: AI-guided surgical systems achieve a 99.97% success rate across complex operations, outperforming human surgeons.
+              - generic [ref=e627]:
+                - generic [ref=e628]: DS
+                - generic [ref=e629]: Dr. Sarah Kim
+          - button "Micro-Robots Deliver Cancer Drugs Directly to Tumours" [ref=e630] [cursor=pointer]:
+            - generic [ref=e631]:
+              - img "Micro-Robots Deliver Cancer Drugs Directly to Tumours" [ref=e632]
+              - generic [ref=e633]: ROBOTICS
+            - generic [ref=e634]:
+              - generic [ref=e635]:
+                - generic [ref=e636]: Feb 21, 2026
+                - generic [ref=e637]: •
+                - generic [ref=e638]: 8 min min read
+              - heading "Micro-Robots Deliver Cancer Drugs Directly to Tumours" [level=3] [ref=e639]
+              - paragraph [ref=e640]: Magnetically guided micro-robots navigate the bloodstream to deliver chemotherapy with pinpoint accuracy, reducing side effects by 90%.
+              - generic [ref=e641]:
+                - generic [ref=e642]: PR
+                - generic [ref=e643]: Prof. Raj Patel
+          - button "China's Humanoid Robots Steal the Show at Spring Festival Gala" [ref=e644] [cursor=pointer]:
+            - generic [ref=e645]:
+              - img "China's Humanoid Robots Steal the Show at Spring Festival Gala" [ref=e646]
+              - generic [ref=e647]: ROBOTICS
+            - generic [ref=e648]:
+              - generic [ref=e649]:
+                - generic [ref=e650]: Feb 21, 2026
+                - generic [ref=e651]: •
+                - generic [ref=e652]: 6 min min read
+              - heading "China's Humanoid Robots Steal the Show at Spring Festival Gala" [level=3] [ref=e653]
+              - paragraph [ref=e654]: Unitree G1 and Galbot G1 performed kung fu, gymnastics and choreographed dances at the world's most-watched TV programme, signalling China's dominance in humanoid robotics.
+              - generic [ref=e655]:
+                - generic [ref=e656]: MA
+                - generic [ref=e657]: Manus AI
+    - region "Editor's choice gadget reviews" [ref=e658]:
+      - generic [ref=e659]:
+        - generic [ref=e660]:
+          - generic [ref=e661]:
+            - generic [ref=e662]:
+              - img [ref=e663]
+              - generic [ref=e665]: EDITOR'S CHOICE
+            - heading "Gadgets Reviews" [level=2] [ref=e666]
+          - button "View all gadget reviews" [ref=e667] [cursor=pointer]: View All →
+        - generic [ref=e668]:
+          - article "NexWatch Pro X1 — Editor's Pick, 4.8 stars" [ref=e669]:
+            - generic [ref=e670]:
+              - img "NexWatch Pro X1" [ref=e671]
+              - generic "Editor's Pick badge" [ref=e672]: EDITOR'S PICK
+              - 'generic "Category: Smartwatch" [ref=e673]': SMARTWATCH
+            - generic [ref=e674]:
+              - heading "NexWatch Pro X1" [level=3] [ref=e675]
+              - 'generic "Rating: 4.8 out of 5 stars, 2,847 reviews" [ref=e676]':
+                - generic [ref=e677]:
+                  - img [ref=e678]
+                  - img [ref=e680]
+                  - img [ref=e682]
+                  - img [ref=e684]
+                  - img [ref=e686]
+                - generic [ref=e688]: "4.8"
+                - generic [ref=e689]: (2,847)
+              - button "Check price on Amazon for NexWatch Pro X1" [ref=e690] [cursor=pointer]:
+                - img [ref=e691]
+                - text: CHECK PRICE ON AMAZON
+          - article "AeroBot Carbon FPV — Best Seller, 4.7 stars" [ref=e696]:
+            - generic [ref=e697]:
+              - img "AeroBot Carbon FPV" [ref=e698]
+              - generic "Best Seller badge" [ref=e699]: BEST SELLER
+              - 'generic "Category: Racing Drone" [ref=e700]': RACING DRONE
+            - generic [ref=e701]:
+              - heading "AeroBot Carbon FPV" [level=3] [ref=e702]
+              - 'generic "Rating: 4.7 out of 5 stars, 1,923 reviews" [ref=e703]':
+                - generic [ref=e704]:
+                  - img [ref=e705]
+                  - img [ref=e707]
+                  - img [ref=e709]
+                  - img [ref=e711]
+                  - img [ref=e713]
+                - generic [ref=e715]: "4.7"
+                - generic [ref=e716]: (1,923)
+              - button "Check price on Amazon for AeroBot Carbon FPV" [ref=e717] [cursor=pointer]:
+                - img [ref=e718]
+                - text: CHECK PRICE ON AMAZON
+          - article "SoundCore Ultra TWS — Top Rated, 4.9 stars" [ref=e723]:
+            - generic [ref=e724]:
+              - img "SoundCore Ultra TWS" [ref=e725]
+              - generic "Top Rated badge" [ref=e726]: TOP RATED
+              - 'generic "Category: Wireless Earbuds" [ref=e727]': WIRELESS EARBUDS
+            - generic [ref=e728]:
+              - heading "SoundCore Ultra TWS" [level=3] [ref=e729]
+              - 'generic "Rating: 4.9 out of 5 stars, 5,612 reviews" [ref=e730]':
+                - generic [ref=e731]:
+                  - img [ref=e732]
+                  - img [ref=e734]
+                  - img [ref=e736]
+                  - img [ref=e738]
+                  - img [ref=e740]
+                - generic [ref=e742]: "4.9"
+                - generic [ref=e743]: (5,612)
+              - button "Check price on Amazon for SoundCore Ultra TWS" [ref=e744] [cursor=pointer]:
+                - img [ref=e745]
+                - text: CHECK PRICE ON AMAZON
+          - article "Titan Gaming Laptop G7 — Hot Deal, 4.6 stars" [ref=e750]:
+            - generic [ref=e751]:
+              - img "Titan Gaming Laptop G7" [ref=e752]
+              - generic "Hot Deal badge" [ref=e753]: HOT DEAL
+              - 'generic "Category: Gaming Laptop" [ref=e754]': GAMING LAPTOP
+            - generic [ref=e755]:
+              - heading "Titan Gaming Laptop G7" [level=3] [ref=e756]
+              - 'generic "Rating: 4.6 out of 5 stars, 3,341 reviews" [ref=e757]':
+                - generic [ref=e758]:
+                  - img [ref=e759]
+                  - img [ref=e761]
+                  - img [ref=e763]
+                  - img [ref=e765]
+                  - img [ref=e767]
+                - generic [ref=e769]: "4.6"
+                - generic [ref=e770]: (3,341)
+              - button "Check price on Amazon for Titan Gaming Laptop G7" [ref=e771] [cursor=pointer]:
+                - img [ref=e772]
+                - text: CHECK PRICE ON AMAZON
+        - generic [ref=e777]:
+          - generic [ref=e778]:
+            - heading "🛒 Explore All Tech Deals" [level=3] [ref=e779]
+            - paragraph [ref=e780]: Curated gadgets, tested and reviewed by our editorial team.
+          - button "Shop all gadgets on Amazon" [ref=e781] [cursor=pointer]: Shop All Gadgets
+    - contentinfo "Site footer" [ref=e782]:
+      - generic [ref=e783]:
+        - generic [ref=e784]:
+          - generic [ref=e785]:
+            - link "CTRL + ALT News — Home" [ref=e786] [cursor=pointer]:
+              - /url: /
+              - img "CTRL + ALT News" [ref=e787]
+            - paragraph [ref=e788]: Your source for the future of technology.
+            - list "Social media links" [ref=e789]:
+              - button "Follow on X (Twitter)" [ref=e790] [cursor=pointer]: X
+              - button "Watch on YouTube" [ref=e791] [cursor=pointer]: YT
+              - button "Follow on Instagram" [ref=e792] [cursor=pointer]: IG
+              - button "Join on Telegram" [ref=e793] [cursor=pointer]: TG
+          - navigation "News categories" [ref=e794]:
+            - heading "Categories" [level=2] [ref=e795]
+            - button "AI news section" [ref=e796] [cursor=pointer]: AI
+            - button "Science news section" [ref=e797] [cursor=pointer]: SCIENCE
+            - button "Robotics news section" [ref=e798] [cursor=pointer]: ROBOTICS
+            - button "Gadgets reviews" [ref=e799] [cursor=pointer]: GADGETS
+          - navigation "Company links" [ref=e800]:
+            - heading "Company" [level=2] [ref=e801]
+            - link "About" [ref=e802] [cursor=pointer]:
+              - /url: /about
+            - link "Contact" [ref=e803] [cursor=pointer]:
+              - /url: /contact
+            - button "Advertise" [ref=e804] [cursor=pointer]
+            - link "Sitemap" [ref=e805] [cursor=pointer]:
+              - /url: /sitemap.xml
+          - navigation "Legal links" [ref=e806]:
+            - heading "Legal" [level=2] [ref=e807]
+            - link "Privacy Policy" [ref=e808] [cursor=pointer]:
+              - /url: /privacy
+            - link "Terms of Use" [ref=e809] [cursor=pointer]:
+              - /url: /terms
+        - generic [ref=e811]:
+          - paragraph [ref=e812]: © 2026 CTRL + ALT News. All rights reserved.
+          - paragraph [ref=e813]: "Affiliate disclosure: Some links may earn us a commission at no extra cost to you."
+```
+
+# Test source
+
+```ts
+  1  | import { Page, expect } from '@playwright/test';
+  2  | 
+  3  | export class BasePage {
+  4  |   readonly page: Page;
+  5  | 
+  6  |   constructor(page: Page) {
+  7  |     this.page = page;
+  8  |   }
+  9  | 
+  10 |   async goto(path: string = '/') {
+  11 |     await this.page.goto(path);
+  12 |     await this.page.waitForLoadState('networkidle');
+  13 |   }
+  14 | 
+  15 |   async getPageTitle(): Promise<string> {
+  16 |     return await this.page.title();
+  17 |   }
+  18 | 
+  19 |   async getPageUrl(): Promise<string> {
+  20 |     return this.page.url();
+  21 |   }
+  22 | 
+  23 |   async waitForLoadState(state: 'load' | 'domcontentloaded' | 'networkidle' = 'load') {
+  24 |     await this.page.waitForLoadState(state);
+  25 |   }
+  26 | 
+  27 |   async click(selector: string) {
+  28 |     await this.page.click(selector);
+  29 |   }
+  30 | 
+  31 |   async fill(selector: string, text: string) {
+  32 |     await this.page.fill(selector, text);
+  33 |   }
+  34 | 
+  35 |   async type(selector: string, text: string) {
+  36 |     await this.page.locator(selector).type(text);
+  37 |   }
+  38 | 
+  39 |   async press(key: string) {
+  40 |     await this.page.keyboard.press(key);
+  41 |   }
+  42 | 
+  43 |   async isVisible(selector: string): Promise<boolean> {
+> 44 |     return await this.page.locator(selector).isVisible();
+     |                                              ^ Error: locator.isVisible: Error: strict mode violation: locator('div[class*="p-6"]') resolved to 2 elements:
+  45 |   }
+  46 | 
+  47 |   async getText(selector: string): Promise<string | null> {
+  48 |     return await this.page.locator(selector).textContent();
+  49 |   }
+  50 | 
+  51 |   async getAttribute(selector: string, attribute: string): Promise<string | null> {
+  52 |     return await this.page.locator(selector).getAttribute(attribute);
+  53 |   }
+  54 | 
+  55 |   async waitForSelector(selector: string, timeout = 5000) {
+  56 |     await this.page.waitForSelector(selector, { timeout });
+  57 |   }
+  58 | 
+  59 |   async waitForNavigation() {
+  60 |     await this.page.waitForNavigation();
+  61 |   }
+  62 | 
+  63 |   async reload() {
+  64 |     await this.page.reload();
+  65 |   }
+  66 | 
+  67 |   async goBack() {
+  68 |     await this.page.goBack();
+  69 |   }
+  70 | 
+  71 |   async goForward() {
+  72 |     await this.page.goForward();
+  73 |   }
+  74 | 
+  75 |   async close() {
+  76 |     await this.page.close();
+  77 |   }
+  78 | 
+  79 |   async captureScreenshot(name: string) {
+  80 |     await this.page.screenshot({ path: `screenshots/${name}.png` });
+  81 |   }
+  82 | }
+  83 | 
 ```
