@@ -14,6 +14,7 @@ import digestRouter from "./api/digest.js";
 import topicRecommendationsRouter from "./api/topic-recommendations.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
+import moderationRouter from "./src/routes/moderation.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -129,6 +130,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
   // User profile endpoints (Story 3.3)
   app.use('/api/user', usersRouter);
   app.use('/api/users', usersRouter);
+
+  // Moderation endpoints (Story 3.5)
+  app.use('/api', moderationRouter);
 
   // Serve static files from dist/public in production
   const staticPath =
