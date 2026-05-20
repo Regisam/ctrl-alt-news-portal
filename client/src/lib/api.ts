@@ -172,6 +172,33 @@ export class APIClient {
   delete<T = unknown>(path: string, options?: RequestInit & { skipAuth?: boolean }) {
     return this.request<T>(path, { ...options, method: 'DELETE' });
   }
+
+  /**
+   * Logout: revoke session and clear all tokens
+   */
+  async logout(): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.baseURL}/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies
+      });
+
+      if (response.ok) {
+        this.clearAccessToken();
+        logger.info('Logout successful');
+        return true;
+      }
+
+      logger.warn('Logout failed', { status: response.status });
+      return false;
+    } catch (error) {
+      logger.error('Logout error', { error: String(error) });
+      return false;
+    }
+  }
 }
 
 // Export singleton instance

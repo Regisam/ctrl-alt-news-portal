@@ -291,4 +291,45 @@ router.post('/refresh', async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/auth/logout
+router.post('/logout', async (req: Request, res: Response) => {
+  try {
+    // Extract refresh token from httpOnly cookie
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      logger.warn('Logout attempt with no refresh token in cookie');
+      return res.status(401).json({
+        success: false,
+        error: 'Not authenticated',
+      });
+    }
+
+    // Remove refresh token from store (revoke)
+    refreshTokens.delete(refreshToken);
+
+    // Clear httpOnly cookie
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    // Log successful logout
+    logger.info('User logged out successfully');
+
+    // Return success response
+    res.json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  } catch (error) {
+    logger.error(`Logout error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+    });
+  }
+});
+
 export default router;
