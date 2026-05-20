@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { logger } from '../../logger.js';
 import { getGoogleAuthUrl, exchangeCodeForToken, extractUserProfile } from '../services/google-oauth.js';
 
@@ -65,6 +66,20 @@ const REFRESH_TOKEN_EXPIRY = '7d';
 // In-memory refresh token store (Phase 1 - replace with DB in Phase 2)
 const refreshTokens: Map<string, { userId: string; expiresAt: number }> = new Map();
 
+// In-memory verification token store (Phase 1 - replace with DB in Phase 2)
+const verificationTokens: Map<string, { userId: string; email: string; expiresAt: number }> = new Map();
+
+// Generate verification token (32-byte random)
+function generateVerificationToken(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+// Get verification link (development returns link in response for testing)
+function getVerificationLink(token: string): string {
+  const baseUrl = process.env.GOOGLE_CALLBACK_URL?.replace('/auth/oauth/google/callback', '') || 'http://localhost:3000';
+  return `${baseUrl}/verify-email?token=${token}`;
+}
+
 interface LoginRequest {
   email?: string;
   password?: string;
@@ -123,12 +138,23 @@ router.post('/register', async (req: Request, res: Response) => {
       email: email!,
       passwordHash,
       id: userId,
+      emailVerified: false,
     });
+
+    // Generate verification token (24-hour expiration)
+    const verificationToken = generateVerificationToken();
+    verificationTokens.set(verificationToken, {
+      userId,
+      email: email!,
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    });
+
+    const verificationLink = getVerificationLink(verificationToken);
 
     // Log successful registration
     logger.info(`User registered successfully: ${email}`);
 
-    // Return user data (no password)
+    // Return user data (no password) + verification link for testing
     const user: User = {
       id: userId,
       email: email!,
@@ -138,6 +164,7 @@ router.post('/register', async (req: Request, res: Response) => {
     res.status(201).json({
       success: true,
       user,
+      verificationLink, // Development: returns link for testing (Phase 2: send via email)
     });
   } catch (error) {
     logger.error(`Registration error: ${error instanceof Error ? error.message : String(error)}`);
@@ -438,6 +465,129 @@ router.get('/oauth/google/callback', async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: 'Authentication failed',
+    });
+  }
+});
+
+// GET /api/auth/verify-email/:token
+router.get('/verify-email/:token', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+
+    if (!token || typeof token !== 'string') {
+      logger.warn('Verify email attempt without token');
+      return res.status(400).json({
+        success: false,
+        error: 'Missing verification token',
+      });
+    }
+
+    // Check token exists
+    const tokenData = verificationTokens.get(token);
+    if (!tokenData) {
+      logger.warn('Verify email attempt with invalid token');
+      return res.status(404).json({
+        success: false,
+        error: 'Verification token not found',
+      });
+    }
+
+    // Check token expiration (24 hours)
+    if (tokenData.expiresAt < Date.now()) {
+      verificationTokens.delete(token);
+      logger.warn(`Verification token expired for: ${tokenData.email}`);
+      return res.status(400).json({
+        success: false,
+        error: 'Verification token expired',
+      });
+    }
+
+    // Find user and mark as verified
+    const user = users.get(tokenData.email.toLowerCase());
+    if (!user) {
+      logger.warn(`User not found for email verification: ${tokenData.email}`);
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
+
+    // Mark email as verified
+    user.emailVerified = true;
+
+    // Remove token (one-time use)
+    verificationTokens.delete(token);
+
+    logger.info(`Email verified successfully for: ${tokenData.email}`);
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully',
+      email: tokenData.email,
+    });
+  } catch (error) {
+    logger.error(`Email verification error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Verification failed',
+    });
+  }
+});
+
+// POST /api/auth/resend-verification
+router.post('/resend-verification', async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || typeof email !== 'string') {
+      logger.warn('Resend verification attempt without email');
+      return res.status(400).json({
+        success: false,
+        error: 'Email is required',
+      });
+    }
+
+    // Find user
+    const user = users.get(email.toLowerCase());
+    if (!user) {
+      logger.warn(`Resend verification attempt with non-existent email: ${email}`);
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
+
+    // Check if user is already verified
+    if (user.emailVerified) {
+      logger.warn(`Resend verification attempt for already verified email: ${email}`);
+      return res.status(400).json({
+        success: false,
+        error: 'Email already verified',
+      });
+    }
+
+    // Generate new verification token
+    const verificationToken = generateVerificationToken();
+    verificationTokens.set(verificationToken, {
+      userId: user.id,
+      email: email,
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    });
+
+    const verificationLink = getVerificationLink(verificationToken);
+
+    logger.info(`Verification token resent for: ${email}`);
+
+    res.json({
+      success: true,
+      message: 'Verification token resent',
+      verificationLink, // Development: returns link for testing (Phase 2: send via email)
+    });
+  } catch (error) {
+    logger.error(`Resend verification error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Resend failed',
     });
   }
 });
