@@ -17,10 +17,8 @@ export function useABTest(experiment: ABExperiment, userId: string = ''): string
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
-    // If experiment is disabled, return null
+    // If experiment is disabled, don't execute effect
     if (!experiment.enabled) {
-      setVariant(null);
-      setIsLoading(false);
       return;
     }
 
@@ -54,6 +52,11 @@ export function useABTest(experiment: ABExperiment, userId: string = ''): string
       setIsLoading(false);
     });
   }, [experiment.id, experiment.enabled, userId]);
+
+  // Return null early if experiment is disabled (computed, not via state)
+  if (!experiment.enabled) {
+    return null;
+  }
 
   return variant;
 }

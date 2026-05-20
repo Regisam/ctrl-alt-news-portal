@@ -26,8 +26,6 @@ interface AnalyticsStore {
  * AC8: Analytics tracking (open, click, unsubscribe rates tracked)
  */
 export function useDigestAnalytics(userId: string, digestDate?: string) {
-  const [metrics, setMetrics] = useState<DigestMetrics | null>(null);
-
   const storageKey = 'digest-analytics';
 
   // Retrieve all analytics from localStorage
@@ -49,6 +47,14 @@ export function useDigestAnalytics(userId: string, digestDate?: string) {
     },
     [getAllMetrics]
   );
+
+  // Initialize metrics from localStorage if digestDate provided
+  const [metrics, setMetrics] = useState<DigestMetrics | null>(() => {
+    if (digestDate) {
+      return getDigestMetrics(digestDate);
+    }
+    return null;
+  });
 
   // Record an open event (called when pixel loads)
   const recordOpen = useCallback(
@@ -154,11 +160,13 @@ export function useDigestAnalytics(userId: string, digestDate?: string) {
     };
   }, [getAllMetrics]);
 
-  // Load metrics on mount if digestDate provided
+  // Update metrics when digestDate changes
   useEffect(() => {
     if (digestDate) {
       const loaded = getDigestMetrics(digestDate);
-      setMetrics(loaded);
+      Promise.resolve().then(() => {
+        setMetrics(loaded);
+      });
     }
   }, [digestDate, getDigestMetrics]);
 
