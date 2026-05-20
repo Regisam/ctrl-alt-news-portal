@@ -56,7 +56,7 @@ export default function RegisterPage({ lang }: { lang: 'en' | 'pt' }) {
       if (data.success && data.authUrl) {
         window.location.href = data.authUrl;
       }
-    } catch (error) {
+    } catch (_error) {
       setSubmitError(
         lang === 'en'
           ? 'Failed to initiate Google sign-up'
