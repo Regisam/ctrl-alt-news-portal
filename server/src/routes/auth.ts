@@ -136,6 +136,9 @@ interface LoginEvent {
 // In-memory login history store (Phase 1 - replace with DB in Phase 2)
 const loginHistory: Map<string, LoginEvent[]> = new Map();
 
+// Map sessionId to refreshToken for quick lookup during revocation
+const sessionIdToRefreshToken: Map<string, string> = new Map();
+
 // Generate verification token (32-byte random)
 function generateVerificationToken(): string {
   return crypto.randomBytes(32).toString('hex');
@@ -357,6 +360,9 @@ router.post('/login', async (req: Request, res: Response) => {
     }
     loginHistory.get(user.id)!.push(loginEvent);
 
+    // Map sessionId to refreshToken for quick revocation
+    sessionIdToRefreshToken.set(sessionId, refreshToken);
+
     // Log successful login
     logger.info(`User logged in successfully: ${email}`);
 
@@ -572,6 +578,31 @@ router.get('/oauth/google/callback', async (req: Request, res: Response) => {
       userId,
       expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
     });
+
+    // Track OAuth login history
+    const sessionId = crypto.randomBytes(16).toString('hex');
+    const ipAddress = getClientIp(req);
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const { browser, os, deviceType } = parseUserAgent(userAgent);
+
+    const loginEvent: LoginEvent = {
+      sessionId,
+      timestamp: Date.now(),
+      ipAddress,
+      userAgent,
+      browser,
+      os,
+      deviceType,
+      type: 'oauth',
+    };
+
+    if (!loginHistory.has(userId)) {
+      loginHistory.set(userId, []);
+    }
+    loginHistory.get(userId)!.push(loginEvent);
+
+    // Map sessionId to refreshToken for quick revocation
+    sessionIdToRefreshToken.set(sessionId, refreshToken);
 
     // Set refresh token in httpOnly cookie
     res.cookie('refreshToken', refreshToken, {
@@ -1290,9 +1321,15 @@ router.post('/profile/update-avatar', verifyToken, async (req: any, res: Respons
 function cleanupUserTokens(userId: string): number {
   let deletedCount = 0;
 
-  // Delete refresh tokens
+  // Delete refresh tokens and associated session mappings
   for (const [token, data] of refreshTokens.entries()) {
     if (data.userId === userId) {
+      // Find and delete associated sessionId mapping
+      for (const [sessionId, refreshToken] of sessionIdToRefreshToken.entries()) {
+        if (refreshToken === token) {
+          sessionIdToRefreshToken.delete(sessionId);
+        }
+      }
       refreshTokens.delete(token);
       deletedCount++;
     }
@@ -1505,30 +1542,31 @@ router.delete('/sessions/:sessionId', verifyToken, (req: any, res: Response) => 
     const { sessionId } = req.params;
     const userId = req.user.userId;
 
-    // Find and delete the refresh token with this session
-    let found = false;
-    for (const [token, data] of refreshTokens.entries()) {
-      if (data.userId === userId) {
-        // Check if this is the matching session by finding it in history
-        const history = loginHistory.get(userId) || [];
-        const session = history.find((e) => e.sessionId === sessionId);
-
-        if (session && session.timestamp === data.expiresAt - 7 * 24 * 60 * 60 * 1000) {
-          refreshTokens.delete(token);
-          found = true;
-          logger.info(`Session revoked for user: ${req.user.email}, sessionId: ${sessionId}`);
-          break;
-        }
-      }
-    }
-
-    if (!found) {
+    // Find the refresh token for this session
+    const refreshToken = sessionIdToRefreshToken.get(sessionId);
+    if (!refreshToken) {
       logger.warn(`Session not found for revocation: ${sessionId}`);
       return res.status(404).json({
         success: false,
         error: 'Session not found',
       });
     }
+
+    // Verify the refresh token belongs to the current user
+    const tokenData = refreshTokens.get(refreshToken);
+    if (!tokenData || tokenData.userId !== userId) {
+      logger.warn(`Unauthorized session revocation attempt: ${sessionId}`);
+      return res.status(404).json({
+        success: false,
+        error: 'Session not found',
+      });
+    }
+
+    // Delete the refresh token
+    refreshTokens.delete(refreshToken);
+    sessionIdToRefreshToken.delete(sessionId);
+
+    logger.info(`Session revoked for user: ${req.user.email}, sessionId: ${sessionId}`);
 
     res.json({
       success: true,
