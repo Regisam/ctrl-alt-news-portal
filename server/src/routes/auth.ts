@@ -32,6 +32,15 @@ export function validatePassword(password: string): boolean {
   return password.length >= 8;
 }
 
+export function validateUrl(url: string): boolean {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function validateRegistration(body: RegisterRequest): { valid: boolean; errors: Record<string, string> } {
   const errors: Record<string, string> = {};
 
@@ -75,6 +84,9 @@ const resetPasswordTokens: Map<string, { email: string; expiresAt: number }> = n
 // Track last reset request per email for rate limiting (5-minute window)
 const lastResetRequest: Map<string, number> = new Map();
 
+// In-memory email change verification token store (Phase 1 - replace with DB in Phase 2)
+const emailChangeTokens: Map<string, { userId: string; newEmail: string; expiresAt: number }> = new Map();
+
 // Generate verification token (32-byte random)
 function generateVerificationToken(): string {
   return crypto.randomBytes(32).toString('hex');
@@ -95,6 +107,31 @@ function generateResetToken(): string {
 function getResetLink(token: string): string {
   const baseUrl = process.env.GOOGLE_CALLBACK_URL?.replace('/auth/oauth/google/callback', '') || 'http://localhost:3000';
   return `${baseUrl}/reset-password?token=${token}`;
+}
+
+// Middleware to verify JWT token
+function verifyToken(req: any, res: Response, next: any) {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      logger.warn('Auth attempt without token');
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized',
+      });
+    }
+
+    const token = authHeader.substring(7);
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string };
+    req.user = decoded;
+    next();
+  } catch (error) {
+    logger.warn(`Token verification failed: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(401).json({
+      success: false,
+      error: 'Unauthorized',
+    });
+  }
 }
 
 interface LoginRequest {
@@ -809,6 +846,371 @@ router.post('/reset-password/:token', async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: 'Password reset failed',
+    });
+  }
+});
+
+// GET /api/auth/profile
+router.get('/profile', verifyToken, async (req: any, res: Response) => {
+  try {
+    const user = users.get(req.user.email.toLowerCase());
+    if (!user) {
+      logger.warn(`Profile access for non-existent user: ${req.user.email}`);
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
+
+    logger.debug(`Profile accessed by user: ${req.user.email}`);
+
+    res.json({
+      success: true,
+      profile: {
+        id: user.id,
+        email: user.email,
+        name: user.name || null,
+        avatar: user.avatar || null,
+        emailVerified: user.emailVerified || false,
+        createdAt: new Date().toISOString(), // In real app, store this on user creation
+        googleId: user.googleId || null,
+      },
+    });
+  } catch (error) {
+    logger.error(`Profile retrieval error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Profile retrieval failed',
+    });
+  }
+});
+
+// POST /api/auth/profile/update-email
+router.post('/profile/update-email', verifyToken, async (req: any, res: Response) => {
+  try {
+    const { newEmail } = req.body;
+
+    if (!newEmail || typeof newEmail !== 'string') {
+      logger.warn('Update email attempt without email parameter');
+      return res.status(400).json({
+        success: false,
+        error: 'New email is required',
+      });
+    }
+
+    // Validate email format
+    if (!validateEmail(newEmail)) {
+      logger.warn(`Update email attempt with invalid format: ${newEmail}`);
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid email format',
+      });
+    }
+
+    // Check email not already in use (exclude current email)
+    if (newEmail.toLowerCase() !== req.user.email.toLowerCase() && users.has(newEmail.toLowerCase())) {
+      logger.warn(`Update email attempt with duplicate email: ${newEmail}`);
+      return res.status(409).json({
+        success: false,
+        error: 'Email already in use',
+      });
+    }
+
+    // Generate email change verification token (24-hour expiration)
+    const emailChangeToken = generateVerificationToken();
+    emailChangeTokens.set(emailChangeToken, {
+      userId: req.user.userId,
+      newEmail: newEmail.toLowerCase(),
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    });
+
+    logger.info(`Email change requested for user: ${req.user.email}, new email: ${newEmail}`);
+
+    const verifyLink = `${process.env.GOOGLE_CALLBACK_URL?.replace('/auth/oauth/google/callback', '') || 'http://localhost:3000'}/verify-email-change?token=${emailChangeToken}`;
+
+    res.json({
+      success: true,
+      message: 'Verification link sent to new email',
+      verifyLink, // Development: returns link for testing (Phase 2: send via email)
+    });
+  } catch (error) {
+    logger.error(`Email change error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Email change request failed',
+    });
+  }
+});
+
+// GET /api/auth/verify-email-change/:token
+router.get('/verify-email-change/:token', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+
+    if (!token || typeof token !== 'string') {
+      logger.warn('Email change verification attempt without token');
+      return res.status(400).json({
+        success: false,
+        error: 'Missing verification token',
+      });
+    }
+
+    // Check token exists
+    const tokenData = emailChangeTokens.get(token);
+    if (!tokenData) {
+      logger.warn('Email change verification with invalid token');
+      return res.status(404).json({
+        success: false,
+        error: 'Verification token not found',
+      });
+    }
+
+    // Check token expiration
+    if (tokenData.expiresAt < Date.now()) {
+      emailChangeTokens.delete(token);
+      logger.warn(`Email change token expired`);
+      return res.status(400).json({
+        success: false,
+        error: 'Verification token expired',
+      });
+    }
+
+    // Find user by userId and update email
+    let user: any = null;
+    for (const u of users.values()) {
+      if (u.id === tokenData.userId) {
+        user = u;
+        break;
+      }
+    }
+
+    if (!user) {
+      logger.warn(`User not found for email change verification`);
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
+
+    // Remove old email key and add new one
+    users.delete(user.email.toLowerCase());
+    user.email = tokenData.newEmail;
+    user.emailVerified = true;
+    users.set(tokenData.newEmail, user);
+
+    // Delete token (one-time use)
+    emailChangeTokens.delete(token);
+
+    logger.info(`Email changed successfully to: ${tokenData.newEmail}`);
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully',
+    });
+  } catch (error) {
+    logger.error(`Email change verification error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Email verification failed',
+    });
+  }
+});
+
+// POST /api/auth/profile/update-password
+router.post('/profile/update-password', verifyToken, async (req: any, res: Response) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || typeof currentPassword !== 'string') {
+      logger.warn('Update password attempt without current password');
+      return res.status(400).json({
+        success: false,
+        error: 'Current password is required',
+      });
+    }
+
+    if (!newPassword || typeof newPassword !== 'string') {
+      logger.warn('Update password attempt without new password');
+      return res.status(400).json({
+        success: false,
+        error: 'New password is required',
+      });
+    }
+
+    // Find user
+    const user = users.get(req.user.email.toLowerCase());
+    if (!user) {
+      logger.warn(`Update password for non-existent user: ${req.user.email}`);
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
+
+    // Verify current password
+    const passwordMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!passwordMatch) {
+      logger.warn(`Update password with incorrect current password for: ${req.user.email}`);
+      return res.status(400).json({
+        success: false,
+        error: 'Current password is incorrect',
+      });
+    }
+
+    // Validate new password
+    if (!validatePassword(newPassword)) {
+      logger.warn('Update password with invalid new password');
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 8 characters',
+      });
+    }
+
+    // Prevent reusing same password
+    const samePassword = await bcrypt.compare(newPassword, user.passwordHash);
+    if (samePassword) {
+      logger.warn(`Update password with same password for: ${req.user.email}`);
+      return res.status(400).json({
+        success: false,
+        error: 'New password cannot be same as current',
+      });
+    }
+
+    // Hash new password with bcrypt (10 salt rounds)
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    user.passwordHash = passwordHash;
+
+    logger.info(`Password updated successfully for: ${req.user.email}`);
+
+    res.json({
+      success: true,
+      message: 'Password updated successfully',
+    });
+  } catch (error) {
+    logger.error(`Update password error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Password update failed',
+    });
+  }
+});
+
+// POST /api/auth/profile/update-name
+router.post('/profile/update-name', verifyToken, async (req: any, res: Response) => {
+  try {
+    const { name } = req.body;
+
+    if (typeof name !== 'string') {
+      logger.warn('Update name attempt without name parameter');
+      return res.status(400).json({
+        success: false,
+        error: 'Name is required',
+      });
+    }
+
+    // Validate name (1-100 chars)
+    if (name.trim().length === 0) {
+      logger.warn('Update name attempt with empty name');
+      return res.status(400).json({
+        success: false,
+        error: 'Name must not be empty',
+      });
+    }
+
+    if (name.length > 100) {
+      logger.warn('Update name attempt with name too long');
+      return res.status(400).json({
+        success: false,
+        error: 'Name cannot exceed 100 characters',
+      });
+    }
+
+    // Find user and update
+    const user = users.get(req.user.email.toLowerCase());
+    if (!user) {
+      logger.warn(`Update name for non-existent user: ${req.user.email}`);
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
+
+    user.name = name;
+
+    logger.info(`Name updated successfully for: ${req.user.email}`);
+
+    res.json({
+      success: true,
+      message: 'Name updated successfully',
+      profile: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar || null,
+        emailVerified: user.emailVerified || false,
+      },
+    });
+  } catch (error) {
+    logger.error(`Update name error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Name update failed',
+    });
+  }
+});
+
+// POST /api/auth/profile/update-avatar
+router.post('/profile/update-avatar', verifyToken, async (req: any, res: Response) => {
+  try {
+    const { avatarUrl } = req.body;
+
+    if (!avatarUrl || typeof avatarUrl !== 'string') {
+      logger.warn('Update avatar attempt without URL parameter');
+      return res.status(400).json({
+        success: false,
+        error: 'Avatar URL is required',
+      });
+    }
+
+    // Validate URL format
+    if (!validateUrl(avatarUrl)) {
+      logger.warn(`Update avatar attempt with invalid URL: ${avatarUrl}`);
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid URL format',
+      });
+    }
+
+    // Find user and update
+    const user = users.get(req.user.email.toLowerCase());
+    if (!user) {
+      logger.warn(`Update avatar for non-existent user: ${req.user.email}`);
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
+
+    user.avatar = avatarUrl;
+
+    logger.info(`Avatar updated successfully for: ${req.user.email}`);
+
+    res.json({
+      success: true,
+      message: 'Avatar updated successfully',
+      profile: {
+        id: user.id,
+        email: user.email,
+        name: user.name || null,
+        avatar: user.avatar,
+        emailVerified: user.emailVerified || false,
+      },
+    });
+  } catch (error) {
+    logger.error(`Update avatar error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Avatar update failed',
     });
   }
 });
