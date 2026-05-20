@@ -41,6 +41,40 @@ export function validateUrl(url: string): boolean {
   }
 }
 
+// Parse user agent to extract device information
+function parseUserAgent(userAgent: string): { browser: string; os: string; deviceType: string } {
+  const ua = userAgent.toLowerCase();
+  let browser = 'Unknown';
+  let os = 'Unknown';
+  let deviceType = 'desktop';
+
+  // Browser detection
+  if (ua.includes('firefox')) browser = 'Firefox';
+  else if (ua.includes('chrome') && !ua.includes('chromium')) browser = 'Chrome';
+  else if (ua.includes('safari') && !ua.includes('chrome')) browser = 'Safari';
+  else if (ua.includes('edge') || ua.includes('edg')) browser = 'Edge';
+  else if (ua.includes('opera') || ua.includes('opr')) browser = 'Opera';
+
+  // OS detection
+  if (ua.includes('windows')) os = 'Windows';
+  else if (ua.includes('mac') || ua.includes('iphone') || ua.includes('ipad')) os = 'macOS';
+  else if (ua.includes('android')) os = 'Android';
+  else if (ua.includes('linux')) os = 'Linux';
+  else if (ua.includes('ubuntu')) os = 'Ubuntu';
+
+  // Device type detection
+  if (ua.includes('mobile') || ua.includes('iphone') || ua.includes('android')) deviceType = 'mobile';
+  else if (ua.includes('tablet') || ua.includes('ipad')) deviceType = 'tablet';
+
+  return { browser, os, deviceType };
+}
+
+// Extract client IP address from request
+function getClientIp(req: Request): string {
+  const forwarded = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim();
+  return forwarded || (req.ip as string) || 'unknown';
+}
+
 export function validateRegistration(body: RegisterRequest): { valid: boolean; errors: Record<string, string> } {
   const errors: Record<string, string> = {};
 
@@ -86,6 +120,21 @@ const lastResetRequest: Map<string, number> = new Map();
 
 // In-memory email change verification token store (Phase 1 - replace with DB in Phase 2)
 const emailChangeTokens: Map<string, { userId: string; newEmail: string; expiresAt: number }> = new Map();
+
+// Interface for login history tracking
+interface LoginEvent {
+  sessionId: string;
+  timestamp: number;
+  ipAddress: string;
+  userAgent: string;
+  browser: string;
+  os: string;
+  deviceType: string;
+  type: 'local' | 'oauth';
+}
+
+// In-memory login history store (Phase 1 - replace with DB in Phase 2)
+const loginHistory: Map<string, LoginEvent[]> = new Map();
 
 // Generate verification token (32-byte random)
 function generateVerificationToken(): string {
@@ -285,6 +334,28 @@ router.post('/login', async (req: Request, res: Response) => {
       userId: user.id,
       expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
     });
+
+    // Track login history
+    const sessionId = crypto.randomBytes(16).toString('hex');
+    const ipAddress = getClientIp(req);
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const { browser, os, deviceType } = parseUserAgent(userAgent);
+
+    const loginEvent: LoginEvent = {
+      sessionId,
+      timestamp: Date.now(),
+      ipAddress,
+      userAgent,
+      browser,
+      os,
+      deviceType,
+      type: 'local',
+    };
+
+    if (!loginHistory.has(user.id)) {
+      loginHistory.set(user.id, []);
+    }
+    loginHistory.get(user.id)!.push(loginEvent);
 
     // Log successful login
     logger.info(`User logged in successfully: ${email}`);
@@ -1321,6 +1392,153 @@ router.delete('/account', verifyToken, async (req: any, res: Response) => {
     res.status(500).json({
       success: false,
       error: 'Account deletion failed',
+    });
+  }
+});
+
+// GET /api/auth/sessions - List active sessions
+router.get('/sessions', verifyToken, (req: any, res: Response) => {
+  try {
+    const userSessions = [];
+    const userId = req.user.userId;
+
+    // Get all refresh tokens for this user
+    for (const [token, data] of refreshTokens.entries()) {
+      if (data.userId === userId && data.expiresAt > Date.now()) {
+        // Find matching login event for this session
+        const history = loginHistory.get(userId) || [];
+        const loginEvent = history.find((e) => e.timestamp && data.expiresAt - 7 * 24 * 60 * 60 * 1000 <= e.timestamp);
+
+        if (loginEvent) {
+          userSessions.push({
+            sessionId: loginEvent.sessionId,
+            loginTime: loginEvent.timestamp,
+            lastActivity: loginEvent.timestamp,
+            browser: loginEvent.browser,
+            os: loginEvent.os,
+            deviceType: loginEvent.deviceType,
+            isCurrent: false, // Will be marked by client based on refresh token
+          });
+        }
+      }
+    }
+
+    logger.debug(`Session retrieval for user: ${req.user.email}, found: ${userSessions.length}`);
+
+    res.json({
+      success: true,
+      sessions: userSessions,
+    });
+  } catch (error) {
+    logger.error(`Session retrieval error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve sessions',
+    });
+  }
+});
+
+// GET /api/auth/login-history - Get login history (last 30 days)
+router.get('/login-history', verifyToken, (req: any, res: Response) => {
+  try {
+    const days = parseInt(req.query.days as string) || 30;
+    const cutoffTime = Date.now() - days * 24 * 60 * 60 * 1000;
+    const userId = req.user.userId;
+
+    const history = (loginHistory.get(userId) || []).filter((event) => event.timestamp > cutoffTime);
+
+    // Sort by timestamp descending (most recent first)
+    history.sort((a, b) => b.timestamp - a.timestamp);
+
+    logger.debug(`Login history retrieval for user: ${req.user.email}, found: ${history.length}`);
+
+    res.json({
+      success: true,
+      history,
+      total: history.length,
+    });
+  } catch (error) {
+    logger.error(`Login history retrieval error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve login history',
+    });
+  }
+});
+
+// DELETE /api/auth/sessions/others - Revoke all other sessions (must be before :sessionId route)
+router.delete('/sessions/others', verifyToken, (req: any, res: Response) => {
+  try {
+    const userId = req.user.userId;
+    let revokedCount = 0;
+
+    // Get current refresh token (if available)
+    const currentRefreshToken = req.cookies?.refreshToken;
+
+    // Delete all refresh tokens except current
+    for (const [token, data] of refreshTokens.entries()) {
+      if (data.userId === userId && token !== currentRefreshToken) {
+        refreshTokens.delete(token);
+        revokedCount++;
+      }
+    }
+
+    logger.info(`All other sessions revoked for user: ${req.user.email}, count: ${revokedCount}`);
+
+    res.json({
+      success: true,
+      message: 'All other sessions revoked',
+      count: revokedCount,
+    });
+  } catch (error) {
+    logger.error(`All sessions revocation error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to revoke sessions',
+    });
+  }
+});
+
+// DELETE /api/auth/sessions/:sessionId - Revoke specific session
+router.delete('/sessions/:sessionId', verifyToken, (req: any, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+    const userId = req.user.userId;
+
+    // Find and delete the refresh token with this session
+    let found = false;
+    for (const [token, data] of refreshTokens.entries()) {
+      if (data.userId === userId) {
+        // Check if this is the matching session by finding it in history
+        const history = loginHistory.get(userId) || [];
+        const session = history.find((e) => e.sessionId === sessionId);
+
+        if (session && session.timestamp === data.expiresAt - 7 * 24 * 60 * 60 * 1000) {
+          refreshTokens.delete(token);
+          found = true;
+          logger.info(`Session revoked for user: ${req.user.email}, sessionId: ${sessionId}`);
+          break;
+        }
+      }
+    }
+
+    if (!found) {
+      logger.warn(`Session not found for revocation: ${sessionId}`);
+      return res.status(404).json({
+        success: false,
+        error: 'Session not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Session revoked',
+    });
+  } catch (error) {
+    logger.error(`Session revocation error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to revoke session',
     });
   }
 });
