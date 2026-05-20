@@ -2,21 +2,16 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   BarChart,
   Bar,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
-  Cell,
 } from 'recharts';
 import { Download, TrendingUp } from 'lucide-react';
 import { useReadingHistory } from '../hooks/useReadingHistory';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useReactions } from '../hooks/useReactions';
-import { useUserPreferences } from '../hooks/useUserPreferences';
 
 interface MetricsData {
   ctrPersonalized: number;
@@ -40,14 +35,27 @@ interface FilterState {
   endDate: string;
 }
 
-function formatDate(timestamp: number): string {
-  return new Date(timestamp).toISOString().split('T')[0];
+interface HistoryItem {
+  timestamp: number;
+  articleId: string;
+  category?: string;
+}
+
+interface BookmarkItem {
+  dateSaved: number;
+  articleId: string;
+  category?: string;
+}
+
+interface ReactionItem {
+  timestamp: number;
+  articleId: string;
 }
 
 function calculateMetrics(
-  history: any[],
-  bookmarks: any[],
-  reactions: any[],
+  history: HistoryItem[],
+  bookmarks: BookmarkItem[],
+  reactions: ReactionItem[],
   filter: FilterState
 ): MetricsData {
   const startTime = new Date(filter.startDate).getTime();
@@ -190,7 +198,6 @@ export default function ImpactReportPage() {
   const { history } = useReadingHistory();
   const { bookmarks } = useBookmarks();
   const { reactions } = useReactions();
-  const { toggleDarkMode } = useUserPreferences();
 
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterState>({ startDate: '', endDate: '' });
