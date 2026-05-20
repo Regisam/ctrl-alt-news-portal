@@ -69,6 +69,12 @@ const refreshTokens: Map<string, { userId: string; expiresAt: number }> = new Ma
 // In-memory verification token store (Phase 1 - replace with DB in Phase 2)
 const verificationTokens: Map<string, { userId: string; email: string; expiresAt: number }> = new Map();
 
+// In-memory password reset token store (Phase 1 - replace with DB in Phase 2)
+const resetPasswordTokens: Map<string, { email: string; expiresAt: number }> = new Map();
+
+// Track last reset request per email for rate limiting (5-minute window)
+const lastResetRequest: Map<string, number> = new Map();
+
 // Generate verification token (32-byte random)
 function generateVerificationToken(): string {
   return crypto.randomBytes(32).toString('hex');
@@ -78,6 +84,17 @@ function generateVerificationToken(): string {
 function getVerificationLink(token: string): string {
   const baseUrl = process.env.GOOGLE_CALLBACK_URL?.replace('/auth/oauth/google/callback', '') || 'http://localhost:3000';
   return `${baseUrl}/verify-email?token=${token}`;
+}
+
+// Generate reset token (32-byte random)
+function generateResetToken(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+// Get reset link (development returns link in response for testing)
+function getResetLink(token: string): string {
+  const baseUrl = process.env.GOOGLE_CALLBACK_URL?.replace('/auth/oauth/google/callback', '') || 'http://localhost:3000';
+  return `${baseUrl}/reset-password?token=${token}`;
 }
 
 interface LoginRequest {
@@ -588,6 +605,210 @@ router.post('/resend-verification', async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: 'Resend failed',
+    });
+  }
+});
+
+// POST /api/auth/forgot-password
+router.post('/forgot-password', async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || typeof email !== 'string') {
+      logger.warn('Forgot password attempt without email');
+      return res.status(400).json({
+        success: false,
+        error: 'Email is required',
+      });
+    }
+
+    // Find user
+    const user = users.get(email.toLowerCase());
+    if (!user) {
+      logger.warn(`Forgot password attempt with non-existent email: ${email}`);
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
+
+    // Check rate limit (5-minute window)
+    const lastRequest = lastResetRequest.get(email.toLowerCase());
+    const now = Date.now();
+    const cooldownMs = 5 * 60 * 1000;
+
+    if (lastRequest && now - lastRequest < cooldownMs) {
+      const remainingMs = cooldownMs - (now - lastRequest);
+      const remainingMinutes = Math.ceil(remainingMs / 60000);
+      logger.warn(`Rate limited forgot password for ${email}, remaining wait: ${remainingMinutes} minutes`);
+      return res.status(400).json({
+        success: false,
+        error: `Too many requests, try again in ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}`,
+      });
+    }
+
+    // Generate reset token with 1-hour expiration
+    const resetToken = generateResetToken();
+    resetPasswordTokens.set(resetToken, {
+      email: email.toLowerCase(),
+      expiresAt: Date.now() + 60 * 60 * 1000, // 1 hour
+    });
+
+    // Update last reset request timestamp
+    lastResetRequest.set(email.toLowerCase(), now);
+
+    const resetLink = getResetLink(resetToken);
+
+    logger.info(`Password reset token generated for: ${email}`);
+
+    res.json({
+      success: true,
+      resetLink, // Development: returns link for testing (Phase 2: send via email)
+      message: 'Password reset link sent to email',
+    });
+  } catch (error) {
+    logger.error(`Forgot password error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Forgot password request failed',
+    });
+  }
+});
+
+// GET /api/auth/reset-password/:token
+router.get('/reset-password/:token', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+
+    if (!token || typeof token !== 'string') {
+      logger.warn('Reset password token validation attempt without token');
+      return res.status(400).json({
+        success: false,
+        error: 'Missing reset token',
+        valid: false,
+      });
+    }
+
+    // Check token exists
+    const tokenData = resetPasswordTokens.get(token);
+    if (!tokenData) {
+      logger.warn('Reset password token validation with invalid token');
+      return res.status(404).json({
+        success: false,
+        error: 'Reset token not found',
+        valid: false,
+      });
+    }
+
+    // Check token expiration (1 hour)
+    if (tokenData.expiresAt < Date.now()) {
+      resetPasswordTokens.delete(token);
+      logger.warn(`Reset token expired for: ${tokenData.email}`);
+      return res.status(400).json({
+        success: false,
+        error: 'Reset token expired',
+        valid: false,
+      });
+    }
+
+    logger.info(`Reset token validated for: ${tokenData.email}`);
+
+    res.json({
+      success: true,
+      valid: true,
+      email: tokenData.email,
+    });
+  } catch (error) {
+    logger.error(`Reset token validation error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Token validation failed',
+      valid: false,
+    });
+  }
+});
+
+// POST /api/auth/reset-password/:token
+router.post('/reset-password/:token', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!token || typeof token !== 'string') {
+      logger.warn('Reset password attempt without token');
+      return res.status(400).json({
+        success: false,
+        error: 'Missing reset token',
+      });
+    }
+
+    if (!password || typeof password !== 'string') {
+      logger.warn('Reset password attempt without password');
+      return res.status(400).json({
+        success: false,
+        error: 'Password is required',
+      });
+    }
+
+    // Validate password
+    if (!validatePassword(password)) {
+      logger.warn('Reset password attempt with invalid password');
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 8 characters',
+      });
+    }
+
+    // Check token exists
+    const tokenData = resetPasswordTokens.get(token);
+    if (!tokenData) {
+      logger.warn('Reset password with invalid token');
+      return res.status(404).json({
+        success: false,
+        error: 'Reset token not found',
+      });
+    }
+
+    // Check token expiration
+    if (tokenData.expiresAt < Date.now()) {
+      resetPasswordTokens.delete(token);
+      logger.warn(`Reset password with expired token for: ${tokenData.email}`);
+      return res.status(400).json({
+        success: false,
+        error: 'Reset token expired',
+      });
+    }
+
+    // Find user
+    const user = users.get(tokenData.email);
+    if (!user) {
+      logger.warn(`Reset password user not found for: ${tokenData.email}`);
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
+
+    // Hash new password with bcrypt (10 salt rounds)
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Update user password
+    user.passwordHash = passwordHash;
+
+    // Delete reset token (one-time use)
+    resetPasswordTokens.delete(token);
+
+    logger.info(`Password reset successfully for: ${tokenData.email}`);
+
+    res.json({
+      success: true,
+      message: 'Password reset successfully',
+    });
+  } catch (error) {
+    logger.error(`Reset password error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Password reset failed',
     });
   }
 });
