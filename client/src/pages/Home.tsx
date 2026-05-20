@@ -42,6 +42,17 @@ export default function Home() {
     document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
   }, [lang]);
 
+  // Capture accessToken from OAuth redirect (Story 3.9)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const accessToken = params.get('accessToken');
+    if (accessToken) {
+      localStorage.setItem('accessToken', accessToken);
+      // Clean URL by removing query param
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   // Handle hash-based scroll when navigating from other pages (e.g. /#section-ai)
   useEffect(() => {
     const hash = window.location.hash;

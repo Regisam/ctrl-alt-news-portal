@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { logger } from '../../logger.js';
+import { getGoogleAuthUrl, exchangeCodeForToken, extractUserProfile } from '../services/google-oauth.js';
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ interface User {
 }
 
 // In-memory user store (Phase 1 - replace with DB in Phase 2)
-const users: Map<string, { email: string; passwordHash: string; id: string }> = new Map();
+const users: Map<string, { email: string; passwordHash: string; id: string; name?: string; avatar?: string; emailVerified?: boolean; googleId?: string }> = new Map();
 
 // Validation functions
 export function validateEmail(email: string): boolean {
@@ -328,6 +329,115 @@ router.post('/logout', async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: 'Internal server error',
+    });
+  }
+});
+
+// GET /api/auth/oauth/google
+router.get('/oauth/google', (req: Request, res: Response) => {
+  try {
+    const authUrl = getGoogleAuthUrl();
+    logger.info('Generated Google OAuth consent URL');
+    res.json({
+      success: true,
+      authUrl,
+    });
+  } catch (error) {
+    logger.error(`OAuth consent URL generation error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate consent URL',
+    });
+  }
+});
+
+// GET /api/auth/oauth/google/callback
+router.get('/oauth/google/callback', async (req: Request, res: Response) => {
+  try {
+    const { code } = req.query;
+
+    if (!code || typeof code !== 'string') {
+      logger.warn('OAuth callback without authorization code');
+      return res.status(400).json({
+        success: false,
+        error: 'Missing authorization code',
+      });
+    }
+
+    // Exchange code for ID token
+    const payload = await exchangeCodeForToken(code);
+    if (!payload) {
+      logger.warn('Failed to exchange authorization code for token');
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid authorization code',
+      });
+    }
+
+    // Extract user profile from token
+    const profile = extractUserProfile(payload);
+
+    // Find or create user by email
+    let user = users.get(profile.email.toLowerCase());
+    const userId = user?.id || `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    if (!user) {
+      // Create new user from Google profile
+      users.set(profile.email.toLowerCase(), {
+        email: profile.email,
+        id: userId,
+        passwordHash: '', // OAuth users don't have password
+        name: profile.name,
+        avatar: profile.picture,
+        emailVerified: profile.email_verified,
+        googleId: profile.id,
+      });
+      logger.info(`Created new user from OAuth: ${profile.email}`);
+    } else {
+      // Link to existing account
+      user.name = profile.name;
+      user.avatar = profile.picture;
+      user.emailVerified = profile.email_verified;
+      user.googleId = profile.id;
+      logger.info(`Linked OAuth to existing user: ${profile.email}`);
+    }
+
+    // Generate tokens
+    const accessToken = jwt.sign(
+      { userId, email: profile.email },
+      process.env.JWT_SECRET || 'dev-secret-key-change-in-production',
+      { expiresIn: '15m' }
+    );
+
+    const refreshToken = jwt.sign(
+      { userId, email: profile.email },
+      process.env.JWT_SECRET || 'dev-secret-key-change-in-production',
+      { expiresIn: '7d' }
+    );
+
+    // Store refresh token
+    refreshTokens.set(refreshToken, {
+      userId,
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // Set refresh token in httpOnly cookie
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // Redirect to home with accessToken in query param
+    const redirectUrl = `${process.env.GOOGLE_CALLBACK_URL?.replace('/auth/oauth/google/callback', '') || 'http://localhost:3000'}/?accessToken=${accessToken}`;
+    logger.info(`OAuth login successful for user: ${profile.email}`);
+    res.redirect(redirectUrl);
+  } catch (error) {
+    logger.error(`OAuth callback error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Authentication failed',
     });
   }
 });
