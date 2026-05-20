@@ -1,6 +1,5 @@
-import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import type { Article } from "@/lib/data";
-import { aiArticles, scienceArticles, roboticsArticles, trendingArticles } from "@/lib/data";
 import { RulesEngine, type Rule, type UserContext } from "@/lib/rules-engine";
 import { useUserPreferences } from "./useUserPreferences";
 import { useReadingHistory } from "./useReadingHistory";

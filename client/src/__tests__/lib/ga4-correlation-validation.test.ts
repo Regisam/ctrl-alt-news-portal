@@ -70,26 +70,6 @@ describe('GA4 Correlation Validation — Story 11.5 AC 6', () => {
     // Calculate Pearson correlation
     const correlation = calculatePearsonCorrelation(trendingScores, gaViewCounts);
 
-    // Log validation results
-    console.log('\n=== GA4 CORRELATION VALIDATION REPORT ===');
-    console.log(`Sample Size (articles): ${articles.length}`);
-    console.log(`Pearson Correlation: ${correlation.toFixed(4)}`);
-    console.log(`Threshold (AC 6): >= 0.80`);
-    console.log(`Status: ${correlation >= 0.80 ? '✅ PASS' : '❌ FAIL'}`);
-    console.log('\nDetailed Analysis:');
-
-    articles.forEach((article, i) => {
-      const viewCount = parseInt(article.views.replace(/[^0-9]/g, ''), 10);
-      const trendingScore = trendingScores[i];
-      console.log(`  ${article.title.en.substring(0, 40)}`);
-      console.log(`    Views (GA4): ${viewCount} | Trending Score: ${trendingScore.toFixed(2)}`);
-    });
-
-    console.log('\nInterpretation:');
-    console.log('  - Correlation >= 0.80: Strong positive relationship ✅');
-    console.log('  - Correlation 0.60-0.79: Moderate positive relationship');
-    console.log('  - Correlation < 0.60: Weak relationship');
-
     // Assertion
     expect(correlation).toBeGreaterThanOrEqual(0.80);
   });
@@ -118,11 +98,6 @@ describe('GA4 Correlation Validation — Story 11.5 AC 6', () => {
 
     // Simulate low engagement article with high views
     const lowEngagementScore = calculateTrendingScore(10, 5, 2, new Date().toISOString());
-
-    console.log('\n=== ENGAGEMENT vs VIEWS PRIORITY ===');
-    console.log(`High Engagement (100 reactions, 50 bookmarks, 25 shares): ${highEngagementScore.toFixed(2)}`);
-    console.log(`Low Engagement (10 reactions, 5 bookmarks, 2 shares): ${lowEngagementScore.toFixed(2)}`);
-    console.log(`Trending favors engagement: ${highEngagementScore > lowEngagementScore ? '✅' : '❌'}`);
 
     // Algorithm correctly prioritizes engagement
     expect(highEngagementScore).toBeGreaterThan(lowEngagementScore);

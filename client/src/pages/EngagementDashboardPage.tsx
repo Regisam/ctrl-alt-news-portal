@@ -2,13 +2,10 @@ import React, { useState, useMemo } from 'react';
 import {
   BarChart,
   Bar,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   Cell,
 } from 'recharts';
@@ -16,7 +13,6 @@ import { Download, Filter, X } from 'lucide-react';
 import { useReadingHistory } from '../hooks/useReadingHistory';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useReactions } from '../hooks/useReactions';
-import { useUserPreferences } from '../hooks/useUserPreferences';
 
 const CATEGORIES = ['AI', 'Science', 'Robotics', 'Gadgets'];
 const CATEGORY_COLORS = {
@@ -165,15 +161,15 @@ export default function EngagementDashboardPage() {
   const { history } = useReadingHistory();
   const { bookmarks } = useBookmarks();
   const { reactions } = useReactions();
-  const { favoriteCategories } = useUserPreferences();
 
-  const today = formatDate(Date.now());
-  const thirtyDaysAgo = formatDate(Date.now() - 30 * 24 * 60 * 60 * 1000);
-
-  const [filter, setFilter] = useState<FilterState>({
-    startDate: thirtyDaysAgo,
-    endDate: today,
-    selectedCategories: [],
+  const [filter, setFilter] = useState<FilterState>(() => {
+    const today = formatDate(Date.now());
+    const thirtyDaysAgo = formatDate(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    return {
+      startDate: thirtyDaysAgo,
+      endDate: today,
+      selectedCategories: [],
+    };
   });
 
   const [showFilterPanel, setShowFilterPanel] = useState(false);

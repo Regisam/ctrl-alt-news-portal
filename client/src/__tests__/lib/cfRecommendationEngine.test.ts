@@ -250,7 +250,7 @@ describe('cfRecommendationEngine - CF with Fallback', () => {
       ['user2', new Set(['article2', 'article3', 'article4', 'article5'])],
     ]);
 
-    const contentScorer = (articleId: string) => 0.5; // Not used
+    const contentScorer = (_articleId: string) => 0.5; // Not used
 
     const result = generateCFRecommendationsWithFallback(
       request,
@@ -279,7 +279,7 @@ describe('cfRecommendationEngine - CF with Fallback', () => {
       ['user2', new Set(['article2'])],
     ]);
 
-    const contentScorer = (articleId: string) => 0.7; // Always high
+    const contentScorer = (_articleId: string) => 0.7; // Always high
 
     const result = generateCFRecommendationsWithFallback(
       request,

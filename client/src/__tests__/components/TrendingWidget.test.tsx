@@ -144,14 +144,14 @@ describe('TrendingWidget', () => {
   });
 
   it('should apply correct styling to AI category', () => {
-    const { container } = render(<TrendingWidget />);
+    render(<TrendingWidget />);
 
     const aiBadge = screen.getByText('AI');
     expect(aiBadge).toHaveStyle({ color: '#00D4FF' });
   });
 
   it('should apply correct styling to SCIENCE category', () => {
-    const { container } = render(<TrendingWidget />);
+    render(<TrendingWidget />);
 
     const scienceBadge = screen.getByText('SCIENCE');
     expect(scienceBadge).toHaveStyle({ color: '#A855F7' });

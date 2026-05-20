@@ -221,7 +221,7 @@ export function analyzeABTestResults(
   }
 
   // Generate recommendation
-  let recommendation = '';
+  let recommendation: string;
   if (winningVariant !== 'control') {
     const winner = results[winningVariant];
     if (winner.isSignificant) {

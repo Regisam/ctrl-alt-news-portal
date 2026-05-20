@@ -222,7 +222,7 @@ describe('useDiscoveryWidget', () => {
   describe('performance', () => {
     it('should load articles within 500ms', async () => {
       const start = Date.now();
-      const { result } = renderHook(() => useDiscoveryWidget(userId, 5));
+      renderHook(() => useDiscoveryWidget(userId, 5));
 
       await new Promise((resolve) => setTimeout(resolve, 300));
 

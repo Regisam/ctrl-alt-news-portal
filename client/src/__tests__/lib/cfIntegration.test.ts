@@ -5,9 +5,9 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { computePearsonCorrelation, computeSimilarityMatrix } from '@shared/lib/userSimilarity';
-import { buildEngagementVector, vectorToArray } from '@shared/lib/engagementVectors';
-import { computeJaccardSimilarity, computeItemSimilarityMatrix } from '@shared/lib/itemCollaborativeFiltering';
+import { computeSimilarityMatrix } from '@shared/lib/userSimilarity';
+import { buildEngagementVector } from '@shared/lib/engagementVectors';
+import { computeItemSimilarityMatrix } from '@shared/lib/itemCollaborativeFiltering';
 import { buildCoReadMatrix } from '@shared/lib/coReadMatrix';
 import { generateCFRecommendations, validateCFRecommendations } from '@shared/lib/cfRecommendationEngine';
 import type { UserEngagementVector } from '@shared/lib/engagementVectors';
@@ -188,7 +188,7 @@ describe('cfIntegration - End-to-End CF Pipeline', () => {
     // Random assignment of readers
     for (const user of users) {
       const numArticles = Math.floor(Math.random() * 20) + 5; // Each user reads 5-25 articles
-      const articles = Array.from({ length: numArticles }, (_, i) =>
+      const articles = Array.from({ length: numArticles }, () =>
         `article${Math.floor(Math.random() * 500)}`
       );
 

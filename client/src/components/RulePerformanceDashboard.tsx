@@ -1,9 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import type { Rule } from '@/lib/rules-engine';
-
-interface RulePerformanceData extends Rule {
-  ctr?: number; // Click-through rate
-}
 
 interface Props {
   rules: Rule[];
@@ -21,7 +17,7 @@ export function RulePerformanceDashboard({ rules, compact = false }: Props) {
     switch (sortBy) {
       case 'firing_count':
         return b.metadata.firing_count - a.metadata.firing_count;
-      case 'ctr':
+      case 'ctr': {
         const ctrA = a.metadata.impressions > 0
           ? (a.metadata.clicks / a.metadata.impressions) * 100
           : 0;
@@ -29,6 +25,7 @@ export function RulePerformanceDashboard({ rules, compact = false }: Props) {
           ? (b.metadata.clicks / b.metadata.impressions) * 100
           : 0;
         return ctrB - ctrA;
+      }
       case 'impressions':
         return b.metadata.impressions - a.metadata.impressions;
       default:

@@ -4,14 +4,11 @@ import {
   DEFAULT_SERENDIPITY_FLAG,
   SERENDIPITY_PRESETS,
   SerendipityABTest,
-  DEFAULT_SERENDIPITY_AB_TEST,
-  ABTestVariant,
   isUserEligibleForSerendipity,
   assignUserToVariant,
   getSerendipityWeightForUser,
   validateABTestConfig,
   SerendipityAnalytics,
-  serendipityAnalytics,
 } from '@shared/lib/featureFlags';
 
 describe('Feature Flags & A/B Testing', () => {

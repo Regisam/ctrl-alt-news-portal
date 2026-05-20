@@ -94,8 +94,8 @@ export function DigestPreferencesPanel() {
       )}
 
       {/* Frequency Selection */}
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">Frequency</label>
+      <fieldset className="space-y-2">
+        <legend className="block text-sm font-medium text-gray-700">Frequency</legend>
         <div className="flex gap-4">
           <label className="flex items-center">
             <input
@@ -120,12 +120,13 @@ export function DigestPreferencesPanel() {
             <span className="text-sm">Weekly (Monday)</span>
           </label>
         </div>
-      </div>
+      </fieldset>
 
       {/* Preferred Time */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">Preferred Time (UTC)</label>
+        <label htmlFor="preferred-time" className="block text-sm font-medium text-gray-700">Preferred Time (UTC)</label>
         <input
+          id="preferred-time"
           type="time"
           value={localTime}
           onChange={handleTimeChange}
@@ -135,8 +136,8 @@ export function DigestPreferencesPanel() {
       </div>
 
       {/* Topics Selection */}
-      <div className="space-y-3">
-        <label className="block text-sm font-medium text-gray-700">Topics of Interest</label>
+      <fieldset className="space-y-3">
+        <legend className="block text-sm font-medium text-gray-700">Topics of Interest</legend>
         <div className="grid grid-cols-2 gap-3">
           {AVAILABLE_TOPICS.map((topic) => (
             <label key={topic} className="flex items-center p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
@@ -155,7 +156,7 @@ export function DigestPreferencesPanel() {
             ? 'Select at least one topic to receive digests'
             : `Selected: ${localTopics.join(', ')}`}
         </p>
-      </div>
+      </fieldset>
 
       {/* Actions */}
       <div className="flex gap-3 pt-4 border-t border-gray-200">

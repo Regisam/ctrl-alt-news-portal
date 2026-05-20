@@ -3,8 +3,6 @@
  * Lightweight, localStorage-based variant assignment with deterministic hashing
  */
 
-import crypto from 'crypto';
-
 export interface ABExperiment {
   id: string;
   name: string;

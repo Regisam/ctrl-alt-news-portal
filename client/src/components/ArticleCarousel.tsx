@@ -72,7 +72,7 @@ function CarouselCard({
   };
 
   return (
-    <article
+    <div
       onClick={() => navigate(`/article/${article.id}`)}
       role="button"
       tabIndex={0}
@@ -218,7 +218,7 @@ function CarouselCard({
           </span>
         </div>
       </div>
-    </article>
+    </div>
   );
 }
 

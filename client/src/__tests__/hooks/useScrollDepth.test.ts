@@ -69,7 +69,7 @@ describe('useScrollDepth hook', () => {
     const mockGtag = vi.fn();
     window.gtag = mockGtag;
 
-    const { result } = renderHook(() =>
+    renderHook(() =>
       useScrollDepth({ articleId: 3, wordCount: 1000, debounceMs: 50 })
     );
 
