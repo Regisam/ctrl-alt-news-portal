@@ -1,0 +1,85 @@
+storyId: '3.6'
+storyTitle: 'User Reputation System & Leaderboards'
+reviewDate: '2026-05-20'
+reviewer: Quinn (QA Guardian)
+verdict: PASS
+
+acceptanceCriteria:
+  - id: '1'
+    description: 'GET /api/users/:id/reputation endpoint (authenticated users)'
+    status: PASS
+    evidence: 'router.get(/users/:id/reputation) with requireAuth middleware, 404 handling'
+  - id: '2'
+    description: 'GET /api/reputation/leaderboard endpoint (public, paginated)'
+    status: PASS
+    evidence: 'router.get(/reputation/leaderboard) with limit/offset pagination, no auth required'
+  - id: '3'
+    description: 'Badge system: Trusted (10+), Contributor (50+), Expert (100+), Author (5+ articles)'
+    status: PASS
+    evidence: 'calculateBadges() function implements all 4 tiers with correct thresholds'
+  - id: '4'
+    description: 'Reputation includes: karma, badges, articleCount, commentCount'
+    status: PASS
+    evidence: 'UserReputation interface has all fields, buildReputation() helper returns complete response'
+  - id: '5'
+    description: 'Leaderboard sorted by karma descending'
+    status: PASS
+    evidence: '.sort((a, b) => b.karma - a.karma) in leaderboard endpoint'
+  - id: '6'
+    description: 'Pagination: limit (default 20, max 100), offset'
+    status: PASS
+    evidence: 'Math.min(parseInt(limit) || 20, 100) clamps correctly, slice(offsetNum, offsetNum + limitNum)'
+  - id: '7'
+    description: '404 response when user not found'
+    status: PASS
+    evidence: 'users.get(userId) check returns 404 with proper error message'
+  - id: '8'
+    description: 'TypeScript: 0 errors'
+    status: PASS
+    evidence: 'npm run check passes (tsc --noEmit successful)'
+  - id: '9'
+    description: 'Winston logging for leaderboard access'
+    status: PASS
+    evidence: 'logger.info() calls in both endpoints, logger.warn() for errors'
+  - id: '10'
+    description: 'Efficient queries (avoid N+1)'
+    status: PASS
+    evidence: 'Single Array.from(users.values()) call, no loop queries, aggregate logic clean'
+
+codeQuality:
+  typeScript: PASS
+  linting: PASS
+  security:
+    sqlInjection: PASS (no database queries)
+    xss: PASS (no client-side rendering)
+    authenticationBypass: PASS (middleware enforced)
+  patterns: PASS (matches Story 3.5 conventions)
+  errorHandling: PASS (comprehensive error responses)
+  logging: PASS (Winston integrated for audit trail)
+
+riskAssessment:
+  overallRisk: LOW
+  comments:
+    - 'All AC implemented and validated'
+    - 'Authentication properly enforced on /reputation endpoint'
+    - 'Mock data suitable for Phase 1 development'
+    - 'Code quality matches existing patterns in codebase'
+    - 'Ready for database integration in Phase 2'
+
+issues: []
+
+recommendations:
+  - 'Phase 2: Move mock user data to separate module/database'
+  - 'Phase 2: Consider rate limiting on public leaderboard endpoint'
+  - 'Phase 2: Consider caching reputation calculations for performance'
+
+verdict: PASS
+rationale: |
+  All 10 acceptance criteria successfully implemented and validated.
+  Code quality meets project standards. Authentication and authorization
+  properly enforced. Winston logging configured for audit trail.
+  Mock implementation is clean and follows established patterns.
+
+approval: |
+  ✅ Story 3.6 approved for merge.
+  Ready for @github-devops push and Story completion.
