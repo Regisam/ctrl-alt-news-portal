@@ -233,4 +233,62 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/auth/refresh
+router.post('/refresh', async (req: Request, res: Response) => {
+  try {
+    // Extract refresh token from httpOnly cookie
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      logger.warn('Token refresh attempt with no refresh token in cookie');
+      return res.status(401).json({
+        success: false,
+        error: 'No refresh token provided',
+      });
+    }
+
+    // Validate refresh token exists in store
+    const tokenData = refreshTokens.get(refreshToken);
+    if (!tokenData) {
+      logger.warn('Token refresh attempt with invalid refresh token');
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid refresh token',
+      });
+    }
+
+    // Verify refresh token not expired
+    if (tokenData.expiresAt < Date.now()) {
+      logger.warn(`Token refresh attempt with expired refresh token for user: ${tokenData.userId}`);
+      refreshTokens.delete(refreshToken);
+      return res.status(401).json({
+        success: false,
+        error: 'Refresh token expired',
+      });
+    }
+
+    // Generate new access token (15-minute expiry)
+    const newAccessToken = jwt.sign(
+      { userId: tokenData.userId },
+      JWT_SECRET,
+      { expiresIn: ACCESS_TOKEN_EXPIRY }
+    );
+
+    // Log successful refresh
+    logger.info(`Token refreshed successfully for user: ${tokenData.userId}`);
+
+    // Return new access token in response body
+    res.json({
+      success: true,
+      accessToken: newAccessToken,
+    });
+  } catch (error) {
+    logger.error(`Token refresh error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+    });
+  }
+});
+
 export default router;
