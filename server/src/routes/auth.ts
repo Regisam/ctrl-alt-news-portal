@@ -1215,4 +1215,114 @@ router.post('/profile/update-avatar', verifyToken, async (req: any, res: Respons
   }
 });
 
+// Helper function to clean up all tokens for a user
+function cleanupUserTokens(userId: string): number {
+  let deletedCount = 0;
+
+  // Delete refresh tokens
+  for (const [token, data] of refreshTokens.entries()) {
+    if (data.userId === userId) {
+      refreshTokens.delete(token);
+      deletedCount++;
+    }
+  }
+
+  // Delete reset tokens
+  for (const [token, data] of resetPasswordTokens.entries()) {
+    // Reset tokens use email, not userId, so skip
+  }
+
+  // Delete verification tokens
+  for (const [token, data] of verificationTokens.entries()) {
+    if (data.userId === userId) {
+      verificationTokens.delete(token);
+      deletedCount++;
+    }
+  }
+
+  // Delete email change tokens
+  for (const [token, data] of emailChangeTokens.entries()) {
+    if (data.userId === userId) {
+      emailChangeTokens.delete(token);
+      deletedCount++;
+    }
+  }
+
+  return deletedCount;
+}
+
+// DELETE /api/auth/account
+router.delete('/account', verifyToken, async (req: any, res: Response) => {
+  try {
+    const { password } = req.body;
+
+    if (!password || typeof password !== 'string') {
+      logger.warn(`Account deletion attempt without password for user: ${req.user.email}`);
+      return res.status(400).json({
+        success: false,
+        error: 'Password is required',
+      });
+    }
+
+    // Find user
+    const user = users.get(req.user.email.toLowerCase());
+    if (!user) {
+      logger.warn(`Account deletion attempt for non-existent user: ${req.user.email}`);
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
+
+    // Verify password
+    const passwordMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!passwordMatch) {
+      logger.warn(`Account deletion with incorrect password for user: ${req.user.email}`);
+      return res.status(400).json({
+        success: false,
+        error: 'Incorrect password',
+      });
+    }
+
+    // Check for OAuth session (warning only)
+    if (user.googleId) {
+      logger.warn(`Account deletion for OAuth user: ${req.user.email}`);
+    }
+
+    // Clean up all tokens
+    const deletedTokenCount = cleanupUserTokens(user.id);
+
+    // Delete reset and email verification tokens by email
+    for (const [token, data] of resetPasswordTokens.entries()) {
+      if (data.email === req.user.email.toLowerCase()) {
+        resetPasswordTokens.delete(token);
+      }
+    }
+
+    // Delete user
+    users.delete(req.user.email.toLowerCase());
+
+    // Clear refresh token cookie
+    const cookieRes = res as any;
+    cookieRes.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    logger.info(`Account deleted successfully for user: ${req.user.email}, tokens cleaned up: ${deletedTokenCount}`);
+
+    res.json({
+      success: true,
+      message: 'Account deleted successfully',
+    });
+  } catch (error) {
+    logger.error(`Account deletion error: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      success: false,
+      error: 'Account deletion failed',
+    });
+  }
+});
+
 export default router;
