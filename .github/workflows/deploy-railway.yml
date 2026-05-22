@@ -50,11 +50,11 @@ jobs:
       - name: Deploy to Railway
         uses: railway-app/deploy-action@v1
         with:
-          token: ${{ secrets.RAILWAY_TOKEN }}
+          token: ${{ secrets.API_KEY }}
           service: ctrl-alt-news-portal-prod
           environment: production
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DB_URL }}
           NODE_ENV: production
           CORS_ORIGIN: ${{ secrets.CORS_ORIGIN }}
           LOG_LEVEL: info
