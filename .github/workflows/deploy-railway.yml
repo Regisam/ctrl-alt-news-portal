@@ -26,29 +26,34 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
         run: npx playwright install
 
       - name: Run linting
-        run: npm run lint || true
+        run: pnpm run lint || true
 
       - name: Run type checking
-        run: npm run check
+        run: pnpm run check
 
       - name: Run tests
-        run: npm test
+        run: pnpm test
 
       - name: Build production
-        run: npm run build
+        run: pnpm run build
 
       - name: Deployment ready
         run: |
