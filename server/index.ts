@@ -1,4 +1,6 @@
+console.log(">>> [1] Server file loaded");
 import express, { type Request, type Response, type NextFunction } from "express";
+console.log(">>> [2] Express imported");
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import { createServer } from "http";
@@ -21,13 +23,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function startServer() {
+  console.log("✓ startServer() called");
   const app = express();
+  console.log("✓ Express app created");
   const server = createServer(app);
+  console.log("✓ HTTP server created");
 
   // Body parser middleware (before logging middleware)
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ limit: '10mb', extended: true }));
   app.use(cookieParser());
+  console.log("✓ Body parser middleware added");
 
   // Logging middleware (early in the chain)
   app.use(loggingMiddleware);
@@ -165,9 +171,15 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   const port = process.env.PORT || 3000;
 
+  console.log(`✓ About to listen on port ${port}`);
   server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+    console.log(`✓✓✓ Server running on http://localhost:${port}/`);
   });
+  console.log("✓ server.listen() called");
 }
 
-startServer().catch(console.error);
+console.log(">>> Server starting...");
+startServer().catch((err) => {
+  console.error("ERROR in startServer:", err);
+  process.exit(1);
+});
