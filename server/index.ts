@@ -35,6 +35,7 @@ import analyticsRouter from "./api/analytics.js";
 import contentAnalyticsRouter from "./api/contentAnalytics.js";
 import reportsRouter from "./api/reports.js";
 import recommendationsRouter from "./api/recommendationsRouter.js";
+import commentsRouter from "./api/comments.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -233,6 +234,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Recommendation engine endpoints (Story 17.4)
   app.use('/api/recommendations', recommendationsRouter);
+
+  // Comments & discussions endpoints (Story 18.1)
+  app.use('/api/comments', commentsRouter);
 
   // Error handler middleware (must be last)
   app.use(errorHandlerMiddleware);
