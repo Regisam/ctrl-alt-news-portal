@@ -45,19 +45,21 @@ const transports: winston.transport[] = [
   }),
 ];
 
-// Add Loki transport if configured
-if (process.env.LOKI_URL) {
-  const LokiTransport = require('winston-loki').default;
-  transports.push(
-    new LokiTransport({
-      host: process.env.LOKI_URL,
-      labels: {
-        app: 'ctrl-alt-news',
-        environment: process.env.NODE_ENV || 'development',
-      },
-      format: customFormat,
-    })
-  );
+// Add Loki transport if configured (loaded asynchronously)
+export async function initializeLokiTransport() {
+  if (process.env.LOKI_URL) {
+    const { default: LokiTransport } = await import('winston-loki');
+    transports.push(
+      new LokiTransport({
+        host: process.env.LOKI_URL,
+        labels: {
+          app: 'ctrl-alt-news',
+          environment: process.env.NODE_ENV || 'development',
+        },
+        format: customFormat,
+      })
+    );
+  }
 }
 
 export const logger = winston.createLogger({

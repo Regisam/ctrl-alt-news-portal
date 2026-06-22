@@ -9,7 +9,7 @@ import { fileURLToPath } from "url";
 import healthRouter from "./health.js";
 import { loggingMiddleware } from "./middleware/loggingMiddleware.js";
 import { metricsMiddleware, setupMetricsEndpoint } from "./middleware/metricsMiddleware.js";
-import { logger } from "./logger.js";
+import { logger, initializeLokiTransport } from "./logger.js";
 import { generateSitemapXML } from "./lib/sitemap.js";
 import { handleFeedStream, broadcastFeedUpdate, feedStreamHealth } from "./api/feed-stream.js";
 import digestRouter from "./api/digest.js";
@@ -28,6 +28,9 @@ async function startServer() {
   console.log("✓ Express app created");
   const server = createServer(app);
   console.log("✓ HTTP server created");
+
+  // Initialize Loki transport if LOKI_URL is set
+  await initializeLokiTransport();
 
   // Body parser middleware (before logging middleware)
   app.use(express.json({ limit: '10mb' }));
