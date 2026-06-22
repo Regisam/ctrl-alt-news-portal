@@ -9,6 +9,7 @@ import { fileURLToPath } from "url";
 import healthRouter from "./health.js";
 import { loggingMiddleware } from "./middleware/loggingMiddleware.js";
 import { metricsMiddleware, setupMetricsEndpoint } from "./middleware/metricsMiddleware.js";
+import { rateLimiterMiddleware } from "./middleware/rateLimiter.js";
 import { logger, initializeLokiTransport } from "./logger.js";
 import { generateSitemapXML } from "./lib/sitemap.js";
 import { handleFeedStream, broadcastFeedUpdate, feedStreamHealth } from "./api/feed-stream.js";
@@ -16,6 +17,7 @@ import digestRouter from "./api/digest.js";
 import topicRecommendationsRouter from "./api/topic-recommendations.js";
 import monitoringRouter from "./api/monitoring.js";
 import notificationsRouter from "./api/notifications.js";
+import rateLimitRouter from "./api/rateLimit.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -62,6 +64,9 @@ async function startServer() {
 
   // Setup metrics endpoint
   setupMetricsEndpoint(app);
+
+  // Rate limiting middleware (Story 16.4)
+  app.use(rateLimiterMiddleware);
 
   // Client logs endpoint
   app.post('/api/logs', (req, res) => {
@@ -154,6 +159,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Notifications & alerting endpoints (Story 16.2)
   app.use('/api/notifications', notificationsRouter);
+
+  // Rate limiting admin endpoints (Story 16.4)
+  app.use('/api/rate-limit', rateLimitRouter);
 
   // Serve static files from dist/public in production
   const staticPath =
