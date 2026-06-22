@@ -40,6 +40,7 @@ import emojiRouter from "./api/emoji.js";
 import followingRouter from "./api/following.js";
 import notificationsSmartRouter from "./api/notificationsSmart.js";
 import profilesRouter from "./api/profiles.js";
+import publicProfilesRouter from "./api/public-profiles.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -253,6 +254,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // User profiles endpoints (Story 19.1)
   app.use('/api/profiles', profilesRouter);
+
+  // Public profiles endpoints (Story 19.2)
+  app.use('/api/public-profiles', publicProfilesRouter);
 
   // Error handler middleware (must be last)
   app.use(errorHandlerMiddleware);
