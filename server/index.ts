@@ -12,6 +12,7 @@ import { metricsMiddleware, setupMetricsEndpoint } from "./middleware/metricsMid
 import { rateLimiterMiddleware } from "./middleware/rateLimiter.js";
 import { securityHeadersMiddleware, httpsRedirectMiddleware } from "./middleware/securityHeaders.js";
 import { inputValidationMiddleware } from "./middleware/inputValidation.js";
+import { cacheHeadersMiddleware, varyHeaderMiddleware } from "./middleware/cacheHeaders.js";
 import { errorHandlerMiddleware, setupErrorHandlers } from "./middleware/errorHandler.js";
 import { logger, initializeLokiTransport } from "./logger.js";
 import { errorAggregator } from "./lib/errorAggregator.js";
@@ -26,6 +27,7 @@ import notificationsRouter from "./api/notifications.js";
 import rateLimitRouter from "./api/rateLimit.js";
 import errorAnalyticsRouter from "./api/errorAnalytics.js";
 import slaMonitoringRouter from "./api/slaMonitoring.js";
+import performanceRouter from "./api/performance.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -88,6 +90,11 @@ async function startServer() {
 
   // Setup metrics endpoint
   setupMetricsEndpoint(app);
+
+  // Cache headers middleware (Story 16.9)
+  app.use(cacheHeadersMiddleware);
+  app.use(varyHeaderMiddleware);
+  console.log("✓ Cache headers middleware added");
 
   // Input validation middleware (Story 16.8)
   app.use(inputValidationMiddleware);
@@ -195,6 +202,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // SLA monitoring endpoints (Story 16.6)
   app.use('/api/sla', slaMonitoringRouter);
+
+  // Performance monitoring endpoints (Story 16.9)
+  app.use('/api/performance', performanceRouter);
 
   // Error handler middleware (must be last)
   app.use(errorHandlerMiddleware);
