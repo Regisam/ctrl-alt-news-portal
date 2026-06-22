@@ -32,6 +32,7 @@ import backupAdminRouter from "./api/backupAdmin.js";
 import complianceRouter from "./api/compliance.js";
 import loadTestRouter from "./api/loadTest.js";
 import analyticsRouter from "./api/analytics.js";
+import contentAnalyticsRouter from "./api/contentAnalytics.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -221,6 +222,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // User behavior analytics endpoints (Story 17.1)
   app.use('/api/analytics', analyticsRouter);
+
+  // Content performance analytics endpoints (Story 17.2)
+  app.use('/api/content-analytics', contentAnalyticsRouter);
 
   // Error handler middleware (must be last)
   app.use(errorHandlerMiddleware);
