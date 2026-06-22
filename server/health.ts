@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import os from 'os';
+import { getHealthCheckStatus } from './middleware/healthCheckScheduler.js';
 
 const router = Router();
 
@@ -12,7 +13,12 @@ function getHealthStatus() {
   const memoryPercent = ((totalMemory - freeMemory) / totalMemory) * 100;
   const processMemoryPercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
 
-  const status = memoryPercent > 90 ? 'degraded' : 'ok';
+  // AC5: Get dependency health status (Story 16.7)
+  const dependencyStatus = getHealthCheckStatus();
+
+  // Determine overall status
+  const baseStatus = memoryPercent > 90 ? 'degraded' : 'ok';
+  const status = dependencyStatus.overallStatus === 'unhealthy' ? 'unhealthy' : baseStatus;
 
   return {
     status,
@@ -38,12 +44,19 @@ function getHealthStatus() {
       server: 'healthy',
       logger: 'healthy',
     },
+    dependencies: dependencyStatus.dependencies,
   };
 }
 
 router.get('/health', (_req, res) => {
   const health = getHealthStatus();
-  const statusCode = health.status === 'ok' ? 200 : 503;
+  // AC5: Return appropriate status code based on dependencies + system health
+  let statusCode = 200;
+  if (health.status === 'unhealthy' || health.status === 'degraded') {
+    statusCode = 503; // Service unavailable if critical dependency down
+  } else if (health.status === 'degraded') {
+    statusCode = 200; // Still respond 200 but mark as degraded
+  }
   res.status(statusCode).json(health);
 });
 

@@ -14,6 +14,7 @@ import { errorHandlerMiddleware, setupErrorHandlers } from "./middleware/errorHa
 import { logger, initializeLokiTransport } from "./logger.js";
 import { errorAggregator } from "./lib/errorAggregator.js";
 import { uptimeTracker } from "./lib/uptimeTracker.js";
+import { initializeHealthChecks, getHealthCheckStatus } from "./middleware/healthCheckScheduler.js";
 import { generateSitemapXML } from "./lib/sitemap.js";
 import { handleFeedStream, broadcastFeedUpdate, feedStreamHealth } from "./api/feed-stream.js";
 import digestRouter from "./api/digest.js";
@@ -44,6 +45,9 @@ async function startServer() {
 
   // Initialize Loki transport if LOKI_URL is set
   await initializeLokiTransport();
+
+  // Initialize dependency health checks (Story 16.7)
+  initializeHealthChecks();
 
   // Body parser middleware (before logging middleware)
   app.use(express.json({ limit: '10mb' }));
