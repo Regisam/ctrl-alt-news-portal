@@ -1,5 +1,6 @@
 import { register, Counter, Histogram, Gauge } from 'prom-client';
 import { Express, Request, Response, NextFunction } from 'express';
+import { recordLatency } from '../lib/monitoring.js';
 
 // Define Prometheus metrics
 export const httpRequestDuration = new Histogram({
@@ -46,6 +47,7 @@ export function metricsMiddleware(
     const statusCode = res.statusCode;
     const method = req.method;
 
+    recordLatency(duration);
     httpRequestDuration
       .labels(method, route, String(statusCode))
       .observe(duration);

@@ -14,6 +14,7 @@ import { generateSitemapXML } from "./lib/sitemap.js";
 import { handleFeedStream, broadcastFeedUpdate, feedStreamHealth } from "./api/feed-stream.js";
 import digestRouter from "./api/digest.js";
 import topicRecommendationsRouter from "./api/topic-recommendations.js";
+import monitoringRouter from "./api/monitoring.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -146,6 +147,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Reputation endpoints (Story 3.6)
   app.use('/api', reputationRouter);
+
+  // Monitoring & metrics endpoints (Story 16.1)
+  app.use('/api/monitoring', monitoringRouter);
 
   // Serve static files from dist/public in production
   const staticPath =
