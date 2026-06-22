@@ -37,6 +37,7 @@ import reportsRouter from "./api/reports.js";
 import recommendationsRouter from "./api/recommendationsRouter.js";
 import commentsRouter from "./api/comments.js";
 import emojiRouter from "./api/emoji.js";
+import followingRouter from "./api/following.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -241,6 +242,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Emoji reactions endpoints (Story 18.2)
   app.use('/api/emoji', emojiRouter);
+
+  // Following & subscriptions endpoints (Story 18.3)
+  app.use('/api/following', followingRouter);
 
   // Error handler middleware (must be last)
   app.use(errorHandlerMiddleware);
