@@ -13,6 +13,7 @@ import { rateLimiterMiddleware } from "./middleware/rateLimiter.js";
 import { errorHandlerMiddleware, setupErrorHandlers } from "./middleware/errorHandler.js";
 import { logger, initializeLokiTransport } from "./logger.js";
 import { errorAggregator } from "./lib/errorAggregator.js";
+import { uptimeTracker } from "./lib/uptimeTracker.js";
 import { generateSitemapXML } from "./lib/sitemap.js";
 import { handleFeedStream, broadcastFeedUpdate, feedStreamHealth } from "./api/feed-stream.js";
 import digestRouter from "./api/digest.js";
@@ -21,6 +22,7 @@ import monitoringRouter from "./api/monitoring.js";
 import notificationsRouter from "./api/notifications.js";
 import rateLimitRouter from "./api/rateLimit.js";
 import errorAnalyticsRouter from "./api/errorAnalytics.js";
+import slaMonitoringRouter from "./api/slaMonitoring.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -172,6 +174,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Error analytics endpoints (Story 16.5)
   app.use('/api/error-analytics', errorAnalyticsRouter);
+
+  // SLA monitoring endpoints (Story 16.6)
+  app.use('/api/sla', slaMonitoringRouter);
 
   // Error handler middleware (must be last)
   app.use(errorHandlerMiddleware);
