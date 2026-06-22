@@ -28,6 +28,7 @@ import rateLimitRouter from "./api/rateLimit.js";
 import errorAnalyticsRouter from "./api/errorAnalytics.js";
 import slaMonitoringRouter from "./api/slaMonitoring.js";
 import performanceRouter from "./api/performance.js";
+import backupAdminRouter from "./api/backupAdmin.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -205,6 +206,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Performance monitoring endpoints (Story 16.9)
   app.use('/api/performance', performanceRouter);
+
+  // Backup & disaster recovery endpoints (Story 16.10)
+  app.use('/api/backup', backupAdminRouter);
 
   // Error handler middleware (must be last)
   app.use(errorHandlerMiddleware);
