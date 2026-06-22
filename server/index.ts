@@ -10,7 +10,9 @@ import healthRouter from "./health.js";
 import { loggingMiddleware } from "./middleware/loggingMiddleware.js";
 import { metricsMiddleware, setupMetricsEndpoint } from "./middleware/metricsMiddleware.js";
 import { rateLimiterMiddleware } from "./middleware/rateLimiter.js";
+import { errorHandlerMiddleware, setupErrorHandlers } from "./middleware/errorHandler.js";
 import { logger, initializeLokiTransport } from "./logger.js";
+import { errorAggregator } from "./lib/errorAggregator.js";
 import { generateSitemapXML } from "./lib/sitemap.js";
 import { handleFeedStream, broadcastFeedUpdate, feedStreamHealth } from "./api/feed-stream.js";
 import digestRouter from "./api/digest.js";
@@ -18,6 +20,7 @@ import topicRecommendationsRouter from "./api/topic-recommendations.js";
 import monitoringRouter from "./api/monitoring.js";
 import notificationsRouter from "./api/notifications.js";
 import rateLimitRouter from "./api/rateLimit.js";
+import errorAnalyticsRouter from "./api/errorAnalytics.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -28,6 +31,10 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   console.log("✓ startServer() called");
+
+  // Setup global error handlers
+  setupErrorHandlers();
+
   const app = express();
   console.log("✓ Express app created");
   const server = createServer(app);
@@ -162,6 +169,12 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Rate limiting admin endpoints (Story 16.4)
   app.use('/api/rate-limit', rateLimitRouter);
+
+  // Error analytics endpoints (Story 16.5)
+  app.use('/api/error-analytics', errorAnalyticsRouter);
+
+  // Error handler middleware (must be last)
+  app.use(errorHandlerMiddleware);
 
   // Serve static files from dist/public in production
   const staticPath =
