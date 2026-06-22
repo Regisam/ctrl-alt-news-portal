@@ -34,6 +34,7 @@ import loadTestRouter from "./api/loadTest.js";
 import analyticsRouter from "./api/analytics.js";
 import contentAnalyticsRouter from "./api/contentAnalytics.js";
 import reportsRouter from "./api/reports.js";
+import recommendationsRouter from "./api/recommendationsRouter.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -229,6 +230,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Custom reports endpoints (Story 17.3)
   app.use('/api/reports', reportsRouter);
+
+  // Recommendation engine endpoints (Story 17.4)
+  app.use('/api/recommendations', recommendationsRouter);
 
   // Error handler middleware (must be last)
   app.use(errorHandlerMiddleware);

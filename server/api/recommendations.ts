@@ -1,6 +1,8 @@
 import type { Request, Response } from 'express';
 import type { Article } from '@shared/types';
 import { RankingService } from '../services/RankingService.js';
+import { recommendationEngine } from '../lib/recommendationEngine.js';
+import { logger } from '../logger.js';
 
 interface HybridRecommendationRequest {
   userId: string;
@@ -270,5 +272,152 @@ export async function getABTestMetrics(
   } catch (error) {
     console.error('[ERROR] getABTestMetrics:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+// ========== Story 17.4: Recommendation Engine ==========
+
+/**
+ * POST /api/recommendations/personalized/track-read
+ * AC2: Update user profile with article reading (Story 17.4)
+ */
+export async function trackArticleRead(req: Request, res: Response): Promise<void> {
+  try {
+    const { userId, articleId, engagement } = req.body;
+
+    if (!userId || !articleId) {
+      res.status(400).json({ error: 'userId and articleId required' });
+      return;
+    }
+
+    recommendationEngine.updateUserProfile(userId, articleId, engagement || 50);
+
+    res.json({
+      message: 'Reading tracked',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error('Failed to track reading', { error });
+    res.status(500).json({ error: 'Failed to track reading' });
+  }
+}
+
+/**
+ * POST /api/recommendations/personalized/register-article
+ * Register article for content-based recommendations
+ */
+export async function registerArticleForRecommendations(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { articleId, title, category, author, tags } = req.body;
+
+    if (!articleId || !title || !category) {
+      res.status(400).json({ error: 'articleId, title, category required' });
+      return;
+    }
+
+    recommendationEngine.registerArticle(articleId, title, category, author || 'Unknown', tags);
+
+    res.json({
+      message: 'Article registered',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error('Failed to register article', { error });
+    res.status(500).json({ error: 'Failed to register article' });
+  }
+}
+
+/**
+ * GET /api/recommendations/personalized/:userId
+ * AC4: Get personalized recommendations with AC8 explanations
+ */
+export async function getPersonalizedRecommendations(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { userId } = req.params;
+    const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
+
+    const recommendations = recommendationEngine.getRecommendations(userId, limit);
+
+    res.json({
+      timestamp: new Date().toISOString(),
+      userId,
+      count: recommendations.length,
+      recommendations,
+    });
+  } catch (error) {
+    logger.error('Failed to get recommendations', { error });
+    res.status(500).json({ error: 'Failed to get recommendations' });
+  }
+}
+
+/**
+ * POST /api/recommendations/personalized/click/:userId/:articleId
+ * AC10: Track recommendation click for A/B testing
+ */
+export async function trackRecommendationClick(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { userId, articleId } = req.params;
+
+    recommendationEngine.recordRecommendationClick(userId, articleId);
+
+    res.json({
+      message: 'Recommendation click tracked',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error('Failed to track click', { error });
+    res.status(500).json({ error: 'Failed to track click' });
+  }
+}
+
+/**
+ * GET /api/recommendations/personalized/profile/:userId
+ * AC2: Get user profile (reading history, interests)
+ */
+export async function getUserProfile(req: Request, res: Response): Promise<void> {
+  try {
+    const { userId } = req.params;
+
+    const profile = recommendationEngine.getUserProfile(userId);
+
+    if (!profile) {
+      res.status(404).json({ error: 'User profile not found' });
+      return;
+    }
+
+    res.json({
+      timestamp: new Date().toISOString(),
+      profile,
+    });
+  } catch (error) {
+    logger.error('Failed to get profile', { error });
+    res.status(500).json({ error: 'Failed to get profile' });
+  }
+}
+
+/**
+ * GET /api/recommendations/personalized/stats
+ * Get recommendation engine statistics
+ */
+export async function getRecommendationStats(req: Request, res: Response): Promise<void> {
+  try {
+    const stats = recommendationEngine.getStats();
+
+    res.json({
+      timestamp: new Date().toISOString(),
+      stats,
+    });
+  } catch (error) {
+    logger.error('Failed to get stats', { error });
+    res.status(500).json({ error: 'Failed to get stats' });
   }
 }
