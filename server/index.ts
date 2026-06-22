@@ -31,6 +31,7 @@ import performanceRouter from "./api/performance.js";
 import backupAdminRouter from "./api/backupAdmin.js";
 import complianceRouter from "./api/compliance.js";
 import loadTestRouter from "./api/loadTest.js";
+import analyticsRouter from "./api/analytics.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -217,6 +218,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Load testing & capacity planning endpoints (Story 16.12)
   app.use('/api/load-test', loadTestRouter);
+
+  // User behavior analytics endpoints (Story 17.1)
+  app.use('/api/analytics', analyticsRouter);
 
   // Error handler middleware (must be last)
   app.use(errorHandlerMiddleware);
