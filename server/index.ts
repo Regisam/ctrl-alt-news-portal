@@ -38,6 +38,7 @@ import recommendationsRouter from "./api/recommendationsRouter.js";
 import commentsRouter from "./api/comments.js";
 import emojiRouter from "./api/emoji.js";
 import followingRouter from "./api/following.js";
+import notificationsSmartRouter from "./api/notificationsSmart.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -245,6 +246,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Following & subscriptions endpoints (Story 18.3)
   app.use('/api/following', followingRouter);
+
+  // Smart notifications endpoints (Story 18.4)
+  app.use('/api/notifications-smart', notificationsSmartRouter);
 
   // Error handler middleware (must be last)
   app.use(errorHandlerMiddleware);
