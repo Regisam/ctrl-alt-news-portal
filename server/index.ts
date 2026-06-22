@@ -15,6 +15,7 @@ import { handleFeedStream, broadcastFeedUpdate, feedStreamHealth } from "./api/f
 import digestRouter from "./api/digest.js";
 import topicRecommendationsRouter from "./api/topic-recommendations.js";
 import monitoringRouter from "./api/monitoring.js";
+import notificationsRouter from "./api/notifications.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -150,6 +151,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Monitoring & metrics endpoints (Story 16.1)
   app.use('/api/monitoring', monitoringRouter);
+
+  // Notifications & alerting endpoints (Story 16.2)
+  app.use('/api/notifications', notificationsRouter);
 
   // Serve static files from dist/public in production
   const staticPath =
