@@ -26,6 +26,7 @@ const TrendingDashboard = lazy(() => import("./pages/TrendingDashboard"));
 const TopicPage = lazy(() => import("./pages/TopicPage"));
 const RegisterPage = lazy(() => import("./pages/RegisterPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function Router() {
@@ -67,6 +68,7 @@ function Router() {
         <Route path={"/topic/:topicId"} component={TopicPage} />
         <Route path={"/register"} component={() => <RegisterPage lang="en" />} />
         <Route path={"/login"} component={() => <LoginPage lang="en" />} />
+        <Route path={"/ops/dashboard"} component={DashboardPage} />
         <Route path={"/404"} component={NotFound} />
         <Route component={NotFound} />
       </Switch>
