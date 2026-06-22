@@ -30,6 +30,7 @@ import slaMonitoringRouter from "./api/slaMonitoring.js";
 import performanceRouter from "./api/performance.js";
 import backupAdminRouter from "./api/backupAdmin.js";
 import complianceRouter from "./api/compliance.js";
+import loadTestRouter from "./api/loadTest.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -213,6 +214,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Compliance & audit logging endpoints (Story 16.11)
   app.use('/api/compliance', complianceRouter);
+
+  // Load testing & capacity planning endpoints (Story 16.12)
+  app.use('/api/load-test', loadTestRouter);
 
   // Error handler middleware (must be last)
   app.use(errorHandlerMiddleware);
