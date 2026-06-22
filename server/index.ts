@@ -10,6 +10,8 @@ import healthRouter from "./health.js";
 import { loggingMiddleware } from "./middleware/loggingMiddleware.js";
 import { metricsMiddleware, setupMetricsEndpoint } from "./middleware/metricsMiddleware.js";
 import { rateLimiterMiddleware } from "./middleware/rateLimiter.js";
+import { securityHeadersMiddleware, httpsRedirectMiddleware } from "./middleware/securityHeaders.js";
+import { inputValidationMiddleware } from "./middleware/inputValidation.js";
 import { errorHandlerMiddleware, setupErrorHandlers } from "./middleware/errorHandler.js";
 import { logger, initializeLokiTransport } from "./logger.js";
 import { errorAggregator } from "./lib/errorAggregator.js";
@@ -55,6 +57,15 @@ async function startServer() {
   app.use(cookieParser());
   console.log("✓ Body parser middleware added");
 
+  // Security headers middleware (Story 16.8)
+  app.use(securityHeadersMiddleware);
+  console.log("✓ Security headers added");
+
+  // HTTPS redirect (Story 16.8)
+  if (process.env.NODE_ENV === 'production') {
+    app.use(httpsRedirectMiddleware);
+  }
+
   // Logging middleware (early in the chain)
   app.use(loggingMiddleware);
 
@@ -77,6 +88,9 @@ async function startServer() {
 
   // Setup metrics endpoint
   setupMetricsEndpoint(app);
+
+  // Input validation middleware (Story 16.8)
+  app.use(inputValidationMiddleware);
 
   // Rate limiting middleware (Story 16.4)
   app.use(rateLimiterMiddleware);
