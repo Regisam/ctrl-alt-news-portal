@@ -1,124 +1,253 @@
-# Rate Limiting & Throttling Guide
-
-**Version**: 1.0  
-**Last Updated**: 2026-06-22
+# API Rate Limiting & DDoS Protection Guide
 
 ## Overview
 
-Rate limiting protects the API from:
-- Brute force attacks
-- DoS (Denial of Service)
-- Resource exhaustion
-- Unfair usage
+Protect API from abuse and DDoS attacks using intelligent rate limiting.
+
+## Rate Limit Tiers
+
+### 1. Strict (Auth Endpoints)
+- **Rate**: 5-10 requests per window
+- **Window**: 1 hour for registration, 15 min for login
+- **Use**: POST /auth/register, POST /auth/login
+
+### 2. Moderate (User Actions)
+- **Rate**: 30-60 requests per minute
+- **Window**: 1 minute
+- **Use**: POST /comments, POST /articles
+
+### 3. Default (API)
+- **Rate**: 100 requests per minute
+- **Window**: 1 minute
+- **Use**: Most API endpoints
+
+### 4. Public (Read-Only)
+- **Rate**: 300 requests per minute
+- **Window**: 1 minute
+- **Use**: GET /articles, GET /search
 
 ## Configuration
 
-### Default Limits
+### Per-Endpoint Rate Limiting
 
 ```typescript
-// 100 requests/minute per IP
-default: { windowMs: 60s, maxRequests: 100 }
+import { endpointRateLimiters } from '../middleware/advancedRateLimiter';
 
-// 5 login attempts per 15 minutes
-/api/auth/login: { windowMs: 15m, maxRequests: 5 }
-
-// 30 searches per minute
-/api/search: { windowMs: 60s, maxRequests: 30 }
-
-// 50 article requests per minute
-/api/articles: { windowMs: 60s, maxRequests: 50 }
+// Apply to specific routes
+app.post('/api/auth/register', endpointRateLimiters.register, registerHandler);
+app.post('/api/auth/login', endpointRateLimiters.login, loginHandler);
+app.post('/api/comments', endpointRateLimiters.postComment, postCommentHandler);
+app.get('/api/articles', endpointRateLimiters.getArticles, getArticlesHandler);
 ```
 
-## Features
+### Custom Configuration
 
-- **AC1-6**: Per-user + per-IP limits
-- **AC7**: Sliding window algorithm (accurate)
-- **AC8**: Redis support (optional)
-- **AC9**: Rate limit headers (X-RateLimit-*)
-- **AC11**: Admin endpoints for management
+```typescript
+import { createRateLimiter } from '../middleware/advancedRateLimiter';
+
+// Create custom limiter
+const customLimiter = createRateLimiter({
+  windowMs: 60000, // 1 minute
+  maxRequests: 50,
+});
+
+app.post('/api/custom-endpoint', customLimiter, handler);
+```
 
 ## Response Headers
 
+All rate-limited endpoints return:
+
 ```
 X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 42
-X-RateLimit-Reset: 1687353045
-Retry-After: 30
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1687000000
+Retry-After: 60
 ```
 
-## Rate Limit Exceeded (429)
+## Error Response (429)
+
+When rate limit exceeded:
 
 ```json
 {
-  "error": "Too Many Requests",
-  "message": "Rate limit exceeded. Please try again later.",
-  "retryAfter": 30,
-  "rateLimitReset": "2026-06-22T10:30:45Z"
+  "success": false,
+  "error": "Too many requests",
+  "message": "Rate limit exceeded. Please retry after 60 seconds.",
+  "statusCode": 429,
+  "retryAfter": 60
 }
 ```
 
-## Whitelisted Endpoints
+## DDoS Detection
 
-These bypass rate limiting:
-- `/api/health`
-- `/api/status`
-- `/api/version`
-- `/metrics`
-- `/api/monitoring`
+### Automatic Detection
 
-## Admin Endpoints
+- Monitors requests per IP
+- Triggers alert at 200+ requests/minute
+- Auto-blocks high-anomaly IPs (>80% score)
+- 5-minute auto-block duration
 
-### View Stats
-```bash
-GET /api/rate-limit/stats
+### Anomaly Score
+
+```
+score = (requestCount / threshold) * 100
+- score < 50: Normal traffic
+- score 50-80: Suspicious
+- score > 80: Likely DDoS, auto-block
 ```
 
-### Check Client Limit
+## IP Management
+
+### Whitelist (Bypass Rate Limits)
+
 ```bash
-GET /api/rate-limit/check/:clientId
-# clientId format: "user:123" or "ip:192.168.1.1"
+# Add to whitelist
+POST /api/rate-limit/whitelist/192.168.1.100
+
+# Remove from whitelist
+DELETE /api/rate-limit/whitelist/192.168.1.100
 ```
 
-### Reset One Client
+**Whitelisted IPs:**
+- Internal services
+- Load balancers
+- Monitoring systems
+- Trusted partners
+
+### Blacklist (Block Completely)
+
 ```bash
-POST /api/rate-limit/reset/:clientId
+# Add to blacklist (permanent)
+POST /api/rate-limit/blacklist/203.0.113.45
+
+# Add to blacklist (temporary, 1 hour)
+POST /api/rate-limit/blacklist/203.0.113.45
+Content-Type: application/json
+
+{ "durationMs": 3600000 }
+
+# Remove from blacklist
+DELETE /api/rate-limit/blacklist/203.0.113.45
 ```
 
-### Reset All
+## Analytics & Monitoring
+
+### View Rate Limit Analytics
+
 ```bash
-POST /api/rate-limit/reset-all
+GET /api/rate-limit/analytics
 ```
 
-## Client Identification
+**Response:**
+```json
+{
+  "totalTracked": 1234,
+  "whitelisted": 5,
+  "blacklisted": 3,
+  "alerts": [
+    {
+      "ip": "203.0.113.45",
+      "timestamp": "2026-06-25T10:30:00Z",
+      "requestCount": 250,
+      "anomalyScore": 85
+    }
+  ],
+  "topViolators": [
+    {
+      "identifier": "203.0.113.45",
+      "count": 250,
+      "blocked": true
+    }
+  ]
+}
+```
 
-- **Authenticated**: User ID (from token)
-- **Anonymous**: IP address
+## Client Implementation
 
-## Algorithm
+### JavaScript/Fetch
 
-Sliding window: tracks requests across a time window, more accurate than fixed buckets.
+```javascript
+async function apiCall() {
+  const response = await fetch('/api/articles');
+
+  // Check rate limit headers
+  const limit = response.headers.get('X-RateLimit-Limit');
+  const remaining = response.headers.get('X-RateLimit-Remaining');
+  const reset = response.headers.get('X-RateLimit-Reset');
+
+  console.log(`Requests remaining: ${remaining}/${limit}`);
+
+  if (response.status === 429) {
+    const retryAfter = parseInt(response.headers.get('Retry-After'));
+    console.log(`Rate limited. Retry after ${retryAfter}s`);
+    
+    // Implement exponential backoff
+    await new Promise(r => setTimeout(r, retryAfter * 1000));
+    return apiCall(); // Retry
+  }
+
+  return response.json();
+}
+```
+
+### Exponential Backoff
+
+```javascript
+async function callWithRetry(fn, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (error.status === 429) {
+        const delay = Math.pow(2, i) * 1000; // 1s, 2s, 4s
+        console.log(`Retry in ${delay}ms`);
+        await new Promise(r => setTimeout(r, delay));
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+```
 
 ## Best Practices
 
-1. **Monitor limits**: Check `/api/rate-limit/stats`
-2. **Adjust thresholds**: Edit ENDPOINT_LIMITS in middleware
-3. **Test limits**: Use admin endpoints before deploying
-4. **Log violations**: All 429s logged with client ID
+1. **Handle 429 Responses**: Implement retry logic with backoff
+2. **Monitor Headers**: Track X-RateLimit-* headers
+3. **Cache Results**: Reduce redundant requests
+4. **Batch Requests**: Combine multiple operations
+5. **Use Webhooks**: For real-time updates instead of polling
+6. **Whitelist Services**: Internal services should be whitelisted
+7. **Implement Backoff**: Exponential backoff for retries
 
 ## Troubleshooting
 
-### Getting 429 too often?
+### Too Many Requests Errors
 
-1. Check your request rate: `GET /api/rate-limit/check/:clientId`
-2. Wait for reset window to expire
-3. Or reset manually (admin): `POST /api/rate-limit/reset/:clientId`
+1. Check rate limit headers
+2. Implement exponential backoff
+3. Batch requests if possible
+4. Request to be whitelisted if legitimate service
 
-### Need higher limits?
+### False Positives
 
-1. If authenticated: higher quota by default
-2. Contact ops to whitelist your IP (for services)
-3. Adjust thresholds in config (if admin)
+1. Check if IP is whitelisted
+2. Monitor anomaly score
+3. Adjust thresholds if needed
+4. Contact support
 
----
+### DDoS Attacks
 
-**See also**: docs/guides/monitoring-guide.md
+1. Check /api/rate-limit/analytics
+2. Review topViolators list
+3. Manually block suspicious IPs
+4. Monitor auto-blocks
+
+## Performance Impact
+
+- **Memory**: ~1KB per tracked identifier
+- **CPU**: O(1) lookups per request
+- **Cleanup**: Automatic every 60 seconds
+- **Max Tracked**: 10,000+ identifiers
+
