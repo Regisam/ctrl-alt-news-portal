@@ -39,13 +39,13 @@ export function dtoHandlerMiddleware(
 
   // AC4: Error responses
   res.badRequest = function (error: string, details?: unknown) {
-    const response: ApiResponse = {
+    const response: ApiResponse & { details?: unknown } = {
       success: false,
       error,
       timestamp: new Date().toISOString(),
       statusCode: HttpStatus.BAD_REQUEST,
-      ...(details && { details }),
     };
+    if (details) response.details = details;
     return this.status(HttpStatus.BAD_REQUEST).json(response);
   };
 
@@ -70,13 +70,13 @@ export function dtoHandlerMiddleware(
   };
 
   res.error = function (statusCode: number, error: string, details?: unknown) {
-    const response: ApiResponse = {
+    const response: ApiResponse & { details?: unknown } = {
       success: false,
       error,
       timestamp: new Date().toISOString(),
       statusCode,
-      ...(details && { details }),
     };
+    if (details) response.details = details;
     return this.status(statusCode).json(response);
   };
 
