@@ -29,6 +29,8 @@ model User {
   blockedBy      BlockedUser[] @relation("blocked")
 
   @@index([email])
+  @@index([createdAt])
+  @@index([updatedAt])
 }
 
 // AC9: Profile model
@@ -68,6 +70,9 @@ model Article {
   @@index([authorId])
   @@index([category])
   @@index([publishedAt])
+  @@index([published])
+  @@index([authorId, published])
+  @@index([category, publishedAt])
 }
 
 // AC6: Comment model

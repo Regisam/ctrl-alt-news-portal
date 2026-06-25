@@ -1,155 +1,280 @@
-# Performance Optimization & Caching Guide
-
-**Version**: 1.0  
-**Last Updated**: 2026-06-22
+# Performance Optimization Guide
 
 ## Overview
 
-Optimize response times and reduce server load through HTTP caching, response compression, and in-memory caching.
+Best practices for optimizing database queries and API response times.
 
-## Features Implemented
+## Database Indices
 
-- **AC1**: HTTP caching headers (Cache-Control, ETag, Last-Modified)
-- **AC2**: Response compression (gzip/brotli via express-compression)
-- **AC3**: In-memory response caching (5-minute default TTL)
-- **AC4**: Cache invalidation by pattern
-- **AC5**: Cache hit rate tracking
-- **AC9**: Performance metrics dashboard
-- **AC10**: Caching strategy documentation
+### Created Indices
+
+**User table:**
+```sql
+CREATE INDEX idx_user_email ON "User"(email);
+CREATE INDEX idx_user_createdAt ON "User"("createdAt");
+CREATE INDEX idx_user_updatedAt ON "User"("updatedAt");
+```
+
+**Article table:**
+```sql
+CREATE INDEX idx_article_authorId ON "Article"("authorId");
+CREATE INDEX idx_article_category ON "Article"(category);
+CREATE INDEX idx_article_publishedAt ON "Article"("publishedAt");
+CREATE INDEX idx_article_published ON "Article"(published);
+CREATE INDEX idx_article_authorId_published ON "Article"("authorId", published);
+CREATE INDEX idx_article_category_publishedAt ON "Article"(category, "publishedAt");
+```
+
+**Comment table:**
+```sql
+CREATE INDEX idx_comment_articleId ON "Comment"("articleId");
+CREATE INDEX idx_comment_userId ON "Comment"("userId");
+CREATE INDEX idx_comment_parentId ON "Comment"("parentId");
+```
+
+**Other indices (auto-created):**
+- Following: followerId, followeeId, (followerId, followeeId)
+- Notification: userId, read, createdAt
+- Reputation: userId, score
+
+### Index Strategy
+
+- **Equality filters**: First column
+- **Range filters**: After equality columns
+- **Sorting**: Last columns
+- **Composite indices**: Most selective first
+
+## Query Optimization
+
+### Select Only Needed Fields
+
+❌ Before:
+```typescript
+const user = await db.user.findUnique({ where: { id } });
+```
+
+✅ After:
+```typescript
+const user = await db.user.findUnique({
+  where: { id },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    // exclude password, timestamps if not needed
+  },
+});
+```
+
+### Prevent N+1 Queries
+
+❌ Before:
+```typescript
+const articles = await db.article.findMany();
+for (const article of articles) {
+  article.author = await db.user.findUnique({
+    where: { id: article.authorId },
+  });
+}
+```
+
+✅ After:
+```typescript
+const articles = await db.article.findMany({
+  include: {
+    author: {
+      select: { id: true, name: true, email: true },
+    },
+  },
+});
+```
 
 ## Caching Strategy
 
-### Static Assets (Images, CSS, JS, Fonts)
-```
-Cache-Control: public, max-age=31536000, immutable
-TTL: 1 year
-When: Build-time versioned assets
-```
+### Cache Manager Usage
 
-Versioned assets (hash in filename) are immutable and cached forever.
+```typescript
+import { cacheManager } from '../lib/cacheManager';
 
-### API Endpoints (GET requests)
-```
-Cache-Control: public, max-age=300
-TTL: 5 minutes
-When: GET requests to /api/*
-Invalidated: On POST/PUT/DELETE
-```
+// Cache with TTL and tags
+cacheManager.set('articles:list:page-1', articles, {
+  ttl: 300, // 5 minutes
+  tags: ['articles', 'list'], // for invalidation
+});
 
-API responses cached for 5 minutes, invalidated on mutations.
+// Retrieve from cache
+const cached = cacheManager.get('articles:list:page-1');
 
-### HTML Pages
-```
-Cache-Control: public, max-age=0, must-revalidate
-TTL: None (always check)
-When: /index.html, / route
+// Invalidate by tag (when article is updated)
+cacheManager.invalidateByTag('articles');
 ```
 
-HTML never cached—always validate with ETag (304 Not Modified).
+### Cache Invalidation Rules
 
-## ETag Support
+| Event | Tags to Invalidate |
+|-------|-------------------|
+| Article created | articles, lists |
+| Article updated | articles, article:{id}, lists |
+| Article deleted | articles, article:{id}, lists |
+| Comment added | comments, article:{id} |
+| User profile updated | user:{id}, profiles |
 
-**How it works:**
-1. Server generates MD5 hash of response
-2. Client receives `ETag: "abc123"`
-3. Client sends `If-None-Match: "abc123"`
-4. Server responds with `304 Not Modified` (no body sent)
+## Performance Monitoring
 
-**Saves bandwidth:** Full response not sent if unchanged.
+### Query Performance
 
-## Cache Invalidation
+```typescript
+import { QueryOptimizer, performanceMetrics } from '../lib/queryOptimizer';
 
-### Manual Invalidation
-```bash
-POST /api/performance/cache/invalidate
-{
-  "pattern": "/api/articles/*"
+const { result, duration } = await QueryOptimizer.measureQuery(
+  'fetch-articles',
+  () => db.article.findMany()
+);
+
+performanceMetrics.recordMetric('fetch-articles', duration);
+```
+
+### View Metrics
+
+```typescript
+const stats = performanceMetrics.getStats('fetch-articles');
+console.log(stats);
+// {
+//   count: 100,
+//   min: 10.5,
+//   max: 250.3,
+//   avg: 45.2,
+//   p50: 40,
+//   p95: 120,
+//   p99: 200
+// }
+```
+
+## Connection Pooling
+
+### Configuration
+
+```prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  
+  // Connection pool (max connections)
+  // Adjust based on load
 }
 ```
 
-### Clear All
+Default: 2 connections (dev) → 10+ (production)
+
+## Pagination
+
+### Efficient Pagination
+
+```typescript
+import { QueryOptimizer } from '../lib/queryOptimizer';
+
+const allArticles = await db.article.findMany({
+  orderBy: { publishedAt: 'desc' },
+  take: 1000, // Limit fetch
+});
+
+const paginated = QueryOptimizer.paginate(allArticles, page, 20);
+// {
+//   items: [...20 items],
+//   pagination: {
+//     page: 1,
+//     pageSize: 20,
+//     total: 1000,
+//     pages: 50,
+//     hasMore: true
+//   }
+// }
+```
+
+### Cursor-based (Better for Large Data)
+
+```typescript
+const articles = await db.article.findMany({
+  take: 20,
+  skip: 0,
+  cursor: { id: 'last-id' }, // Optional, for next page
+  orderBy: { id: 'asc' },
+});
+```
+
+## HTTP Caching
+
+### Response Headers
+
+```typescript
+// Cache for 5 minutes
+res.set('Cache-Control', 'public, max-age=300');
+
+// Cache for 1 hour
+res.set('Cache-Control', 'public, max-age=3600');
+
+// Don't cache
+res.set('Cache-Control', 'no-cache, no-store');
+
+// Revalidate on every request
+res.set('Cache-Control', 'public, max-age=0, must-revalidate');
+```
+
+## Performance Targets
+
+| Metric | Target | Critical |
+|--------|--------|----------|
+| Page load | <200ms | >500ms |
+| Article list | <100ms | >250ms |
+| Single article | <50ms | >150ms |
+| Search | <300ms | >1000ms |
+| User profile | <75ms | >200ms |
+
+## Monitoring Commands
+
 ```bash
-POST /api/performance/cache/clear
+# View cache stats
+curl http://localhost:3000/api/cache/stats
+
+# View performance metrics
+curl http://localhost:3000/api/metrics/performance
+
+# Database query analysis
+EXPLAIN ANALYZE SELECT * FROM "Article" ...;
+
+# Connection pool status
+SELECT datname, count(*) FROM pg_stat_activity GROUP BY datname;
 ```
-
-### Automatic Invalidation
-Cache entries expire after TTL (default 5 minutes).
-
-## Performance Metrics
-
-### View Cache Stats
-```bash
-GET /api/performance/metrics
-```
-
-Response:
-```json
-{
-  "cache": {
-    "entries": 42,
-    "hits": 156,
-    "misses": 12,
-    "hitRate": 92.8,
-    "sizeKB": 512
-  }
-}
-```
-
-### Target Response Times
-- **p95**: < 200ms
-- **p99**: < 500ms
-
-Check via `/api/performance/metrics`.
-
-## Compression
-
-Responses automatically compressed with:
-- **gzip** (default)
-- **brotli** (for supported browsers)
-
-**Threshold:** Responses > 1KB compressed
-
-**Bypass:** Include `X-No-Compression` header
-
-## Best Practices
-
-1. **Static assets:** Serve with max-age=31536000 (versioned)
-2. **API responses:** Cache GET, invalidate on POST/PUT/DELETE
-3. **HTML:** Never cache (always validate with ETag)
-4. **Monitor:** Check cache hit rate via `/api/performance/metrics`
-5. **Tune TTL:** Adjust based on data freshness requirements
-6. **Vary header:** Different Accept-Encoding requires separate cache entries
-
-## Configuration
-
-**Default TTL:** 5 minutes (300,000ms)
-**Max cache size:** 100 entries
-**Auto-cleanup:** Every 1 minute
-**Eviction policy:** LRU (least recently used) when full
 
 ## Troubleshooting
 
-### Cache not working?
+### Slow Queries
 
-Check if hitting static asset rules:
-```bash
-curl -I https://example.com/api/articles
-# Should show: Cache-Control: public, max-age=300
-```
+1. Check indices: `\d table_name` in psql
+2. Analyze plan: `EXPLAIN ANALYZE query`
+3. Look for sequential scans (bad)
+4. Add indices as needed
 
-### Stale data?
+### High Memory Usage
 
-Data older than TTL is automatically removed. To force fresh:
-```bash
-POST /api/performance/cache/invalidate
-{ "pattern": "*" }
-```
+1. Check cache size: `cacheManager.getStats()`
+2. Reduce cache TTL
+3. Implement LRU eviction
+4. Monitor connection pool
 
-### High memory usage?
+### Lock Contention
 
-Cache limited to 100 entries. Each ~1KB.
-Max: ~100KB in-memory cache.
+1. Use shorter transactions
+2. Avoid SELECT FOR UPDATE
+3. Implement optimistic locking
+4. Check long-running queries
 
----
+## Best Practices
 
-**See also**: docs/guides/monitoring-guide.md
+1. **Index first**: Create indices before queries get slow
+2. **Cache wisely**: Cache heavy operations, not everything
+3. **Monitor early**: Set up metrics before problems arise
+4. **Test at scale**: Use production-like data volumes
+5. **Profile regularly**: Use EXPLAIN ANALYZE
+6. **Paginate always**: Never fetch unlimited rows
+
