@@ -14,6 +14,7 @@ import { securityHeadersMiddleware, httpsRedirectMiddleware } from "./middleware
 import { inputValidationMiddleware } from "./middleware/inputValidation.js";
 import { cacheHeadersMiddleware, varyHeaderMiddleware } from "./middleware/cacheHeaders.js";
 import { errorHandlerMiddleware, setupErrorHandlers } from "./middleware/errorHandler.js";
+import { dtoHandlerMiddleware } from "./middleware/dtoHandler.js";
 import { logger, initializeLokiTransport } from "./logger.js";
 import { errorAggregator } from "./lib/errorAggregator.js";
 import { uptimeTracker } from "./lib/uptimeTracker.js";
@@ -114,6 +115,9 @@ async function startServer() {
 
   // Input validation middleware (Story 16.8)
   app.use(inputValidationMiddleware);
+
+  // DTO handler middleware (Story 20.3)
+  app.use(dtoHandlerMiddleware);
 
   // Rate limiting middleware (Story 16.4)
   app.use(rateLimiterMiddleware);
