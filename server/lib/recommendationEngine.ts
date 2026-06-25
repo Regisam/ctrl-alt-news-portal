@@ -1,258 +1,280 @@
 import { logger } from '../logger.js';
 
-// AC2: User profile
-export interface UserProfile {
+// AC1-4: Recommendation types
+export interface UserPreferences {
   userId: string;
-  readingHistory: string[]; // article IDs
-  interests: string[]; // categories/topics
-  engagement: Record<string, number>; // article ID -> engagement score
-  lastUpdated: string;
+  interests: Map<string, number>; // category -> score
+  readArticles: Set<string>;
+  lastUpdated: Date;
 }
 
-// AC4 & AC8: Recommendation with explanation
+export interface ArticleFeatures {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  tags: string[];
+  author: string;
+  publishedAt: Date;
+  views: number;
+}
+
 export interface Recommendation {
   articleId: string;
   title: string;
+  score: number;
+  reason: string;
   category: string;
-  author: string;
-  score: number; // 0-100
-  explanation: string; // AC8: why recommended
-  reason: 'similar' | 'trending' | 'author' | 'category' | 'collaborative';
-}
-
-// AC3: Content similarity
-interface ArticleContent {
-  id: string;
-  title: string;
-  category: string;
-  author: string;
-  tags?: string[];
-  engagement?: number;
 }
 
 class RecommendationEngine {
-  private userProfiles: Map<string, UserProfile> = new Map();
-  private articles: Map<string, ArticleContent> = new Map();
-  private similarityCache: Map<string, number> = new Map();
+  private userPreferences: Map<string, UserPreferences> = new Map();
+  private articleCache: Map<string, ArticleFeatures> = new Map();
+  private recommendations: Map<string, Recommendation[]> = new Map();
+  private metrics: { recommendations: number; clicks: number; clickThroughRate: number } = {
+    recommendations: 0,
+    clicks: 0,
+    clickThroughRate: 0,
+  };
 
-  // AC2: Build user profile
-  updateUserProfile(userId: string, articleId: string, engagement: number): void {
-    let profile = this.userProfiles.get(userId);
+  // AC1: Track user interests
+  trackUserInterest(userId: string, category: string, weight: number = 1): void {
+    let prefs = this.userPreferences.get(userId);
 
-    if (!profile) {
-      profile = {
+    if (!prefs) {
+      prefs = {
         userId,
-        readingHistory: [],
-        interests: [],
-        engagement: {},
-        lastUpdated: new Date().toISOString(),
+        interests: new Map(),
+        readArticles: new Set(),
+        lastUpdated: new Date(),
       };
-      this.userProfiles.set(userId, profile);
+      this.userPreferences.set(userId, prefs);
     }
 
-    // Add to history
-    if (!profile.readingHistory.includes(articleId)) {
-      profile.readingHistory.push(articleId);
-    }
+    const currentScore = prefs.interests.get(category) || 0;
+    prefs.interests.set(category, currentScore + weight);
+    prefs.lastUpdated = new Date();
 
-    // Track engagement
-    profile.engagement[articleId] = engagement;
-    profile.lastUpdated = new Date().toISOString();
+    // AC5: Real-time update
+    this.clearRecommendationCache(userId);
 
-    logger.debug('User profile updated', { userId, articleId, engagement });
+    logger.debug('User interest tracked', { userId, category, weight });
   }
 
-  // Register article for recommendations
-  registerArticle(id: string, title: string, category: string, author: string, tags?: string[]): void {
-    this.articles.set(id, { id, title, category, author, tags });
-  }
+  // AC1: Track article read
+  trackArticleRead(userId: string, articleId: string, category: string): void {
+    this.trackUserInterest(userId, category, 2); // Higher weight for read articles
+    let prefs = this.userPreferences.get(userId);
 
-  // AC3: Calculate content similarity
-  private calculateSimilarity(article1Id: string, article2Id: string): number {
-    const cacheKey = `${article1Id}:${article2Id}`;
-    if (this.similarityCache.has(cacheKey)) {
-      return this.similarityCache.get(cacheKey)!;
+    if (prefs) {
+      prefs.readArticles.add(articleId);
     }
 
-    const a1 = this.articles.get(article1Id);
-    const a2 = this.articles.get(article2Id);
+    logger.debug('Article read tracked', { userId, articleId, category });
+  }
 
-    if (!a1 || !a2) return 0;
+  // AC2: Extract article features
+  addArticle(article: ArticleFeatures): void {
+    this.articleCache.set(article.id, article);
+    this.clearAllRecommendationCache();
 
+    logger.debug('Article added to cache', { articleId: article.id });
+  }
+
+  // AC3: Calculate similarity between articles
+  calculateSimilarity(article1: ArticleFeatures, article2: ArticleFeatures): number {
     let score = 0;
 
-    // Category match (40%)
-    if (a1.category === a2.category) score += 40;
-
-    // Author match (20%)
-    if (a1.author === a2.author) score += 20;
-
-    // Tag overlap (20%)
-    if (a1.tags && a2.tags) {
-      const overlap = a1.tags.filter((t) => a2.tags!.includes(t)).length;
-      const maxTags = Math.max(a1.tags.length, a2.tags.length);
-      score += (overlap / maxTags) * 20;
+    // Same category (40%)
+    if (article1.category === article2.category) {
+      score += 40;
     }
 
-    // Title similarity (20%) - simple word overlap
-    const words1 = new Set(a1.title.toLowerCase().split(' '));
-    const words2 = new Set(a2.title.toLowerCase().split(' '));
-    const intersection = Array.from(words1).filter((w) => words2.has(w)).length;
-    const union = words1.size + words2.size - intersection;
-    score += (intersection / union) * 20;
+    // Tag overlap (30%)
+    const commonTags = new Set([...article1.tags].filter((t) => article2.tags.includes(t)));
+    const tagSimilarity = (commonTags.size / Math.max(article1.tags.length, article2.tags.length, 1)) * 100;
+    score += (tagSimilarity / 100) * 30;
 
-    this.similarityCache.set(cacheKey, Math.round(score));
-    return Math.round(score);
+    // Author similarity (20%)
+    if (article1.author === article2.author) {
+      score += 20;
+    }
+
+    // Recency boost (10%)
+    const daysSincePublish = Math.max(
+      (Date.now() - article1.publishedAt.getTime()) / (24 * 60 * 60 * 1000),
+      0
+    );
+
+    if (daysSincePublish < 7) {
+      score += 10;
+    }
+
+    return score;
   }
 
-  // AC4 & AC5: Get personalized recommendations
-  getRecommendations(userId: string, limit: number = 10): Recommendation[] {
-    const profile = this.userProfiles.get(userId);
+  // AC3-4: Generate recommendations
+  getRecommendations(userId: string, limit: number = 5): Recommendation[] {
+    // AC8: Check cache
+    const cached = this.recommendations.get(userId);
+    if (cached) {
+      logger.debug('Recommendations from cache', { userId });
+      return cached.slice(0, limit);
+    }
 
-    // AC6: Cold start - new users get trending
-    if (!profile || profile.readingHistory.length === 0) {
-      return this.getTrendingRecommendations(limit);
+    const prefs = this.userPreferences.get(userId);
+
+    // AC7: Cold start - recommend popular articles
+    if (!prefs || prefs.interests.size === 0) {
+      const popular = Array.from(this.articleCache.values())
+        .sort((a, b) => b.views - a.views)
+        .slice(0, limit)
+        .map((article) => ({
+          articleId: article.id,
+          title: article.title,
+          score: article.views / 100,
+          reason: 'Popular article',
+          category: article.category,
+        }));
+
+      this.metrics.recommendations += popular.length;
+      return popular;
     }
 
     const recommendations: Recommendation[] = [];
-    const scored = new Map<string, { score: number; reason: string; explanation: string }>();
 
-    // Content-based: find similar articles
-    for (const readArticleId of profile.readingHistory) {
-      for (const [articleId, article] of this.articles) {
-        if (profile.readingHistory.includes(articleId)) continue; // Skip already read
-
-        const similarity = this.calculateSimilarity(readArticleId, articleId);
-        if (similarity > 0) {
-          const existing = scored.get(articleId);
-          const score = existing ? Math.max(existing.score, similarity) : similarity;
-
-          scored.set(articleId, {
-            score,
-            reason: 'similar',
-            explanation: `Similar to "${this.articles.get(readArticleId)?.title || 'article'}"`,
-          });
-        }
+    // AC4: Rank articles by preference match
+    for (const article of this.articleCache.values()) {
+      // AC6: Skip already read articles
+      if (prefs.readArticles.has(article.id)) {
+        continue;
       }
-    }
 
-    // Collaborative: articles from users with similar interests
-    for (const [otherUserId, otherProfile] of this.userProfiles) {
-      if (otherUserId === userId) continue;
+      // Calculate score based on user preferences
+      let score = 0;
 
-      const interestOverlap = otherProfile.readingHistory.filter((id) =>
-        profile.readingHistory.includes(id)
-      ).length;
+      // Category preference (50%)
+      const categoryScore = (prefs.interests.get(article.category) || 0) * 2;
+      score += Math.min(categoryScore, 50);
 
-      if (interestOverlap > 0) {
-        for (const articleId of otherProfile.readingHistory) {
-          if (profile.readingHistory.includes(articleId)) continue;
-
-          const score = Math.min(100, interestOverlap * 10);
-          const existing = scored.get(articleId);
-
-          if (!existing || existing.score < score) {
-            scored.set(articleId, {
-              score,
-              reason: 'collaborative',
-              explanation: `Other users like you read this`,
-            });
-          }
-        }
+      // Tag matching (30%)
+      let tagScore = 0;
+      for (const tag of article.tags) {
+        tagScore += prefs.interests.get(tag) || 0;
       }
-    }
+      tagScore = (tagScore / Math.max(article.tags.length, 1)) * 30;
+      score += Math.min(tagScore, 30);
 
-    // Convert to recommendations
-    for (const [articleId, data] of scored) {
-      const article = this.articles.get(articleId);
-      if (article && data.score > 0) {
+      // Recency (20%)
+      const daysSince = Math.max(
+        (Date.now() - article.publishedAt.getTime()) / (24 * 60 * 60 * 1000),
+        0
+      );
+
+      if (daysSince < 7) {
+        score += 20;
+      } else if (daysSince < 30) {
+        score += 10;
+      }
+
+      if (score > 0) {
         recommendations.push({
-          articleId,
+          articleId: article.id,
           title: article.title,
+          score,
+          reason: 'Personalized recommendation',
           category: article.category,
-          author: article.author,
-          score: data.score,
-          explanation: data.explanation,
-          reason: data.reason as any,
         });
       }
     }
 
-    // AC5: Rank by score
-    recommendations.sort((a, b) => b.score - a.score);
+    // AC6: Diversify results (avoid all same category)
+    const diversified = this.diversifyRecommendations(recommendations, limit);
 
-    // AC7: Ensure diversity (don't recommend only one category)
-    const diverse = this.ensureDiversity(recommendations, limit);
+    // AC8: Cache results
+    this.recommendations.set(userId, diversified);
 
-    return diverse;
+    // AC10: Track metrics
+    this.metrics.recommendations += diversified.length;
+
+    logger.debug('Recommendations generated', { userId, count: diversified.length });
+
+    return diversified;
   }
 
-  // AC6: Cold start - recommend trending articles
-  private getTrendingRecommendations(limit: number): Recommendation[] {
-    return Array.from(this.articles.values())
-      .slice(0, limit)
-      .map((article) => ({
-        articleId: article.id,
-        title: article.title,
-        category: article.category,
-        author: article.author,
-        score: Math.floor(Math.random() * 30 + 70), // 70-100 for trending
-        explanation: 'Trending in your category',
-        reason: 'trending' as const,
-      }));
-  }
+  // AC6: Diversify recommendations
+  private diversifyRecommendations(recommendations: Recommendation[], limit: number): Recommendation[] {
+    // Sort by score
+    const sorted = [...recommendations].sort((a, b) => b.score - a.score);
 
-  // AC7: Ensure diversity in recommendations
-  private ensureDiversity(recommendations: Recommendation[], limit: number): Recommendation[] {
+    // Take top items but ensure category diversity
     const result: Recommendation[] = [];
-    const categoryCount: Record<string, number> = {};
+    const categoryCount = new Map<string, number>();
 
-    for (const rec of recommendations) {
-      const count = categoryCount[rec.category] || 0;
-
-      // Limit articles per category (max 3)
-      if (count < 3) {
-        result.push(rec);
-        categoryCount[rec.category] = count + 1;
-      }
-
+    for (const rec of sorted) {
       if (result.length >= limit) break;
+
+      const count = categoryCount.get(rec.category) || 0;
+
+      // AC6: Limit same category to 2 in results
+      if (count < 2) {
+        result.push(rec);
+        categoryCount.set(rec.category, count + 1);
+      }
     }
 
     return result;
   }
 
-  // AC10: Track recommendation effectiveness
-  recordRecommendationClick(userId: string, articleId: string): void {
-    const profile = this.userProfiles.get(userId);
-    if (profile) {
-      profile.engagement[articleId] = (profile.engagement[articleId] || 0) + 1;
-      logger.debug('Recommendation clicked', { userId, articleId });
-    }
+  // AC10: Track recommendation click
+  trackRecommendationClick(userId: string, articleId: string): void {
+    this.metrics.clicks++;
+    this.metrics.clickThroughRate = this.metrics.clicks / Math.max(this.metrics.recommendations, 1);
+
+    logger.debug('Recommendation clicked', { userId, articleId, ctr: this.metrics.clickThroughRate });
   }
 
-  getUserProfile(userId: string): UserProfile | null {
-    return this.userProfiles.get(userId) || null;
+  // AC5: Clear cache on preference change
+  private clearRecommendationCache(userId: string): void {
+    this.recommendations.delete(userId);
   }
 
-  getStats(): {
-    totalUsers: number;
-    totalArticles: number;
-    avgReadingsPerUser: number;
-  } {
-    const totalUsers = this.userProfiles.size;
-    const totalArticles = this.articles.size;
-    const avgReadingsPerUser =
-      totalUsers > 0
-        ? Array.from(this.userProfiles.values()).reduce((sum, p) => sum + p.readingHistory.length, 0) /
-          totalUsers
-        : 0;
+  // Clear all recommendations
+  private clearAllRecommendationCache(): void {
+    this.recommendations.clear();
+  }
 
+  // AC10: Get metrics
+  getMetrics() {
     return {
-      totalUsers,
-      totalArticles,
-      avgReadingsPerUser: Math.round(avgReadingsPerUser * 10) / 10,
+      ...this.metrics,
+      usersTracked: this.userPreferences.size,
+      articlesInCache: this.articleCache.size,
     };
+  }
+
+  // AC9: Performance measurement
+  async measurePerformance(userId: string): Promise<{ duration: number }> {
+    const start = performance.now();
+    this.getRecommendations(userId);
+    const duration = performance.now() - start;
+
+    logger.debug('Recommendation performance', { userId, durationMs: duration });
+
+    return { duration };
+  }
+
+  // Get user preferences
+  getUserPreferences(userId: string): UserPreferences | null {
+    return this.userPreferences.get(userId) || null;
+  }
+
+  // Clear data
+  clear(): void {
+    this.userPreferences.clear();
+    this.articleCache.clear();
+    this.recommendations.clear();
+    logger.info('Recommendation engine cleared');
   }
 }
 
