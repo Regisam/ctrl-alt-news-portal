@@ -1,208 +1,234 @@
-import { clientLogger as logger } from './logger';
+const API_BASE_URL = process.env.VITE_API_URL || 'http://localhost:3000/api';
 
-export class APIClient {
-  private baseURL = '/api';
-  private accessToken: string | null = null;
-
-  constructor() {
-    // Load access token from localStorage on initialization
-    if (typeof window !== 'undefined') {
-      this.accessToken = localStorage.getItem('accessToken');
-    }
-  }
-
-  /**
-   * Sets the access token (called after login)
-   */
-  setAccessToken(token: string): void {
-    this.accessToken = token;
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('accessToken', token);
-    }
-  }
-
-  /**
-   * Clears the access token (called after logout)
-   */
-  clearAccessToken(): void {
-    this.accessToken = null;
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('accessToken');
-    }
-  }
-
-  /**
-   * Refreshes the access token using the refresh token from httpOnly cookie
-   * Returns new access token or null if refresh fails
-   */
-  private async refreshAccessToken(): Promise<string | null> {
-    try {
-      const response = await fetch(`${this.baseURL}/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include cookies for httpOnly refreshToken
-      });
-
-      if (!response.ok) {
-        logger.warn('Token refresh failed', { status: response.status });
-        return null;
-      }
-
-      const data = await response.json();
-      if (data.success && data.accessToken) {
-        this.setAccessToken(data.accessToken);
-        logger.info('Token refreshed successfully');
-        return data.accessToken;
-      }
-
-      return null;
-    } catch (error) {
-      logger.error('Token refresh error', { error: String(error) });
-      return null;
-    }
-  }
-
-  /**
-   * Makes an HTTP request with automatic token refresh on 401
-   */
-  async request<T = unknown>(
-    path: string,
-    options: RequestInit & { skipAuth?: boolean } = {}
-  ): Promise<{ ok: boolean; status: number; data: T; error?: string }> {
-    const { skipAuth = false, ...fetchOptions } = options;
-
-    // Build full URL
-    const url = `${this.baseURL}${path}`;
-
-    // Add authorization header if token exists and skipAuth is false
-    const headers = new Headers(fetchOptions.headers);
-    if (this.accessToken && !skipAuth) {
-      headers.set('Authorization', `Bearer ${this.accessToken}`);
-    }
-
-    // Make initial request
-    let response = await fetch(url, {
-      ...fetchOptions,
-      headers,
-      credentials: 'include', // Include cookies
-    });
-
-    // Handle 401 - attempt token refresh and retry
-    if (response.status === 401 && this.accessToken && !skipAuth) {
-      logger.info('Token expired, attempting refresh', { path });
-
-      const newToken = await this.refreshAccessToken();
-      if (newToken) {
-        // Retry request with new token
-        headers.set('Authorization', `Bearer ${newToken}`);
-        response = await fetch(url, {
-          ...fetchOptions,
-          headers,
-          credentials: 'include',
-        });
-      } else {
-        // Refresh failed - clear token and return 401
-        this.clearAccessToken();
-        return {
-          ok: false,
-          status: 401,
-          data: {} as T,
-          error: 'Session expired. Please log in again.',
-        };
-      }
-    }
-
-    // Parse response
-    let data: T = {} as T;
-    const contentType = response.headers.get('content-type');
-    if (contentType?.includes('application/json')) {
-      data = await response.json();
-    }
-
-    return {
-      ok: response.ok,
-      status: response.status,
-      data,
-      error: !response.ok ? response.statusText : undefined,
-    };
-  }
-
-  /**
-   * GET request
-   */
-  get<T = unknown>(path: string, options?: RequestInit & { skipAuth?: boolean }) {
-    return this.request<T>(path, { ...options, method: 'GET' });
-  }
-
-  /**
-   * POST request
-   */
-  post<T = unknown>(path: string, body?: unknown, options?: RequestInit & { skipAuth?: boolean }) {
-    return this.request<T>(path, {
-      ...options,
-      method: 'POST',
-      body: body ? JSON.stringify(body) : undefined,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-    });
-  }
-
-  /**
-   * PATCH request
-   */
-  patch<T = unknown>(path: string, body?: unknown, options?: RequestInit & { skipAuth?: boolean }) {
-    return this.request<T>(path, {
-      ...options,
-      method: 'PATCH',
-      body: body ? JSON.stringify(body) : undefined,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-    });
-  }
-
-  /**
-   * DELETE request
-   */
-  delete<T = unknown>(path: string, options?: RequestInit & { skipAuth?: boolean }) {
-    return this.request<T>(path, { ...options, method: 'DELETE' });
-  }
-
-  /**
-   * Logout: revoke session and clear all tokens
-   */
-  async logout(): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.baseURL}/auth/logout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include cookies
-      });
-
-      if (response.ok) {
-        this.clearAccessToken();
-        logger.info('Logout successful');
-        return true;
-      }
-
-      logger.warn('Logout failed', { status: response.status });
-      return false;
-    } catch (error) {
-      logger.error('Logout error', { error: String(error) });
-      return false;
-    }
-  }
+interface ApiOptions {
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  headers?: Record<string, string>;
+  body?: any;
 }
 
-// Export singleton instance
-export const apiClient = new APIClient();
+async function apiCall<T>(
+  endpoint: string,
+  options: ApiOptions = {}
+): Promise<T> {
+  const { method = 'GET', headers = {}, body } = options;
 
-// Also export for easy usage: import { api } from '@/lib/api'
-export const api = apiClient;
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (!response.ok) {
+    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+// Authentication
+export const authAPI = {
+  register: (email: string, password: string) =>
+    apiCall('/auth-v2/register', {
+      method: 'POST',
+      body: { email, password },
+    }),
+
+  login: (email: string, password: string) =>
+    apiCall('/auth-v2/login', {
+      method: 'POST',
+      body: { email, password },
+    }),
+
+  logout: () =>
+    apiCall('/auth-v2/logout', { method: 'POST' }),
+
+  getCurrentUser: () =>
+    apiCall('/auth-v2/me', { method: 'GET' }),
+};
+
+// Articles
+export const articlesAPI = {
+  search: (query: string, limit = 20) =>
+    apiCall(`/search/articles?q=${encodeURIComponent(query)}&limit=${limit}`),
+
+  getByCategory: (category: string) =>
+    apiCall(`/search/articles?category=${category}`),
+
+  getById: (id: string) =>
+    apiCall(`/search/articles/${id}`),
+};
+
+// Analytics
+export const analyticsAPI = {
+  getLiveMetrics: () =>
+    apiCall('/analytics-live/live'),
+
+  getTimeSeries: (metric: string, hours = 24) =>
+    apiCall(`/analytics-live/time-series/${metric}?hours=${hours}`),
+
+  getMetricsForDateRange: (startDate: string, endDate: string) =>
+    apiCall(`/analytics-live/metrics?start=${startDate}&end=${endDate}`),
+
+  trackArticleView: (articleId: string) =>
+    apiCall('/analytics-live/track-view', {
+      method: 'POST',
+      body: { articleId },
+    }),
+
+  trackSearch: (query: string, results: number) =>
+    apiCall('/analytics-live/track-search', {
+      method: 'POST',
+      body: { query, results },
+    }),
+};
+
+// Push Notifications
+export const pushAPI = {
+  getVapidPublicKey: () =>
+    apiCall('/push/vapid-public-key'),
+
+  subscribe: (subscription: PushSubscription) =>
+    apiCall('/push/subscribe', {
+      method: 'POST',
+      body: subscription,
+    }),
+
+  getSubscriptions: () =>
+    apiCall('/push/subscriptions'),
+
+  unsubscribe: (subscriptionId: string) =>
+    apiCall(`/push/unsubscribe/${subscriptionId}`, {
+      method: 'POST',
+    }),
+
+  sendTest: () =>
+    apiCall('/push/test', { method: 'POST' }),
+
+  getMetrics: () =>
+    apiCall('/push/metrics'),
+};
+
+// Email
+export const emailAPI = {
+  sendDailyDigest: (preferences: any) =>
+    apiCall('/digest/subscribe', {
+      method: 'POST',
+      body: preferences,
+    }),
+
+  requestVerification: (email: string) =>
+    apiCall('/transactional/send-verification', {
+      method: 'POST',
+      body: { email },
+    }),
+
+  requestPasswordReset: (email: string) =>
+    apiCall('/transactional/send-password-reset', {
+      method: 'POST',
+      body: { email },
+    }),
+};
+
+// User Behavior
+export const behaviorAPI = {
+  startSession: (userId: string) =>
+    apiCall('/user-behavior/sessions/start', {
+      method: 'POST',
+      body: { userId },
+    }),
+
+  endSession: (sessionId: string) =>
+    apiCall(`/user-behavior/sessions/${sessionId}/end`, {
+      method: 'POST',
+    }),
+
+  trackPageView: (sessionId: string, page: string) =>
+    apiCall(`/user-behavior/sessions/${sessionId}/pageview`, {
+      method: 'POST',
+      body: { page },
+    }),
+
+  trackEvent: (event: string, data: any) =>
+    apiCall('/user-behavior/events/track', {
+      method: 'POST',
+      body: { event, data },
+    }),
+
+  getEngagementScore: (userId: string) =>
+    apiCall(`/user-behavior/users/${userId}/engagement`),
+
+  getChurnRisk: (userId: string) =>
+    apiCall(`/user-behavior/users/${userId}/churn-risk`),
+};
+
+// Experiments (A/B Testing)
+export const experimentsAPI = {
+  getActiveExperiments: () =>
+    apiCall('/experiments'),
+
+  getUserVariant: (userId: string, experimentId: string) =>
+    apiCall(`/experiments/${experimentId}/assign?userId=${userId}`),
+
+  trackMetric: (experimentId: string, metric: string, value: any) =>
+    apiCall(`/experiments/${experimentId}/metrics`, {
+      method: 'POST',
+      body: { metric, value },
+    }),
+
+  getResults: (experimentId: string) =>
+    apiCall(`/experiments/${experimentId}/results`),
+};
+
+// Alerts
+export const alertsAPI = {
+  getDashboard: () =>
+    apiCall('/alerts/dashboard'),
+
+  getAlertHistory: () =>
+    apiCall('/alerts/history'),
+
+  acknowledgeAlert: (alertId: string) =>
+    apiCall(`/alerts/${alertId}/acknowledge`, { method: 'POST' }),
+
+  silenceAlert: (alertId: string, durationMinutes: number) =>
+    apiCall(`/alerts/${alertId}/silence`, {
+      method: 'POST',
+      body: { durationMinutes },
+    }),
+};
+
+// Admin
+export const adminAPI = {
+  getPendingArticles: () =>
+    apiCall('/admin/pending-articles'),
+
+  approveArticle: (articleId: string) =>
+    apiCall(`/admin/articles/${articleId}/approve`, { method: 'POST' }),
+
+  rejectArticle: (articleId: string, reason: string) =>
+    apiCall(`/admin/articles/${articleId}/reject`, {
+      method: 'POST',
+      body: { reason },
+    }),
+
+  getReports: () =>
+    apiCall('/admin/reports'),
+
+  resolveReport: (reportId: string) =>
+    apiCall(`/admin/reports/${reportId}/resolve`, { method: 'POST' }),
+};
+
+export default {
+  authAPI,
+  articlesAPI,
+  analyticsAPI,
+  pushAPI,
+  emailAPI,
+  behaviorAPI,
+  experimentsAPI,
+  alertsAPI,
+  adminAPI,
+};

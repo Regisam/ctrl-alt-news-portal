@@ -1,4 +1,5 @@
-// Prisma schema for Ctrl Alt News Portal
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -9,179 +10,227 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// AC4: User model
+// Users
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String     @id @default(cuid())
+  email     String     @unique
   password  String
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  name      String?
+  avatar    String?
+  bio       String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime?
 
-  profile        Profile?
-  articles       Article[]
-  comments       Comment[]
-  following      Following[] @relation("follower")
-  followers      Following[] @relation("followee")
-  notifications  Notification[]
-  reputation     Reputation?
-  blockedUsers   BlockedUser[] @relation("blocker")
-  blockedBy      BlockedUser[] @relation("blocked")
+  // Relations
+  articles      Article[]
+  comments      Comment[]
+  reactions     Reaction[]
+  sessions      Session[]
+  emailToken    EmailToken[]
+  preferences   UserPreference?
 
   @@index([email])
   @@index([createdAt])
-  @@index([updatedAt])
 }
 
-// AC9: Profile model
-model Profile {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  displayName     String
-  bio             String   @default("")
-  avatar          String?
-  privacy         String   @default("public")
-  themePreference String   @default("system")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-// AC5: Article model
+// Articles
 model Article {
-  id          String   @id @default(cuid())
-  title       String
-  content     String
-  excerpt     String?
-  category    String
-  authorId    String
-  published   Boolean  @default(false)
-  publishedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  views       Int      @default(0)
+  id        String     @id @default(cuid())
+  title     String
+  content   String
+  excerpt   String
+  image     String?
+  category  String     // AI, Science, Robotics, Gadgets
+  author    String
+  authorId  String?
+  views     Int        @default(0)
+  likes     Int        @default(0)
+  published Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
-  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  comments Comment[]
+  // Relations
+  userId    String?
+  user      User?      @relation(fields: [userId], references: [id])
+  comments  Comment[]
+  reactions Reaction[]
 
-  @@index([authorId])
   @@index([category])
-  @@index([publishedAt])
+  @@index([createdAt])
   @@index([published])
-  @@index([authorId, published])
-  @@index([category, publishedAt])
 }
 
-// AC6: Comment model
+// Comments
 model Comment {
   id        String   @id @default(cuid())
   content   String
-  articleId String
-  userId    String
-  parentId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  article   Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parent    Comment?  @relation("replies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies   Comment[] @relation("replies")
+  // Relations
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([articleId])
   @@index([userId])
-  @@index([parentId])
 }
 
-// AC7: Following model
-model Following {
+// Reactions (likes, emoji reactions)
+model Reaction {
   id        String   @id @default(cuid())
-  followerId String
-  followeeId String
+  type      String   // like, love, wow, etc
   createdAt DateTime @default(now())
 
-  follower User @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
-  followee User @relation("followee", fields: [followeeId], references: [id], onDelete: Cascade)
-
-  @@unique([followerId, followeeId])
-  @@index([followerId])
-  @@index([followeeId])
-}
-
-// AC8: Notification model
-model Notification {
-  id              String   @id @default(cuid())
-  userId          String
-  type            String
-  actorId         String
-  actorName       String
-  targetId        String
-  targetType      String
-  message         String
-  read            Boolean  @default(false)
-  readAt          DateTime?
-  createdAt       DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([read])
-  @@index([createdAt])
-}
-
-// Reputation model (for Story 19.4)
-model Reputation {
-  id   String @id @default(cuid())
-  userId String @unique
-  score  Int    @default(0)
-  tier   String @default("bronze")
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([score])
-}
-
-// Badge model (for Story 19.4)
-model Badge {
-  id        String   @id @default(cuid())
+  // Relations
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
   userId    String
-  type      String
-  name      String
-  earnedAt  DateTime @default(now())
-  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, userId])
+  @@index([articleId])
+  @@index([userId])
+}
+
+// Sessions for user behavior tracking
+model Session {
+  id        String   @id @default(cuid())
+  startTime DateTime @default(now())
+  endTime   DateTime?
+  duration  Int?     // in seconds
+
+  // Relations
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events    Event[]
 
   @@index([userId])
+  @@index([startTime])
+}
+
+// Events for user behavior tracking
+model Event {
+  id        String   @id @default(cuid())
+  type      String   // page_view, click, search, etc
+  data      Json?
+  createdAt DateTime @default(now())
+
+  // Relations
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
   @@index([type])
 }
 
-// Blocked users model
-model BlockedUser {
+// Push Subscriptions
+model PushSubscription {
   id        String   @id @default(cuid())
-  blockerId String
-  blockedId String
+  endpoint  String   @unique
+  auth      String
+  p256dh    String
   createdAt DateTime @default(now())
 
-  blocker User @relation("blocker", fields: [blockerId], references: [id], onDelete: Cascade)
-  blocked User @relation("blocked", fields: [blockedId], references: [id], onDelete: Cascade)
-
-  @@unique([blockerId, blockedId])
-  @@index([blockerId])
-}
-
-// AC6: Session model for auth persistence
-model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Relations
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
 
   @@index([userId])
+}
+
+// Email Tokens (for verification, password reset, etc)
+model EmailToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  type      String   // verification, password_reset, email_change
+  email     String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email])
   @@index([expiresAt])
+}
+
+// User Preferences
+model UserPreference {
+  id                String   @id @default(cuid())
+  emailDigestEnabled Boolean  @default(true)
+  emailDigestFrequency String @default("daily") // daily, weekly, never
+  pushEnabled       Boolean  @default(true)
+  darkMode          Boolean  @default(true)
+  language          String   @default("en")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Experiments (A/B Testing)
+model Experiment {
+  id        String   @id @default(cuid())
+  name      String
+  description String?
+  status    String   @default("draft") // draft, running, paused, completed
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime @default(now())
+
+  // Relations
+  variants  Variant[]
+  assignments ExperimentAssignment[]
+
+  @@index([status])
+}
+
+// Experiment Variants
+model Variant {
+  id        String   @id @default(cuid())
+  name      String
+  config    Json
+  traffic   Int      @default(50) // 0-100 percentage
+
+  // Relations
+  experimentId String
+  experiment   Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+
+  @@index([experimentId])
+}
+
+// Experiment Assignments
+model ExperimentAssignment {
+  id        String   @id @default(cuid())
+  variantId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  experimentId String
+  experiment   Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+
+  @@unique([experimentId, userId])
+  @@index([experimentId])
+}
+
+// Alerts
+model Alert {
+  id        String   @id @default(cuid())
+  metric    String   // response_time, error_rate, etc
+  severity  String   @default("info") // info, warning, critical
+  message   String
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  resolvedAt DateTime?
+
+  @@index([metric])
+  @@index([severity])
 }
