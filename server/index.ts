@@ -47,6 +47,7 @@ import discoveryRouter from "./api/discovery.js";
 import reputationAPIRouter from "./api/reputationAPI.js";
 import authV2Router from "./api/authV2.js";
 import searchRouter from "./api/search.js";
+import adminRouter from "./api/admin.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -278,6 +279,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Advanced search endpoints (Story 22.2)
   app.use('/api/search', searchRouter);
+
+  // Admin & moderation endpoints (Story 23.2)
+  app.use('/api/admin', adminRouter);
 
   // User reputation endpoints (Story 19.4)
   app.use('/api/reputation', reputationAPIRouter);
