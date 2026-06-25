@@ -35,6 +35,7 @@ import analyticsRouter from "./api/analytics.js";
 import contentAnalyticsRouter from "./api/contentAnalytics.js";
 import reportsRouter from "./api/reports.js";
 import recommendationsRouter from "./api/recommendationsRouter.js";
+import recommendationsUnifiedRouter from "./api/recommendationsUnified.js";
 import commentsRouter from "./api/comments.js";
 import emojiRouter from "./api/emoji.js";
 import followingRouter from "./api/following.js";
@@ -239,7 +240,10 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
   // Custom reports endpoints (Story 17.3)
   app.use('/api/reports', reportsRouter);
 
-  // Recommendation engine endpoints (Story 17.4)
+  // Unified recommendations endpoints (Story 20.2)
+  app.use('/api/recommendations-v2', recommendationsUnifiedRouter);
+
+  // Legacy recommendation endpoints (for backward compatibility)
   app.use('/api/recommendations', recommendationsRouter);
 
   // Comments & discussions endpoints (Story 18.1)
