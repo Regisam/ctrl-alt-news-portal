@@ -53,6 +53,7 @@ import pushRouter from "./api/push.js";
 import transactionalRouter from "./api/transactional.js";
 import analyticsLiveRouter from "./api/analytics-live.js";
 import alertsRouter from "./api/alerts.js";
+import experimentsRouter from "./api/experiments.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -302,6 +303,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Performance alerting (Story 25.2)
   app.use('/api/alerts', alertsRouter);
+
+  // A/B testing (Story 25.3)
+  app.use('/api/experiments', experimentsRouter);
 
   // User reputation endpoints (Story 19.4)
   app.use('/api/reputation', reputationAPIRouter);
