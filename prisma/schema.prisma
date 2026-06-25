@@ -166,3 +166,17 @@ model BlockedUser {
   @@unique([blockerId, blockedId])
   @@index([blockerId])
 }
+
+// AC6: Session model for auth persistence
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}

@@ -45,6 +45,7 @@ import profilesRouter from "./api/profiles.js";
 import publicProfilesRouter from "./api/public-profiles.js";
 import discoveryRouter from "./api/discovery.js";
 import reputationAPIRouter from "./api/reputationAPI.js";
+import authV2Router from "./api/authV2.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -197,6 +198,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Authentication endpoints (Story 3.1-3.2)
   app.use('/api/auth', authRouter);
+
+  // Auth with persistence (Story 21.2)
+  app.use('/api/auth-v2', authV2Router);
 
   // User profile endpoints (Story 3.3)
   app.use('/api/user', usersRouter);
