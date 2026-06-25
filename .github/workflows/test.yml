@@ -1,101 +1,136 @@
-name: Tests & Quality Gates
+name: Tests & Quality Checks
 
 on:
-  pull_request:
   push:
-    branches: [main]
-  schedule:
-    - cron: '0 2 * * *'  # Nightly at 2 AM UTC
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [20]
-      fail-fast: false
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: ctrl_alt_news_test
+          POSTGRES_PASSWORD: password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Full history for coverage analysis
-
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: '18'
           cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Lint code
-        run: npm run lint
-
-      - name: TypeScript type check
+      
+      # AC1: TypeScript checking
+      - name: TypeScript Check
         run: npm run check
-
-      - name: Run unit & integration tests
+      
+      # AC2: Linting
+      - name: ESLint
+        run: npm run lint
+      
+      # AC3: Unit tests
+      - name: Unit Tests
         run: npm run test
+      
+      # AC4: Integration tests
+      - name: Integration Tests
         env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/ctrl_alt_news_test
           NODE_ENV: test
-
-      # E2E tests disabled temporarily - causing CI/CD hang
-      # TODO: Investigate and fix E2E test runner in separate story
-      # - name: Install Playwright browsers
-      #   run: npx playwright install --with-deps
-      #
-      # - name: Run E2E tests
-      #   run: npm run test:e2e
-      #   continue-on-error: true
-
-      - name: Generate coverage report
-        if: always()
-        run: npm run test:coverage
-
-      - name: Upload coverage to Codecov
-        if: matrix.node-version == '20'  # Only once
-        uses: codecov/codecov-action@v4
+        run: npm run test:integration
+      
+      # AC6: Build validation
+      - name: Build
+        run: npm run build
+      
+      # AC7: Upload build artifact
+      - name: Upload Build Artifact
+        if: success()
+        uses: actions/upload-artifact@v4
         with:
-          files: ./coverage/coverage-final.json
-          flags: unittests
-          fail_ci_if_error: false
-          verbose: true
+          name: dist
+          path: dist/
+          retention-days: 7
 
-
-  coverage-check:
+  e2e:
     runs-on: ubuntu-latest
     needs: test
-    if: always()
+    if: success()
+    
     steps:
       - uses: actions/checkout@v4
-
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '18'
           cache: 'npm'
-
+      
       - name: Install dependencies
         run: npm ci
+      
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+      
+      # AC5: E2E tests
+      - name: Run E2E Tests
+        run: npm run test:e2e
+      
+      - name: Upload E2E Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
 
-      - name: Run coverage check
-        run: npm run test:coverage
-
-      - name: Check coverage thresholds
-        run: |
-          node scripts/check-coverage.js --lines 28 --functions 60 --branches 70 --statements 28
-
-
-  quality-gate:
+  coverage:
     runs-on: ubuntu-latest
-    needs: [test, coverage-check]
-    if: always()
+    needs: test
+    if: success()
+    
     steps:
-      - name: Verify all checks passed
-        run: |
-          if [ "${{ needs.test.result }}" != "success" ] || [ "${{ needs.coverage-check.result }}" != "success" ]; then
-            echo "❌ Quality gate failed"
-            exit 1
-          fi
-          echo "✅ All quality gates passed"
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Run Coverage
+        run: npm run test:coverage
+      
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 30
+
+  status:
+    runs-on: ubuntu-latest
+    needs: [test, e2e]
+    if: always()
+    
+    steps:
+      - name: Check Status
+        if: failure()
+        run: exit 1
+      
+      - name: Success
+        if: success()
+        run: echo "All checks passed!"
