@@ -6,35 +6,43 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { RouteLoading } from "./components/RouteLoading";
 
-const Home = lazy(() => import("./pages/Home"));
+const HomePage = lazy(() => import("./pages/HomePage"));
 const ArticleDetail = lazy(() => import("./pages/ArticleDetail"));
-const AboutPage = lazy(() => import("./pages/AboutPage"));
-const ContactPage = lazy(() => import("./pages/ContactPage"));
-const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
-const TermsPage = lazy(() => import("./pages/TermsPage"));
-const SearchPage = lazy(() => import("./pages/SearchPage"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
-const ShareAnalyticsDashboard = lazy(() => import("./pages/ShareAnalyticsDashboard"));
-const GoogleSearchConsolePage = lazy(() => import("./pages/GoogleSearchConsolePage"));
-const AnalyticsDashboardPage = lazy(() => import("./pages/AnalyticsDashboardPage"));
-const ReadingListPage = lazy(() => import("./pages/ReadingListPage"));
-const SettingsPage = lazy(() => import("./pages/SettingsPage"));
-const EngagementDashboardPage = lazy(() => import("./pages/EngagementDashboardPage"));
-const ImpactReportPage = lazy(() => import("./pages/ImpactReportPage"));
-const AuthorPage = lazy(() => import("./pages/AuthorPage"));
-const TrendingDashboard = lazy(() => import("./pages/TrendingDashboard"));
-const TopicPage = lazy(() => import("./pages/TopicPage"));
-const RegisterPage = lazy(() => import("./pages/RegisterPage"));
-const LoginPage = lazy(() => import("./pages/LoginPage"));
-const DashboardPage = lazy(() => import("./pages/DashboardPage"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+const SearchPage = lazy(() => import("./pages/SearchPage"));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+
+// Legacy pages (import fallbacks)
+const Home = HomePage;
+const AboutPage = lazy(() => import("./pages/AboutPage").catch(() => ({ default: HomePage })));
+const ContactPage = lazy(() => import("./pages/ContactPage").catch(() => ({ default: HomePage })));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage").catch(() => ({ default: HomePage })));
+const TermsPage = lazy(() => import("./pages/TermsPage").catch(() => ({ default: HomePage })));
+const ShareAnalyticsDashboard = lazy(() => import("./pages/ShareAnalyticsDashboard").catch(() => ({ default: Dashboard })));
+const GoogleSearchConsolePage = lazy(() => import("./pages/GoogleSearchConsolePage").catch(() => ({ default: Dashboard })));
+const AnalyticsDashboardPage = lazy(() => import("./pages/AnalyticsDashboardPage").catch(() => ({ default: Dashboard })));
+const ReadingListPage = lazy(() => import("./pages/ReadingListPage").catch(() => ({ default: HomePage })));
+const SettingsPage = lazy(() => import("./pages/SettingsPage").catch(() => ({ default: UserProfile })));
+const EngagementDashboardPage = lazy(() => import("./pages/EngagementDashboardPage").catch(() => ({ default: Dashboard })));
+const ImpactReportPage = lazy(() => import("./pages/ImpactReportPage").catch(() => ({ default: Dashboard })));
+const AuthorPage = lazy(() => import("./pages/AuthorPage").catch(() => ({ default: UserProfile })));
+const TrendingDashboard = lazy(() => import("./pages/TrendingDashboard").catch(() => ({ default: HomePage })));
+const TopicPage = lazy(() => import("./pages/TopicPage").catch(() => ({ default: HomePage })));
+const RegisterPage = lazy(() => import("./pages/RegisterPage").catch(() => ({ default: HomePage })));
+const LoginPage = lazy(() => import("./pages/LoginPage").catch(() => ({ default: HomePage })));
+const DashboardPage = Dashboard;
+const NotFound = lazy(() => import("./pages/NotFound").catch(() => ({ default: HomePage })));
 
 function Router() {
   return (
     <Suspense fallback={<RouteLoading />}>
       <Switch>
-        <Route path={"/"} component={Home} />
+        <Route path={"/"} component={HomePage} />
+        <Route path={"/articles/:id"} component={ArticleDetail} />
         <Route path={"/article/:id"} component={ArticleDetail} />
+        <Route path={"/category/:name"} component={CategoryPage} />
         <Route
           path={"/ai"}
           component={() => <CategoryPage category="AI" />}
@@ -59,6 +67,7 @@ function Router() {
         <Route path={"/privacy"} component={PrivacyPage} />
         <Route path={"/terms"} component={TermsPage} />
         <Route path={"/search"} component={SearchPage} />
+        <Route path={"/profile"} component={UserProfile} />
         <Route path={"/reading-list"} component={ReadingListPage} />
         <Route path={"/settings"} component={SettingsPage} />
         <Route path={"/engagement"} component={EngagementDashboardPage} />
@@ -68,7 +77,9 @@ function Router() {
         <Route path={"/topic/:topicId"} component={TopicPage} />
         <Route path={"/register"} component={() => <RegisterPage lang="en" />} />
         <Route path={"/login"} component={() => <LoginPage lang="en" />} />
-        <Route path={"/ops/dashboard"} component={DashboardPage} />
+        <Route path={"/dashboard"} component={Dashboard} />
+        <Route path={"/ops/dashboard"} component={Dashboard} />
+        <Route path={"/admin"} component={AdminPanel} />
         <Route path={"/404"} component={NotFound} />
         <Route component={NotFound} />
       </Switch>

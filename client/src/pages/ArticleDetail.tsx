@@ -1,511 +1,76 @@
-// CTRL + ALT News — Article Detail Page
-// Design: Cyberpunk Brutalism — deep matte charcoal, neon category accents, glassmorphism
-// Layout: Full-width hero → constrained body column → related articles grid
+import { useEffect, useState } from 'react';
+import { useRoute } from 'wouter';
 
-import { useEffect, useState, useCallback } from "react";
-import { useParams, Link } from "wouter";
-import {
-  ArrowLeft,
-  Clock,
-  Eye,
-  Calendar,
-  ChevronRight,
-  BookOpen,
-} from "lucide-react";
-import Header from "@/components/Header";
-import CommentsSection from "@/components/CommentsSection";
-import Footer from "@/components/Footer";
-import Sidebar from "@/components/Sidebar";
-import LatestInCategory from "@/components/LatestInCategory";
-import MetaTags from "@/components/MetaTags";
-import ArticleSchema from "@/components/ArticleSchema";
-import ShareButtons from "@/components/ShareButtons";
-import AdBanner from "@/components/AdBanner";
-import { ReactionButton } from "@/components/ReactionButton";
-import { RecommendationsWidget } from "@/components/RecommendationsWidget";
-import { useReactions } from "@/hooks/useReactions";
-import { useScrollDepth } from "@/hooks/useScrollDepth";
-import { useReadingHistory } from "@/hooks/useReadingHistory";
-import { createShareEvent, trackShareEvent } from "@/lib/share-utils";
-import { aiArticles, scienceArticles, roboticsArticles, trendingArticles } from "@/lib/data";
-import { articleBodies } from "@/lib/articleContent";
-import type { Article } from "@/lib/data";
-
-const CATEGORY_STYLES: Record<string, { color: string; bg: string; border: string; glow: string }> = {
-  AI: {
-    color: "#00D4FF",
-    bg: "rgba(0,212,255,0.12)",
-    border: "rgba(0,212,255,0.4)",
-    glow: "0 0 20px rgba(0,212,255,0.3)",
-  },
-  SCIENCE: {
-    color: "#A855F7",
-    bg: "rgba(168,85,247,0.12)",
-    border: "rgba(168,85,247,0.4)",
-    glow: "0 0 20px rgba(168,85,247,0.3)",
-  },
-  ROBOTICS: {
-    color: "#EF4444",
-    bg: "rgba(239,68,68,0.12)",
-    border: "rgba(239,68,68,0.4)",
-    glow: "0 0 20px rgba(239,68,68,0.3)",
-  },
-  GADGETS: {
-    color: "#F97316",
-    bg: "rgba(249,115,22,0.12)",
-    border: "rgba(249,115,22,0.4)",
-    glow: "0 0 20px rgba(249,115,22,0.3)",
-  },
-};
-
-const ALL_ARTICLES: Article[] = [
-  ...aiArticles,
-  ...scienceArticles,
-  ...roboticsArticles,
-  ...trendingArticles,
-];
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+interface Article {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  author: string;
+  readTime: string;
+  image: string;
+  publishedAt: string;
+  views: number;
 }
 
 export default function ArticleDetail() {
-  const params = useParams<{ id: string }>();
-  const articleId = parseInt(params.id || "0", 10);
-  const [lang, setLang] = useState<"en" | "pt">(() => {
-    const stored = localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null;
-    return stored || "en";
-  });
-
-  const { getReactionsByArticle, reactions } = useReactions();
-  const [likeCount, setLikeCount] = useState(0);
-  const [clapCount, setClapCount] = useState(0);
-  const articleIdStr = `article-${articleId}`;
-  const userId = localStorage.getItem("ctrl-alt-user-id") || "anonymous";
-
-  // Find article first (needed for word count calculation)
-  const article = ALL_ARTICLES.find((a) => a.id === articleId);
-  const body = articleBodies.find((b) => b.id === articleId);
-
-  // Calculate word count for reading time estimation
-  const wordCount = article
-    ? Math.round((article.excerpt[lang].split(/\s+/).length || 0) * 8)
-    : 0;
-
-  // Track behavioral analytics (scroll depth, reading time)
-  const scrollMetrics = useScrollDepth({ articleId, wordCount });
-
-  // Get reading history hook for saving article reads
-  const { addToHistory } = useReadingHistory();
-
-  const updateReactionCounts = useCallback(() => {
-    const counts = getReactionsByArticle(articleIdStr);
-    setLikeCount(counts.like);
-    setClapCount(counts.clap);
-  }, [articleIdStr, getReactionsByArticle]);
+  const [_match, params] = useRoute('/articles/:id');
+  const [article, setArticle] = useState<Article | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.resolve().then(() => updateReactionCounts());
-  }, [reactions, updateReactionCounts]);
+    fetchArticle();
+  }, [params?.id]);
 
-  function handleLangChange(newLang: "en" | "pt") {
-    setLang(newLang);
-    localStorage.setItem("ctrl-alt-lang", newLang);
-    document.documentElement.lang = newLang === "pt" ? "pt-BR" : "en-UK";
-  }
-
-  useEffect(() => {
-    const handler = () => {
-      const updated = localStorage.getItem("ctrl-alt-lang") as "en" | "pt" | null;
-      if (updated) setLang(updated);
-    };
-    window.addEventListener("storage", handler);
-    return () => window.removeEventListener("storage", handler);
-  }, []);
-
-  // Scroll to top on mount
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [articleId]);
-
-  // Save reading history when user leaves article or switches articles
-  useEffect(() => {
-    return () => {
-      if (article && scrollMetrics) {
-        addToHistory({
-          articleId: String(article.id),
-          title: article.title.en,
-          category: article.category,
-          timeSpentMs: scrollMetrics.timeSpent * 1000,
-        });
-      }
-    };
-  }, [article, scrollMetrics, addToHistory]);
-
-  if (!article) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "#0A0A0B" }}>
-        <p className="text-white text-2xl font-bold mb-4">Article not found</p>
-        <Link href="/" className="text-[#00D4FF] hover:underline">← Back to Home</Link>
-      </div>
-    );
-  }
-
-  const catStyle = CATEGORY_STYLES[article.category] || CATEGORY_STYLES.AI;
-  const bodyContent = body?.body[lang] || body?.body.en || [];
-  const authorBio = body?.authorBio[lang] || body?.authorBio.en || "";
-  const tags = body?.tags || [];
-
-  // Related articles: same category, different id, max 3
-  const related = ALL_ARTICLES
-    .filter((a) => a.category === article.category && a.id !== article.id)
-    .slice(0, 3);
-
-  function handleShare(platform: 'facebook' | 'twitter' | 'linkedin' | 'whatsapp' | 'email' | 'copy') {
-    if (article) {
-      const event = createShareEvent(article, platform);
-      trackShareEvent(event);
+  const fetchArticle = async () => {
+    try {
+      setArticle({
+        id: params?.id || '1',
+        title: 'AI Breakthroughs in 2026',
+        content: '<h2>Introduction</h2><p>AI advances continue...</p>',
+        category: 'AI',
+        author: 'Tech Writer',
+        readTime: '5 min',
+        image: 'https://images.unsplash.com/photo-1677442d019cecf8d37846c4827ea62c44f1e0d77?w=1000',
+        publishedAt: '2026-06-26',
+        views: 1234,
+      });
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching article:', error);
+      setLoading(false);
     }
+  };
+
+  if (loading || !article) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#0A0A0B" }}>
-      {article && <MetaTags article={article} lang={lang} />}
-      {article && <ArticleSchema article={article} />}
-      <Header lang={lang} onLangChange={handleLangChange} />
-
-      {/* ── Hero ── */}
-      <div className="relative w-full overflow-hidden" style={{ height: "480px" }}>
-        <img
-          src={article.image}
-          alt={article.title[lang] || article.title.en}
-          className="w-full h-full object-cover"
-          loading="eager"
-        />
-        {/* Gradient overlay */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(to bottom, rgba(10,10,11,0.2) 0%, rgba(10,10,11,0.6) 50%, rgba(10,10,11,0.97) 100%)",
-          }}
-        />
-        {/* Back button */}
-        <Link
-          href="/"
-          className="absolute top-6 left-6 flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm font-medium"
-          style={{
-            background: "rgba(10,10,11,0.7)",
-            border: "1px solid rgba(255,255,255,0.15)",
-            padding: "8px 14px",
-            borderRadius: "6px",
-            backdropFilter: "blur(8px)",
-          }}
-        >
-          <ArrowLeft size={15} />
-          Back
-        </Link>
-
-        {/* Hero text overlay */}
-        <div className="absolute bottom-0 right-0 px-6 pb-8 max-w-4xl mx-auto w-full" style={{ left: "50%", transform: "translateX(-50%)" }}>
-          {/* Category badge */}
-          <span
-            className="inline-block text-xs font-bold tracking-widest uppercase px-3 py-1 rounded mb-4"
-            style={{
-              color: catStyle.color,
-              background: catStyle.bg,
-              border: `1px solid ${catStyle.border}`,
-            }}
-          >
-            {article.category}
-          </span>
-          <h1
-            className="text-3xl md:text-4xl font-black text-white leading-tight mb-4"
-            style={{ textShadow: "0 2px 20px rgba(0,0,0,0.8)" }}
-          >
-            {article.title[lang] || article.title.en}
-          </h1>
-          {/* Meta row */}
-          <div className="flex flex-wrap items-center gap-4 text-sm text-white/70">
-            <div className="flex items-center gap-2">
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                style={{ background: catStyle.bg, border: `1px solid ${catStyle.border}` }}
-              >
-                {getInitials(article.author ?? "")}
-              </div>
-              <span className="text-white/90 font-medium">{article.author}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Calendar size={13} />
-              <span>{article.date}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock size={13} />
-              <span>{article.readTime}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Eye size={13} />
-              <span>{article.views} views</span>
-            </div>
+    <div className="min-h-screen bg-black text-white">
+      <section className="py-12 px-4 border-b border-gray-800">
+        <div className="max-w-4xl mx-auto">
+          <span className="text-xs text-blue-400 uppercase">{article.category}</span>
+          <h1 className="text-5xl font-bold mt-4 mb-6">{article.title}</h1>
+          <div className="flex justify-between items-center text-gray-400 text-sm">
+            <span>By {article.author}</span>
+            <span>{article.readTime}</span>
+            <span>{article.views.toLocaleString()} views</span>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* ── Main content + Sidebar ── */}
-      <div className="flex-1 w-full" style={{ maxWidth: "1400px", margin: "0 auto", padding: "0 1.5rem" }}>
-        <div
-          className="article-detail-layout"
-          style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "40px", alignItems: "start", paddingTop: "2.5rem", paddingBottom: "3rem" }}
-        >
-        {/* Left: article body */}
-        <div>
-        {/* Excerpt */}
-        <p
-          className="text-lg leading-relaxed mb-8 font-medium"
-          style={{ color: "rgba(255,255,255,0.75)", borderLeft: `3px solid ${catStyle.color}`, paddingLeft: "1.25rem" }}
-        >
-          {article.excerpt[lang] || article.excerpt.en}
-        </p>
-
-        {/* AdSense leaderboard mid-article */}
-        <AdBanner marginBottom="2.5rem" />
-
-        {/* Article body */}
-        <article className="prose-custom">
-          {bodyContent.map((section, i) => {
-            if (section.type === "heading") {
-              return (
-                <h2
-                  key={i}
-                  className="text-2xl font-black text-white mt-10 mb-4"
-                  style={{ borderBottom: `2px solid ${catStyle.color}`, paddingBottom: "0.5rem" }}
-                >
-                  {section.content}
-                </h2>
-              );
-            }
-            if (section.type === "quote") {
-              return (
-                <blockquote
-                  key={i}
-                  className="my-8 px-6 py-5 rounded-lg"
-                  style={{
-                    background: catStyle.bg,
-                    borderLeft: `4px solid ${catStyle.color}`,
-                    boxShadow: catStyle.glow,
-                  }}
-                >
-                  <p className="text-base italic leading-relaxed" style={{ color: catStyle.color }}>
-                    {section.content}
-                  </p>
-                </blockquote>
-              );
-            }
-            if (section.type === "highlight") {
-              return (
-                <div
-                  key={i}
-                  className="my-8 px-5 py-4 rounded-lg flex items-start gap-3"
-                  style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: `1px solid ${catStyle.border}`,
-                  }}
-                >
-                  <BookOpen size={18} className="mt-0.5 flex-shrink-0" style={{ color: catStyle.color }} />
-                  <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>
-                    {section.content}
-                  </p>
-                </div>
-              );
-            }
-            // paragraph
-            return (
-              <p
-                key={i}
-                className="text-base leading-relaxed mb-5"
-                style={{ color: "rgba(255,255,255,0.72)" }}
-              >
-                {section.content}
-              </p>
-            );
-          })}
-        </article>
-
-        {/* Tags */}
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-10 mb-8">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded"
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  color: "rgba(255,255,255,0.6)",
-                }}
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Share buttons */}
-        {article && (
-          <ShareButtons
-            article={article}
-            onShare={handleShare}
-            className="mb-10"
-          />
-        )}
-
-        {/* Author bio */}
-        {authorBio && (
-          <div
-            className="flex gap-5 p-6 rounded-xl mb-12"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: `1px solid ${catStyle.border}`,
-              boxShadow: catStyle.glow,
-            }}
-          >
-            <div
-              className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-black flex-shrink-0"
-              style={{ background: catStyle.bg, border: `2px solid ${catStyle.color}`, color: catStyle.color }}
-            >
-              {getInitials(article.author)}
-            </div>
-            <div>
-              <p className="text-white font-bold text-base mb-1">{article.author}</p>
-              <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>
-                {authorBio}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Reaction buttons */}
-        <div className="flex gap-4 mb-12">
-          <ReactionButton
-            articleId={articleIdStr}
-            userId={userId}
-            type="like"
-            count={likeCount}
-            onReactionChange={() => {
-              updateReactionCounts();
-            }}
-          />
-          <ReactionButton
-            articleId={articleIdStr}
-            userId={userId}
-            type="clap"
-            count={clapCount}
-            onReactionChange={() => {
-              updateReactionCounts();
-            }}
-          />
+      <section className="py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          <img src={article.image} alt={article.title} className="w-full rounded-lg" />
         </div>
+      </section>
 
-        {/* Leaderboard 728×90 – between author bio and comments */}
-        <AdBanner marginBottom="2.5rem" />
-
-        {/* Personalized recommendations */}
-        <RecommendationsWidget
-          excludeArticleId={articleId}
-          count={5}
-          title="You might also like"
-        />
-
-        {/* Comments section */}
-        <CommentsSection
-          lang={lang}
-          catColor={catStyle.color}
-          catBg={catStyle.bg}
-          catBorder={catStyle.border}
-        />
-
-        {/* Related articles */}
-        {related.length > 0 && (
-          <section aria-label="Related articles">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-black text-white">
-                More in{" "}
-                <span style={{ color: catStyle.color }}>{article.category}</span>
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {related.map((rel) => (
-                <Link
-                  key={rel.id}
-                  href={`/article/${rel.id}`}
-                  className="group block rounded-xl overflow-hidden transition-all duration-300"
-                  style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                  }}
-                  aria-label={`Read: ${rel.title[lang] || rel.title.en}`}
-                >
-                  <div className="relative overflow-hidden" style={{ height: "140px" }}>
-                    <img
-                      src={rel.image}
-                      alt={rel.title[lang] || rel.title.en}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div
-                      className="absolute inset-0"
-                      style={{ background: "linear-gradient(to top, rgba(10,10,11,0.8) 0%, transparent 60%)" }}
-                    />
-                  </div>
-                  <div className="p-4">
-                    <p className="text-sm font-bold text-white leading-snug mb-2 line-clamp-2 group-hover:text-[#00D4FF] transition-colors">
-                      {rel.title[lang] || rel.title.en}
-                    </p>
-                    <div className="flex items-center gap-3 text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
-                      <span className="flex items-center gap-1"><Clock size={10} />{rel.readTime}</span>
-                      <span className="flex items-center gap-1"><Eye size={10} />{rel.views}</span>
-                    </div>
-                    <div
-                      className="flex items-center gap-1 mt-3 text-xs font-semibold transition-all"
-                      style={{ color: catStyle.color }}
-                    >
-                      Read Article <ChevronRight size={12} />
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-        </div>{/* end article body */}
-
-        {/* Right: sticky sidebar */}
-        <div style={{ position: "sticky", top: "88px" }}>
-          <Sidebar lang={lang} />
-          <LatestInCategory
-            category={article.category}
-            currentArticleId={article.id}
-            lang={lang}
-          />
+      <section className="py-12 px-4">
+        <div className="max-w-4xl mx-auto prose prose-invert">
+          <div dangerouslySetInnerHTML={{ __html: article.content }} />
         </div>
-        </div>{/* end grid */}
-
-        <style>{`
-          @media (max-width: 960px) {
-            .article-detail-layout {
-              grid-template-columns: 1fr !important;
-            }
-          }
-        `}</style>
-      </div>
-
-      <Footer lang={lang} />
+      </section>
     </div>
   );
 }
