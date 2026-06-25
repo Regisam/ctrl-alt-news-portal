@@ -41,6 +41,7 @@ import followingRouter from "./api/following.js";
 import notificationsSmartRouter from "./api/notificationsSmart.js";
 import profilesRouter from "./api/profiles.js";
 import publicProfilesRouter from "./api/public-profiles.js";
+import discoveryRouter from "./api/discovery.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -257,6 +258,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Public profiles endpoints (Story 19.2)
   app.use('/api/public-profiles', publicProfilesRouter);
+
+  // User discovery endpoints (Story 19.3)
+  app.use('/api/discovery', discoveryRouter);
 
   // Error handler middleware (must be last)
   app.use(errorHandlerMiddleware);
