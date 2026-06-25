@@ -49,6 +49,7 @@ import authV2Router from "./api/authV2.js";
 import searchRouter from "./api/search.js";
 import adminRouter from "./api/admin.js";
 import recommendationsV3Router from "./api/recommendationsV3.js";
+import pushRouter from "./api/push.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -286,6 +287,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // Content recommendations v3 (Story 23.3)
   app.use('/api/recommendations-v3', recommendationsV3Router);
+
+  // Push notifications (Story 24.2)
+  app.use('/api/push', pushRouter);
 
   // User reputation endpoints (Story 19.4)
   app.use('/api/reputation', reputationAPIRouter);
