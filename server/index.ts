@@ -54,6 +54,7 @@ import transactionalRouter from "./api/transactional.js";
 import analyticsLiveRouter from "./api/analytics-live.js";
 import alertsRouter from "./api/alerts.js";
 import experimentsRouter from "./api/experiments.js";
+import userBehaviorRouter from "./api/user-behavior.js";
 import authRouter from "./src/routes/auth.js";
 import usersRouter from "./src/routes/users.js";
 import moderationRouter from "./src/routes/moderation.js";
@@ -306,6 +307,9 @@ Sitemap: ${process.env.SITE_URL || "https://ctrlaltnews.com"}/sitemap.xml`;
 
   // A/B testing (Story 25.3)
   app.use('/api/experiments', experimentsRouter);
+
+  // User behavior analytics (Story 25.4)
+  app.use('/api/user-behavior', userBehaviorRouter);
 
   // User reputation endpoints (Story 19.4)
   app.use('/api/reputation', reputationAPIRouter);
