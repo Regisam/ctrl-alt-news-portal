@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import os from 'os';
 
+// Set test environment early so it's available during module import
+process.env.NODE_ENV = 'test';
+
 // Detect available CPU cores and limit workers to avoid machine overload
 const cpuCount = os.cpus().length;
 const maxWorkers = Math.max(1, Math.floor(cpuCount / 3));

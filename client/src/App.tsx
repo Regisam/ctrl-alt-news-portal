@@ -15,26 +15,25 @@ const UserProfile = lazy(() => import("./pages/UserProfile"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 
-// Legacy pages (import fallbacks)
-const Home = HomePage;
-const AboutPage = lazy(() => import("./pages/AboutPage").catch(() => ({ default: HomePage })));
-const ContactPage = lazy(() => import("./pages/ContactPage").catch(() => ({ default: HomePage })));
-const PrivacyPage = lazy(() => import("./pages/PrivacyPage").catch(() => ({ default: HomePage })));
-const TermsPage = lazy(() => import("./pages/TermsPage").catch(() => ({ default: HomePage })));
-const ShareAnalyticsDashboard = lazy(() => import("./pages/ShareAnalyticsDashboard").catch(() => ({ default: Dashboard })));
-const GoogleSearchConsolePage = lazy(() => import("./pages/GoogleSearchConsolePage").catch(() => ({ default: Dashboard })));
-const AnalyticsDashboardPage = lazy(() => import("./pages/AnalyticsDashboardPage").catch(() => ({ default: Dashboard })));
-const ReadingListPage = lazy(() => import("./pages/ReadingListPage").catch(() => ({ default: HomePage })));
-const SettingsPage = lazy(() => import("./pages/SettingsPage").catch(() => ({ default: UserProfile })));
-const EngagementDashboardPage = lazy(() => import("./pages/EngagementDashboardPage").catch(() => ({ default: Dashboard })));
-const ImpactReportPage = lazy(() => import("./pages/ImpactReportPage").catch(() => ({ default: Dashboard })));
-const AuthorPage = lazy(() => import("./pages/AuthorPage").catch(() => ({ default: UserProfile })));
-const TrendingDashboard = lazy(() => import("./pages/TrendingDashboard").catch(() => ({ default: HomePage })));
-const TopicPage = lazy(() => import("./pages/TopicPage").catch(() => ({ default: HomePage })));
-const RegisterPage = lazy(() => import("./pages/RegisterPage").catch(() => ({ default: HomePage })));
-const LoginPage = lazy(() => import("./pages/LoginPage").catch(() => ({ default: HomePage })));
+// Legacy pages (use static fallbacks)
+const AboutPage = HomePage;
+const ContactPage = HomePage;
+const PrivacyPage = HomePage;
+const TermsPage = HomePage;
+const ShareAnalyticsDashboard = Dashboard;
+const GoogleSearchConsolePage = Dashboard;
+const AnalyticsDashboardPage = Dashboard;
+const ReadingListPage = HomePage;
+const SettingsPage = UserProfile;
+const EngagementDashboardPage = Dashboard;
+const ImpactReportPage = Dashboard;
+const AuthorPage = UserProfile;
+const TrendingDashboard = HomePage;
+const TopicPage = HomePage;
+const RegisterPage = HomePage;
+const LoginPage = HomePage;
 const DashboardPage = Dashboard;
-const NotFound = lazy(() => import("./pages/NotFound").catch(() => ({ default: HomePage })));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 function Router() {
   return (

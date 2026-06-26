@@ -1,6 +1,9 @@
 import { beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import { logger } from '../logger.js';
 
+// Set test environment
+process.env.NODE_ENV = 'test';
+
 // AC6: Test setup/teardown
 export const testSetup = {
   testUsers: [
