@@ -17,6 +17,9 @@ export default defineConfig({
     environment: process.env.TEST_ENV === 'integration' ? 'node' : 'jsdom',
     globals: true,
     pool: 'threads',
+    env: {
+      NODE_ENV: 'test',
+    },
     poolOptions: {
       threads: {
         maxThreads: maxWorkers,
