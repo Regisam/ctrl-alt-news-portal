@@ -5,6 +5,7 @@ import { Suspense, lazy } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { RouteLoading } from "./components/RouteLoading";
+import Onboarding from "./components/Onboarding";
 
 const HomePage = lazy(() => import("./pages/HomePage"));
 const ArticleDetail = lazy(() => import("./pages/ArticleDetail"));
@@ -94,6 +95,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <Onboarding />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
