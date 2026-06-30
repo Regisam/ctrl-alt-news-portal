@@ -67,7 +67,8 @@ async function startServer() {
   console.log("✓ startServer() called");
 
   // Setup global error handlers
-  setupErrorHandlers();
+  // Disabled temporarily for Railway debugging
+  // setupErrorHandlers();
 
   const app = express();
   console.log("✓ Express app created");
@@ -75,7 +76,8 @@ async function startServer() {
   console.log("✓ HTTP server created");
 
   // Initialize Loki transport if LOKI_URL is set
-  await initializeLokiTransport();
+  // Disabled: can cause startup crash in Railway
+  // await initializeLokiTransport();
 
   // Initialize dependency health checks (Story 16.7) — skip in test mode and production
   // Disabled: async initialization can crash the server startup in Railway
