@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build && node scripts/build-server.js",
-    "start": "NODE_ENV=production node dist/lite.js",
+    "start": "NODE_ENV=production node server-ultra-simple.js",
     "preview": "vite preview --host",
     "check": "tsc --noEmit",
     "lint": "eslint client/src --ext .ts,.tsx",
