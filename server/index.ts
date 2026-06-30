@@ -64,7 +64,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function startServer() {
-  console.log("✓ startServer() called");
+  console.log("✓ startServer() called - v1.13.0");
 
   // Setup global error handlers
   // Disabled temporarily for Railway debugging
