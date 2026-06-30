@@ -77,10 +77,11 @@ async function startServer() {
   // Initialize Loki transport if LOKI_URL is set
   await initializeLokiTransport();
 
-  // Initialize dependency health checks (Story 16.7) — skip in test mode
-  if (process.env.NODE_ENV !== 'test') {
-    initializeHealthChecks();
-  }
+  // Initialize dependency health checks (Story 16.7) — skip in test mode and production
+  // Disabled: async initialization can crash the server startup in Railway
+  // if (process.env.NODE_ENV !== 'test') {
+  //   initializeHealthChecks();
+  // }
 
   // Body parser middleware (before logging middleware)
   app.use(express.json({ limit: '10mb' }));
