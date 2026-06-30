@@ -1,22 +1,21 @@
 import express from "express";
 import { createServer } from "http";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = createServer(app);
 
-console.log("📁 __dirname:", __dirname);
-console.log("📁 Public path:", path.join(__dirname, "../dist/public"));
+console.log("✅ Server starting...");
 
 // Minimal middleware
 app.use(express.json());
-const publicPath = path.join(__dirname, "../dist/public");
-console.log("📁 Serving static files from:", publicPath);
-app.use(express.static(publicPath));
+
+// Serve public files (simple path, no __dirname)
+try {
+  app.use(express.static("dist/public"));
+  console.log("✅ Static files configured");
+} catch (err) {
+  console.error("❌ Error setting up static files:", err);
+}
 
 // Health check
 app.get("/health", (_req, res) => {
