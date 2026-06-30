@@ -9,9 +9,14 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const server = createServer(app);
 
+console.log("📁 __dirname:", __dirname);
+console.log("📁 Public path:", path.join(__dirname, "../dist/public"));
+
 // Minimal middleware
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "../dist/public")));
+const publicPath = path.join(__dirname, "../dist/public");
+console.log("📁 Serving static files from:", publicPath);
+app.use(express.static(publicPath));
 
 // Health check
 app.get("/health", (_req, res) => {
