@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-console.log('Starting ultra-simple server...');
+console.log('✅ Starting ultra-simple CommonJS server v2...');
 
 const server = http.createServer((req, res) => {
   console.log(`Request: ${req.method} ${req.url}`);
