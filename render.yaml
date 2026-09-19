@@ -6,7 +6,7 @@ services:
     plan: free
 
     buildCommand: npm run build
-    startCommand: NODE_ENV=production node server-ultra-simple.js
+    startCommand: NODE_ENV=production node dist/index.js
 
     envVars:
       - key: NODE_ENV
