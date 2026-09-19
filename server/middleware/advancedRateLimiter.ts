@@ -12,7 +12,7 @@ function getClientIp(req: Request): string {
 }
 
 // AC1-2: User-based rate limiting middleware
-export function createRateLimiter(config: RateLimitConfig = {}) {
+export function createRateLimiter(config: Partial<RateLimitConfig> = {}) {
   const defaultConfig: RateLimitConfig = {
     windowMs: config.windowMs ?? 60 * 1000, // 1 minute
     maxRequests: config.maxRequests ?? 100,

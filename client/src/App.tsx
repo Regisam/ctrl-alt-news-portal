@@ -43,22 +43,10 @@ function Router() {
         <Route path={"/articles/:id"} component={ArticleDetail} />
         <Route path={"/article/:id"} component={ArticleDetail} />
         <Route path={"/category/:name"} component={CategoryPage} />
-        <Route
-          path={"/ai"}
-          component={() => <CategoryPage category="AI" />}
-        />
-        <Route
-          path={"/science"}
-          component={() => <CategoryPage category="SCIENCE" />}
-        />
-        <Route
-          path={"/robotics"}
-          component={() => <CategoryPage category="ROBOTICS" />}
-        />
-        <Route
-          path={"/gadgets"}
-          component={() => <CategoryPage category="GADGETS" />}
-        />
+        <Route path={"/ai"} component={CategoryPage} />
+        <Route path={"/science"} component={CategoryPage} />
+        <Route path={"/robotics"} component={CategoryPage} />
+        <Route path={"/gadgets"} component={CategoryPage} />
         <Route path={"/analytics"} component={ShareAnalyticsDashboard} />
         <Route path={"/search-console"} component={GoogleSearchConsolePage} />
         <Route path={"/dashboard"} component={AnalyticsDashboardPage} />
@@ -75,8 +63,8 @@ function Router() {
         <Route path={"/authors/:slug"} component={AuthorPage} />
         <Route path={"/trending"} component={TrendingDashboard} />
         <Route path={"/topic/:topicId"} component={TopicPage} />
-        <Route path={"/register"} component={() => <RegisterPage lang="en" />} />
-        <Route path={"/login"} component={() => <LoginPage lang="en" />} />
+        <Route path={"/register"} component={RegisterPage} />
+        <Route path={"/login"} component={LoginPage} />
         <Route path={"/dashboard"} component={Dashboard} />
         <Route path={"/ops/dashboard"} component={Dashboard} />
         <Route path={"/admin"} component={AdminPanel} />

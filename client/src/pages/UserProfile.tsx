@@ -1,22 +1,14 @@
-import { useState, useEffect } from 'react';
-
 export default function UserProfile() {
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    setUser({
-      name: 'John Doe',
-      email: 'john@example.com',
-      joinDate: '2026-01-15',
-      articlesRead: 42,
-      preferences: {
-        theme: 'dark',
-        emailDigest: true,
-      },
-    });
-  }, []);
-
-  if (!user) return <div>Loading...</div>;
+  const user = {
+    name: 'John Doe',
+    email: 'john@example.com',
+    joinDate: '2026-01-15',
+    articlesRead: 42,
+    preferences: {
+      theme: 'dark',
+      emailDigest: true,
+    },
+  };
 
   return (
     <div className="min-h-screen bg-black text-white p-4">

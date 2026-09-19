@@ -21,8 +21,8 @@ export function AlertsDisplay() {
 
   const fetchAlerts = async () => {
     try {
-      const response = await alertsAPI.getDashboard();
-      setAlerts(response.data?.alerts || []);
+      const response = await alertsAPI.getDashboard() as any;
+      setAlerts(response?.data?.alerts || []);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching alerts:', error);

@@ -5,7 +5,15 @@ import { logger } from '../logger.js';
 process.env.NODE_ENV = 'test';
 
 // AC6: Test setup/teardown
-export const testSetup = {
+interface TestSetupType {
+  testUsers: Array<{ id: string; email: string; password: string; name: string }>;
+  testArticles: Array<{ id: string; title: string; content: string; category: string; excerpt: string }>;
+  createTestUser: (data?: any) => Promise<any>;
+  createTestArticle: (data?: any) => Promise<any>;
+  cleanup: () => Promise<void>;
+}
+
+export const testSetup: TestSetupType = {
   testUsers: [
     {
       id: 'test-user-1',

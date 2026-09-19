@@ -367,7 +367,7 @@ export async function trackRecommendationClick(
   try {
     const { userId, articleId } = req.params;
 
-    recommendationEngine.recordRecommendationClick(userId, articleId);
+    recommendationEngine.trackRecommendationClick(userId, articleId);
 
     res.json({
       message: 'Recommendation click tracked',

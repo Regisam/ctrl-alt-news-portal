@@ -68,16 +68,16 @@ class DiscoveryManager {
   // AC2: Interest-based discovery
   getByInterests(interests: string[], limit: number = 10): UserRecommendation[] {
     // In production: query users with matching expertise tags
-    return [
+    return ([
       {
         userId: 'user5',
         displayName: 'Carol Davis',
         bio: 'ML Expert',
         expertiseTags: ['ml', 'python', 'ai'],
         score: 90,
-        reason: 'interest-based',
+        reason: 'interest-based' as any,
       },
-    ].slice(0, limit);
+    ] as UserRecommendation[]).slice(0, limit);
   }
 
   // AC4: Trending creators
@@ -116,31 +116,31 @@ class DiscoveryManager {
 
   // AC5: New creators
   getNewCreators(limit: number = 10): UserRecommendation[] {
-    return [
+    return ([
       {
         userId: 'user10',
         displayName: 'New Creator',
         bio: 'Just joined',
         expertiseTags: ['tech'],
         score: 50,
-        reason: 'new',
+        reason: 'new' as any,
       },
-    ].slice(0, limit);
+    ] as UserRecommendation[]).slice(0, limit);
   }
 
   // AC6: Similar users
   getSimilarUsers(userId: string, limit: number = 10): UserRecommendation[] {
     // Find users with similar expertise tags
-    return [
+    return ([
       {
         userId: 'user11',
         displayName: 'Similar User',
         bio: 'Shares your interests',
         expertiseTags: ['tech', 'ai'],
         score: 75,
-        reason: 'similar',
+        reason: 'similar' as any,
       },
-    ].slice(0, limit);
+    ] as UserRecommendation[]).slice(0, limit);
   }
 
   // AC8: Track discovery view

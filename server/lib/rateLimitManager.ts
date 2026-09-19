@@ -40,7 +40,7 @@ class RateLimitManager {
   // AC1: Check if request is allowed
   isAllowed(
     identifier: string,
-    config: RateLimitConfig = {}
+    config: Partial<RateLimitConfig> = {}
   ): { allowed: boolean; remaining: number; resetTime: number } {
     const windowMs = config.windowMs ?? this.DEFAULT_WINDOW_MS;
     const maxRequests = config.maxRequests ?? this.DEFAULT_MAX_REQUESTS;
@@ -201,7 +201,7 @@ class RateLimitManager {
   // AC8: Get headers for response
   getHeaders(
     identifier: string,
-    config: RateLimitConfig = {}
+    config: Partial<RateLimitConfig> = {}
   ): Record<string, string> {
     const { allowed, remaining, resetTime } = this.isAllowed(identifier, config);
     const maxRequests = config.maxRequests ?? this.DEFAULT_MAX_REQUESTS;

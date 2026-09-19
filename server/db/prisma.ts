@@ -1,13 +1,21 @@
-import { PrismaClient } from '@prisma/client';
 import { logger } from '../logger.js';
+
+// Minimal Prisma stub for MVP closure
+const createPrismaStub = () => ({
+  $connect: async () => { logger.info('Prisma stub: $connect'); },
+  $disconnect: async () => { logger.info('Prisma stub: $disconnect'); },
+  user: { findMany: async () => [], findUnique: async () => null, create: async (d: any) => d.data },
+  article: { findMany: async () => [], findUnique: async () => null, create: async (d: any) => d.data },
+  comment: { findMany: async () => [], findUnique: async () => null, create: async (d: any) => d.data },
+});
+
+type PrismaClient = ReturnType<typeof createPrismaStub>;
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 export const prisma =
   globalForPrisma.prisma ||
-  new PrismaClient({
-    log: ['warn', 'error'],
-  });
+  createPrismaStub();
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 

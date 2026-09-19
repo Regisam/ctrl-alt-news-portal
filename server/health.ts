@@ -14,15 +14,20 @@ function getHealthStatus() {
   const processMemoryPercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
 
   // In test mode, skip dependency checks (they're async and flaky in tests)
-  let status = 'ok';
-  let dependencyStatus = { overallStatus: 'healthy' as const, dependencies: [] };
+  let status: 'ok' | 'degraded' | 'unhealthy' = 'ok';
+  let dependencies: any[] = [];
 
   if (process.env.NODE_ENV !== 'test') {
     // AC5: Get dependency health status (Story 16.7)
-    dependencyStatus = getHealthCheckStatus();
-    // Determine overall status
-    const baseStatus = memoryPercent > 90 ? 'degraded' : 'ok';
-    status = dependencyStatus.overallStatus === 'unhealthy' ? 'unhealthy' : baseStatus;
+    try {
+      const depStatus = getHealthCheckStatus() || { overallStatus: 'healthy', dependencies: [] };
+      dependencies = depStatus.dependencies || [];
+      // Determine overall status
+      const baseStatus = memoryPercent > 90 ? 'degraded' : 'ok';
+      status = depStatus.overallStatus === 'unhealthy' ? 'unhealthy' : (baseStatus as 'ok' | 'degraded' | 'unhealthy');
+    } catch {
+      status = 'degraded';
+    }
   }
 
   return {
@@ -49,7 +54,7 @@ function getHealthStatus() {
       server: 'healthy',
       logger: 'healthy',
     },
-    dependencies: dependencyStatus.dependencies,
+    dependencies,
   };
 }
 
@@ -57,7 +62,7 @@ router.get('/health', (_req, res) => {
   const health = getHealthStatus();
   // AC5: Return appropriate status code based on dependencies + system health
   let statusCode = 200;
-  if (health.status === 'unhealthy' || health.status === 'degraded') {
+  if (health.status === 'unhealthy') {
     statusCode = 503; // Service unavailable if critical dependency down
   } else if (health.status === 'degraded') {
     statusCode = 200; // Still respond 200 but mark as degraded

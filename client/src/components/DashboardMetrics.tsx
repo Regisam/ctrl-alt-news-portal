@@ -29,8 +29,8 @@ export function DashboardMetrics() {
 
   const fetchMetrics = async () => {
     try {
-      const response = await analyticsAPI.getLiveMetrics();
-      setMetrics(response.data?.metrics);
+      const response = await analyticsAPI.getLiveMetrics() as any;
+      setMetrics(response?.data?.metrics);
 
       // Generate mock time-series data for charts
       const now = new Date();

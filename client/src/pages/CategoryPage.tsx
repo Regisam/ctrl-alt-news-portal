@@ -3,9 +3,16 @@ import { useState, useEffect } from 'react';
 
 const CATEGORIES = ['AI', 'Science', 'Robotics', 'Gadgets'];
 
+interface Article {
+  id: string;
+  title: string;
+  views: number;
+  readTime: string;
+}
+
 export default function CategoryPage() {
   const [_match, params] = useRoute('/category/:name');
-  const [articles, setArticles] = useState([]);
+  const [articles, setArticles] = useState<Article[]>([]);
   const category = params?.name?.toUpperCase() || 'AI';
 
   useEffect(() => {

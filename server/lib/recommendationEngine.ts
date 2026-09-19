@@ -276,6 +276,37 @@ class RecommendationEngine {
     this.recommendations.clear();
     logger.info('Recommendation engine cleared');
   }
+
+  // Alias methods for compatibility
+  updateUserProfile(userId: string, articleId: string, engagement: number): void {
+    const prefs = this.userPreferences.get(userId);
+    if (prefs) {
+      prefs.readArticles.add(articleId);
+    }
+    logger.debug('User profile updated', { userId, articleId, engagement });
+  }
+
+  registerArticle(articleId: string, title: string, category: string, author: string, tags?: string[]): void {
+    const article: ArticleFeatures = {
+      id: articleId,
+      title,
+      content: '',
+      category,
+      tags: tags || [],
+      author,
+      publishedAt: new Date(),
+      views: 0,
+    };
+    this.addArticle(article);
+  }
+
+  getUserProfile(userId: string): UserPreferences | null {
+    return this.getUserPreferences(userId);
+  }
+
+  getStats() {
+    return this.getMetrics();
+  }
 }
 
 export const recommendationEngine = new RecommendationEngine();

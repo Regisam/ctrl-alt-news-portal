@@ -1,8 +1,22 @@
 import { useEffect, useState } from 'react';
 
+interface PendingArticle {
+  id: string;
+  title: string;
+  author: string;
+  status: string;
+}
+
+interface Report {
+  id: string;
+  reason: string;
+  createdAt: string;
+  status: string;
+}
+
 export default function AdminPanel() {
-  const [pendingArticles, setPendingArticles] = useState([]);
-  const [reports, setReports] = useState([]);
+  const [pendingArticles, setPendingArticles] = useState<PendingArticle[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
 
   useEffect(() => {
     setPendingArticles([
