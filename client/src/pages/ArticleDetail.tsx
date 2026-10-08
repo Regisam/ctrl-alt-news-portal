@@ -18,10 +18,6 @@ export default function ArticleDetail() {
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchArticle();
-  }, [params?.id]);
-
   const fetchArticle = async () => {
     try {
       setArticle({
@@ -41,6 +37,11 @@ export default function ArticleDetail() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sincroniza com sistema externo (rede/WebSocket) ao montar
+    fetchArticle();
+  }, [params?.id]);
 
   if (loading || !article) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;

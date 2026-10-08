@@ -7,18 +7,8 @@ interface PushSubscription {
 }
 
 export function usePushNotifications() {
-  const [isSupported, setIsSupported] = useState(false);
+  const isSupported = typeof navigator !== 'undefined' && typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window;
   const [isSubscribed, setIsSubscribed] = useState(false);
-
-  useEffect(() => {
-    const supported = 'serviceWorker' in navigator && 'PushManager' in window;
-    setIsSupported(supported);
-
-    if (supported) {
-      registerServiceWorker();
-      checkSubscription();
-    }
-  }, []);
 
   const registerServiceWorker = async () => {
     try {
@@ -38,6 +28,14 @@ export function usePushNotifications() {
       console.error('Error checking subscription:', error);
     }
   };
+
+  useEffect(() => {
+    if (isSupported) {
+      registerServiceWorker();
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sincroniza com sistema externo (rede/WebSocket) ao montar
+      checkSubscription();
+    }
+  }, [isSupported]);
 
   const subscribe = async () => {
     try {
@@ -88,7 +86,7 @@ export function usePushNotifications() {
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = window.atob(base64);
   const outputArray = new Uint8Array(rawData.length);
   for (let i = 0; i < rawData.length; ++i) {

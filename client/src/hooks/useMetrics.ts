@@ -97,6 +97,7 @@ export function useMetrics(interval: number = 5000) {
 
   useEffect(() => {
     // Fetch immediately on mount
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sincroniza com sistema externo (rede/WebSocket) ao montar
     fetchMetrics();
 
     // Set up interval

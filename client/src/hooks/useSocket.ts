@@ -10,6 +10,8 @@ export interface UseSocketOptions {
   pollInterval?: number;
 }
 
+type Listener = (...args: any[]) => void;
+
 export function useSocket(options: UseSocketOptions = {}) {
   const {
     url = typeof window !== 'undefined' ? `${window.location.protocol.replace('http', 'ws')}//${window.location.host}` : '',
@@ -25,7 +27,36 @@ export function useSocket(options: UseSocketOptions = {}) {
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [usePolling, setUsePolling] = useState(false);
-  const listenersRef = useRef<Map<string, Set<Function>>>(new Map());
+  const connectRef = useRef<(() => void) | null>(null);
+  const listenersRef = useRef<Map<string, Set<Listener>>>(new Map());
+
+  // AC6: Polling fallback
+  const startPolling = useCallback(() => {
+    if (pollIntervalRef.current) return;
+
+    pollIntervalRef.current = setInterval(() => {
+      // AC6: Fetch notifications via HTTP
+      fetch('/api/notifications?unread=true')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.data.notifications) {
+            const listeners = listenersRef.current.get('notifications');
+            if (listeners) {
+              listeners.forEach((listener) => listener(data.data.notifications));
+            }
+          }
+        })
+        .catch((error) => console.error('Polling error', error));
+    }, pollInterval);
+  }, [pollInterval]);
+
+  // AC6: Stop polling
+  const stopPolling = useCallback(() => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+  }, []);
 
   // AC1: Connect to WebSocket
   const connect = useCallback(() => {
@@ -76,7 +107,7 @@ export function useSocket(options: UseSocketOptions = {}) {
           console.log(`Reconnecting (attempt ${reconnectCountRef.current}/${maxReconnectAttempts})...`);
 
           setTimeout(() => {
-            connect();
+            connectRef.current?.();
           }, reconnectInterval);
         } else if (fallbackToPoll) {
           // AC6: Fallback to polling
@@ -93,35 +124,11 @@ export function useSocket(options: UseSocketOptions = {}) {
         startPolling();
       }
     }
-  }, [url, reconnect, reconnectInterval, maxReconnectAttempts, fallbackToPoll]);
+  }, [url, reconnect, reconnectInterval, maxReconnectAttempts, fallbackToPoll, startPolling]);
 
-  // AC6: Polling fallback
-  const startPolling = useCallback(() => {
-    if (pollIntervalRef.current) return;
-
-    pollIntervalRef.current = setInterval(() => {
-      // AC6: Fetch notifications via HTTP
-      fetch('/api/notifications?unread=true')
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && data.data.notifications) {
-            const listeners = listenersRef.current.get('notifications');
-            if (listeners) {
-              listeners.forEach((listener) => listener(data.data.notifications));
-            }
-          }
-        })
-        .catch((error) => console.error('Polling error', error));
-    }, pollInterval);
-  }, [pollInterval]);
-
-  // AC6: Stop polling
-  const stopPolling = useCallback(() => {
-    if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current);
-      pollIntervalRef.current = null;
-    }
-  }, []);
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   // AC2: Disconnect
   const disconnect = useCallback(() => {
@@ -136,7 +143,7 @@ export function useSocket(options: UseSocketOptions = {}) {
   }, [stopPolling]);
 
   // AC9: Subscribe to events
-  const on = useCallback((eventType: string, listener: Function) => {
+  const on = useCallback((eventType: string, listener: Listener) => {
     if (!listenersRef.current.has(eventType)) {
       listenersRef.current.set(eventType, new Set());
     }
@@ -150,7 +157,7 @@ export function useSocket(options: UseSocketOptions = {}) {
   }, []);
 
   // AC9: Unsubscribe from events
-  const off = useCallback((eventType: string, listener: Function) => {
+  const off = useCallback((eventType: string, listener: Listener) => {
     const listeners = listenersRef.current.get(eventType);
 
     if (listeners) {
@@ -174,6 +181,7 @@ export function useSocket(options: UseSocketOptions = {}) {
 
   // AC1: Auto-connect on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sincroniza com sistema externo (rede/WebSocket) ao montar
     connect();
 
     return () => {

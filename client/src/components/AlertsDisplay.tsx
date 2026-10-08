@@ -13,12 +13,6 @@ export function AlertsDisplay() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchAlerts();
-    const interval = setInterval(fetchAlerts, 60000); // Refresh every 60s
-    return () => clearInterval(interval);
-  }, []);
-
   const fetchAlerts = async () => {
     try {
       const response = await alertsAPI.getDashboard() as any;
@@ -29,6 +23,13 @@ export function AlertsDisplay() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- busca inicial ao montar
+    fetchAlerts();
+    const interval = setInterval(fetchAlerts, 60000); // Refresh every 60s
+    return () => clearInterval(interval);
+  }, []);
 
   if (loading) {
     return <div className="text-center py-8">Loading alerts...</div>;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 interface PendingArticle {
   id: string;
@@ -15,20 +15,14 @@ interface Report {
 }
 
 export default function AdminPanel() {
-  const [pendingArticles, setPendingArticles] = useState<PendingArticle[]>([]);
-  const [reports, setReports] = useState<Report[]>([]);
-
-  useEffect(() => {
-    setPendingArticles([
-      { id: '1', title: 'Pending Article 1', author: 'Writer 1', status: 'pending' },
-      { id: '2', title: 'Pending Article 2', author: 'Writer 2', status: 'pending' },
-    ]);
-
-    setReports([
-      { id: '1', reason: 'Inappropriate content', createdAt: '2026-06-26', status: 'open' },
-      { id: '2', reason: 'Misinformation', createdAt: '2026-06-25', status: 'open' },
-    ]);
-  }, []);
+  const [pendingArticles] = useState<PendingArticle[]>([
+    { id: '1', title: 'Pending Article 1', author: 'Writer 1', status: 'pending' },
+    { id: '2', title: 'Pending Article 2', author: 'Writer 2', status: 'pending' },
+  ]);
+  const [reports] = useState<Report[]>([
+    { id: '1', reason: 'Inappropriate content', createdAt: '2026-06-26', status: 'open' },
+    { id: '2', reason: 'Misinformation', createdAt: '2026-06-25', status: 'open' },
+  ]);
 
   const handleApprove = (id: string) => {
     console.log('Approving article:', id);

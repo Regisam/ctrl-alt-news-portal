@@ -16,10 +16,6 @@ export default function HomePage() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchArticles();
-  }, []);
-
   const fetchArticles = async () => {
     try {
       const response = await fetch('/api/analytics-live/live');
@@ -54,6 +50,11 @@ export default function HomePage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sincroniza com sistema externo (rede/WebSocket) ao montar
+    fetchArticles();
+  }, []);
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;

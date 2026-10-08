@@ -21,12 +21,6 @@ export function DashboardMetrics() {
   const [timeSeriesData, setTimeSeriesData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchMetrics();
-    const interval = setInterval(fetchMetrics, 30000); // Refresh every 30s
-    return () => clearInterval(interval);
-  }, []);
-
   const fetchMetrics = async () => {
     try {
       const response = await analyticsAPI.getLiveMetrics() as any;
@@ -51,6 +45,13 @@ export function DashboardMetrics() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sincroniza com sistema externo (rede/WebSocket) ao montar
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 30000); // Refresh every 30s
+    return () => clearInterval(interval);
+  }, []);
 
   if (loading || !metrics) {
     return <div className="text-center py-12">Loading dashboard...</div>;

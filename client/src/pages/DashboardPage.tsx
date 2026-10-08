@@ -117,6 +117,7 @@ function DashboardPage() {
                   </thead>
                   <tbody className="divide-y dark:divide-gray-700">
                     {alerts.active.map((alert) => {
+                      // eslint-disable-next-line react-hooks/purity -- idade do alerta depende do relógio atual
                       const ageMs = Date.now() - new Date(alert.timestamp).getTime();
                       const ageSec = Math.floor(ageMs / 1000);
                       const ageMin = Math.floor(ageSec / 60);

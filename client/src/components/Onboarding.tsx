@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 
 interface OnboardingStep {
@@ -10,7 +10,7 @@ interface OnboardingStep {
 }
 
 export function Onboarding() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(() => !localStorage.getItem('onboarding-completed'));
   const [currentStep, setCurrentStep] = useState(0);
   const [completed, setCompleted] = useState(new Set<number>());
   const { isSupported, subscribe } = usePushNotifications();
@@ -60,7 +60,7 @@ export function Onboarding() {
       description: 'Choose your favorite categories and notification frequency.',
       action: async () => {
         // Navigate to settings
-        window.location.href = '/profile';
+        window.location.assign('/profile');
       },
       icon: '⚙️',
     },
@@ -69,19 +69,11 @@ export function Onboarding() {
       title: 'Explore the Dashboard',
       description: 'View real-time analytics and engagement metrics.',
       action: async () => {
-        window.location.href = '/dashboard';
+        window.location.assign('/dashboard');
       },
       icon: '📊',
     },
   ];
-
-  useEffect(() => {
-    // Check if user has completed onboarding
-    const hasOnboarded = localStorage.getItem('onboarding-completed');
-    if (!hasOnboarded) {
-      setIsOpen(true);
-    }
-  }, []);
 
   const handleStepComplete = async () => {
     try {

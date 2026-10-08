@@ -1,5 +1,4 @@
 import { useRoute } from 'wouter';
-import { useState, useEffect } from 'react';
 
 const CATEGORIES = ['AI', 'Science', 'Robotics', 'Gadgets'];
 
@@ -12,15 +11,11 @@ interface Article {
 
 export default function CategoryPage() {
   const [_match, params] = useRoute('/category/:name');
-  const [articles, setArticles] = useState<Article[]>([]);
   const category = params?.name?.toUpperCase() || 'AI';
-
-  useEffect(() => {
-    setArticles([
-      { id: '1', title: `${category} Article 1`, views: 1200, readTime: '5 min' },
-      { id: '2', title: `${category} Article 2`, views: 890, readTime: '7 min' },
-    ]);
-  }, [category]);
+  const articles: Article[] = [
+    { id: '1', title: `${category} Article 1`, views: 1200, readTime: '5 min' },
+    { id: '2', title: `${category} Article 2`, views: 890, readTime: '7 min' },
+  ];
 
   return (
     <div className="min-h-screen bg-black text-white p-4">
